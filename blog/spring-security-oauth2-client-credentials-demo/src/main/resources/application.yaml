@@ -1,0 +1,17 @@
+server:
+    port: 8081
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          test-client:
+            provider: test
+            client-id: test
+            client-secret: 6dBPODeSu6dFU92XYuej88gvuh638G0g
+            authorization-grant-type: client_credentials
+            scope: email
+        provider:
+          test:
+            token-uri: http://localhost:8080/realms/master/protocol/openid-connect/token
+            jwk-set-uri: http://localhost:8080/realms/master/protocol/openid-connect/certs

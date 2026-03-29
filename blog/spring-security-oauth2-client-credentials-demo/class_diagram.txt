@@ -1,0 +1,81 @@
++------------------------------------------+
+|        RestClientConfiguration           |
++------------------------------------------+
+| - authorizedClientManager()              |
+| - oauth2RestClient()                     |
++------------------------------------------+
+                    |
+                    | creates
+                    v
++------------------------------------------+
+| AudienceWritingOAuth2ClientHttpRequest-  |
+| Interceptor                              |
++------------------------------------------+
+| - authorizedClientManager                |
+| - clientRegistrationIdResolver           |
+| - principalResolver                      |
+| - authorizationFailureHandler            |
++------------------------------------------+
+                    |
+                    | uses
+                    v
++------------------------------------------+
+| AudienceWritingAuthorizedClientService-  |
+| OAuth2AuthorizedClientManager            |
++------------------------------------------+
+| - clientRegistrationRepository           |
+| - authorizedClientService                |
+| - authorizedClientProvider               |
+| - contextAttributesMapper                |
+| - authorizationSuccessHandler            |
+| - authorizationFailureHandler            |
++------------------------------------------+
+                    |
+                    | uses
+                    v
++------------------------------------------+
+| AudienceWritingClientCredentialsOAuth2-  |
+| AuthorizedClientProvider                 |
++------------------------------------------+
+| - accessTokenResponseClient              |
+| - clockSkew                              |
+| - clock                                  |
++------------------------------------------+
+                    |
+                    | uses
+                    v
++------------------------------------------+
+| AudienceWritingOAuth2AccessToken-        |
+| ResponseClient                           |
++------------------------------------------+
+| - restClient                             |
+| - headersConverter                       |
+| - parametersConverter                    |
+| - parametersCustomizer                   |
++------------------------------------------+
+                    |
+                    | uses
+                    v
++------------------------------------------+
+| OAuth2ClientCredentialsAudienced-        |
+| GrantRequest                             |
++------------------------------------------+
+| - audience                               |
++------------------------------------------+
+
+Class Relationships:
+
+1. RestClientConfiguration creates an instance of AudienceWritingOAuth2ClientHttpRequestInterceptor and configures it with an AudienceWritingAuthorizedClientServiceOAuth2AuthorizedClientManager.
+
+2. AudienceWritingOAuth2ClientHttpRequestInterceptor uses AudienceWritingAuthorizedClientServiceOAuth2AuthorizedClientManager to obtain authorized clients with audience information.
+
+3. AudienceWritingAuthorizedClientServiceOAuth2AuthorizedClientManager uses AudienceWritingClientCredentialsOAuth2AuthorizedClientProvider to authorize clients.
+
+4. AudienceWritingClientCredentialsOAuth2AuthorizedClientProvider uses AudienceWritingOAuth2AccessTokenResponseClient to obtain access tokens.
+
+5. AudienceWritingOAuth2AccessTokenResponseClient uses OAuth2ClientCredentialsAudiencedGrantRequest to include audience information in the token request.
+
+Key Features:
+- The "audience" parameter is propagated through the entire OAuth2 authorization flow
+- Each class extends or implements a standard Spring Security OAuth2 class to add audience support
+- The flow starts with RestClientConfiguration and ends with obtaining an access token with audience information
