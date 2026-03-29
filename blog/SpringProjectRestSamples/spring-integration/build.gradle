@@ -1,0 +1,35 @@
+plugins {
+	id 'org.springframework.boot' version '2.3.3.RELEASE'
+	id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+	id 'java'
+	id 'idea'
+}
+
+group = 'com.stevenpg.restperformance'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.projectlombok:lombok:1.18.12'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	implementation 'org.springframework.boot:spring-boot-starter-integration'
+	implementation 'org.springframework.integration:spring-integration-core:5.2.8.RELEASE'
+	implementation 'org.springframework.integration:spring-integration-http:5.2.8.RELEASE'
+
+	testImplementation('org.springframework.boot:spring-boot-starter-test') {
+		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+	}
+	testImplementation 'org.springframework.integration:spring-integration-test'
+
+	annotationProcessor "org.springframework.boot:spring-boot-configuration-processor"
+}
+
+test {
+	useJUnitPlatform()
+}

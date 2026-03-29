@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:int="http://www.springframework.org/schema/integration"
+       xmlns:int-http="http://www.springframework.org/schema/integration/http"
+       xsi:schemaLocation="
+    http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/integration
+    http://www.springframework.org/schema/integration/spring-integration-5.2.xsd
+    http://www.springframework.org/schema/integration/http
+    http://www.springframework.org/schema/integration/http/spring-integration-http-5.2.xsd">
+
+    <int:channel id="goodEndpointRequestChannel" />
+    <int:channel id="goodEndpointReplyChannel" />
+
+    <int-http:inbound-gateway
+            request-channel="goodEndpointRequestChannel"
+            reply-channel="goodEndpointReplyChannel"
+            path="${endpoint.api.ok}"
+            supported-methods="GET"/>
+
+    <!-- outbound gateway -->
+    <int-http:outbound-gateway
+            request-channel="goodEndpointRequestChannel"
+            reply-channel="goodEndpointReplyChannel"
+            url="${endpoint.ok}"
+        />
+
+</beans>
