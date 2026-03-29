@@ -1,0 +1,15 @@
+{
+    "car": {
+        "make": "toyota",
+        "model": "corolla",
+        "trim": "4DR Sedan",
+        "color": "gray",
+        "year": 2012,
+        "mileage": 120000
+    },
+    "driver": {
+        "firstname": "John",
+        "lastname": "Smith",
+        "driverId": "someId"
+    }
+}
