@@ -1,0 +1,56 @@
+plugins {
+	id 'java'
+
+	// ----------------------------------------------
+	// When changing version, make sure to reload or rebuild the project
+	// This is the version BEFORE the hibernate update was included in Spring Boot
+	id 'org.springframework.boot' version '3.3.9'
+	// This is the breaking version of the framework that includes the Hibernate update
+	//	id 'org.springframework.boot' version '3.4.0'
+	// This is the latest version of the framework (as of project creation)
+	//	id 'org.springframework.boot' version '3.4.3'
+
+	// ----------------------------------------------
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.stevenpg'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'org.postgresql:postgresql'
+	annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation 'org.testcontainers:postgresql'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	compileOnly 'org.projectlombok:lombok:1.18.36'
+	annotationProcessor 'org.projectlombok:lombok:1.18.36'
+
+	testCompileOnly 'org.projectlombok:lombok:1.18.36'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.36'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
