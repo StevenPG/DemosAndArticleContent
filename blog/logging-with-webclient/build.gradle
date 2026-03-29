@@ -1,0 +1,36 @@
+plugins {
+    id 'org.springframework.boot' version '2.3.4.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id 'java'
+}
+
+group = 'com.stevenpg.logging-with-webclient'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation group: 'org.eclipse.jetty', name: 'jetty-reactive-httpclient', version: '1.1.4'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+    testImplementation 'io.projectreactor:reactor-test'
+}
+
+test {
+    useJUnitPlatform()
+}
