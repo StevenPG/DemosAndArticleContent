@@ -5,6 +5,8 @@ A collection of code samples, demos, and issue reproductions that accompany arti
 - Website: [stevenpg.com](https://stevenpg.com/)
 - Substack: [@stevenpg1](https://substack.com/@stevenpg1)
 
+Old projects, demos and blog post repositories have been migrated to this repository. They will all share the same day of commits, but are much older.
+
 ## Structure
 
 - **blog/** — Source code and examples that accompany blog posts and articles.
