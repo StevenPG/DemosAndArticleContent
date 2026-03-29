@@ -1,0 +1,43 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+    // The GraalVM Native Build Tools plugin adds nativeCompile, nativeRun, and nativeTest tasks.
+    // It also integrates with the Spring AOT processor to generate native hints automatically
+    // for most Spring Boot features.
+    id 'org.graalvm.buildtools.native' version '0.10.3'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    // Spring Boot 4 requires Java 25. GraalVM CE for Java 25 is required for nativeCompile.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.kafka:spring-kafka'
+}
+
+graalvmNative {
+    // The reachability metadata repository contains pre-generated native image hints
+    // for popular libraries (Jackson, Hibernate, etc.). Enabling this avoids most
+    // manual reflect-config.json entries for third-party code.
+    metadataRepository {
+        enabled = true
+    }
+    binaries {
+        main {
+            // Automatically detect and include resources (application.properties, etc.)
+            resources.autodetect()
+        }
+    }
+}
