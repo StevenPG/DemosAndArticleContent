@@ -1,0 +1,75 @@
+version: "3"
+
+services:
+  kafka-0:
+    image: docker.io/bitnami/kafka:latest
+    hostname: kafka-0
+    ports:
+      - "29092"
+      - "9093"
+      - "9094:9094"
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_LISTENERS=BROKER://:29092,CONTROLLER://:9093,EXTERNAL1://localhost:9094,EXTERNAL2://localhost:9095,EXTERNAL3://localhost:9096
+      - KAFKA_CFG_ADVERTISED_LISTENERS=BROKER://:29092,EXTERNAL1://localhost:9094,EXTERNAL2://localhost:9095,EXTERNAL3://localhost:9096
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_KRAFT_CLUSTER_ID=ODg3OGVhNDcwNjJjNDNjMm
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=BROKER
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL1:PLAINTEXT,EXTERNAL2:PLAINTEXT,EXTERNAL3:PLAINTEXT
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - BITNAMI_DEBUG=yes
+  kafka-1:
+    image: docker.io/bitnami/kafka:latest
+    hostname: kafka-1
+    ports:
+      - "29092"
+      - "9093"
+      - "9095:9095"
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_LISTENERS=BROKER://:29092,CONTROLLER://:9093,EXTERNAL1://localhost:9094,EXTERNAL2://localhost:9095,EXTERNAL3://localhost:9096
+      - KAFKA_CFG_ADVERTISED_LISTENERS=BROKER://:29092,EXTERNAL1://localhost:9094,EXTERNAL2://localhost:9095,EXTERNAL3://localhost:9096
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_KRAFT_CLUSTER_ID=ODg3OGVhNDcwNjJjNDNjMm
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=BROKER
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL1:PLAINTEXT,EXTERNAL2:PLAINTEXT,EXTERNAL3:PLAINTEXT
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - BITNAMI_DEBUG=yes
+  kafka-2:
+    image: docker.io/bitnami/kafka:latest
+    hostname: kafka-2
+    ports:
+      - "29092"
+      - "9093"
+      - "9096:9096"
+    environment:
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_NODE_ID=2
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_LISTENERS=BROKER://:29092,CONTROLLER://:9093,EXTERNAL1://localhost:9094,EXTERNAL2://localhost:9095,EXTERNAL3://localhost:9096
+      - KAFKA_CFG_ADVERTISED_LISTENERS=BROKER://:29092,EXTERNAL1://localhost:9094,EXTERNAL2://localhost:9095,EXTERNAL3://localhost:9096
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_KRAFT_CLUSTER_ID=ODg3OGVhNDcwNjJjNDNjMm
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=BROKER
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=BROKER:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL1:PLAINTEXT,EXTERNAL2:PLAINTEXT,EXTERNAL3:PLAINTEXT
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - BITNAMI_DEBUG=yes
+  kafdrop:
+    image: obsidiandynamics/kafdrop
+    restart: "no"
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: "kafka-0:29092,kafka-1:29092,kafka-2:29092"
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    depends_on:
+      - "kafka-0"
+      - "kafka-1"
+      - "kafka-2"
