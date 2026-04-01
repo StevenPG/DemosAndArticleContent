@@ -1,1 +1,5 @@
 .DS_Store
+/blog/spring-boot-starter-page-jackson3/.gradle
+/blog/spring-boot-starter-page-jackson3/page-client-failure/build
+/blog/spring-boot-starter-page-jackson3/page-client-success/build
+/blog/spring-boot-starter-page-jackson3/page-server/build
