@@ -1,0 +1,5 @@
+rootProject.name = 'spring-boot-starter-page-jackson3-demo'
+
+include 'page-server'
+include 'page-client-success'
+include 'page-client-failure'
