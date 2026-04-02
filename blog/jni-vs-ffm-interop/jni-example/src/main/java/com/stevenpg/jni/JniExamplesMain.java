@@ -3,11 +3,32 @@ package com.stevenpg.jni;
 import java.util.Arrays;
 
 /**
- * Entry point demonstrating all JNI examples.
+ * =====================================================================
+ * JniExamplesMain - Entry Point for All JNI Examples
+ * =====================================================================
+ *
  * Run with: ./gradlew :jni-example:run
  *
- * NOTE: The native library must be compiled first. The Gradle build
- * handles this automatically, but you need a C compiler (gcc) installed.
+ * This will automatically:
+ *   1. Compile the Java source files
+ *   2. Generate JNI header files (javac -h) for all native classes
+ *   3. Compile the C source files into libjniexamples.so
+ *   4. Run this main class with -Djava.library.path pointing to the .so
+ *
+ * PREREQUISITES:
+ *   - Java 25 (for compilation and running)
+ *   - GCC or compatible C compiler (for compiling native code)
+ *   - Linux (this example uses Linux-specific paths and .so extension)
+ *     See the parent README for macOS/Windows adaptation notes
+ *
+ * WHAT HAPPENS WHEN YOU RUN THIS:
+ *   1. The JVM loads this class
+ *   2. When NativeStringUtils/NativeArrayOps/etc. are first used, their
+ *      static initializers call System.loadLibrary("jniexamples")
+ *   3. The JVM searches java.library.path for libjniexamples.so
+ *   4. The .so file is loaded into the JVM process via dlopen()
+ *   5. JNI_OnLoad() runs (caches JavaVM* for threading examples)
+ *   6. Each native method call is dispatched to the corresponding C function
  */
 public class JniExamplesMain {
 
@@ -19,6 +40,8 @@ public class JniExamplesMain {
         runStringExamples();
         runArrayExamples();
         runSystemInfoExamples();
+        runCallbackExamples();
+        runThreadingExamples();
     }
 
     private static void runStringExamples() {
@@ -44,6 +67,7 @@ public class JniExamplesMain {
         int[] scaled = arrayOps.scaleArray(data, 3);
         System.out.println("Scaled (x3): " + Arrays.toString(scaled));
 
+        // Use a fresh copy for sorting since sortArray modifies in-place
         int[] toSort = {42, 17, 8, 99, 3, 61, 25};
         arrayOps.sortArray(toSort);
         System.out.println("Sorted:      " + Arrays.toString(toSort));
@@ -59,6 +83,34 @@ public class JniExamplesMain {
 
         String nativeMsg = sysInfo.allocateAndReadNativeMemory("JNI native memory test");
         System.out.println("Native mem:  " + nativeMsg);
+        System.out.println();
+    }
+
+    private static void runCallbackExamples() {
+        System.out.println("--- Callbacks / Upcalls (NativeCallback) ---");
+        System.out.println("C code calling back into Java to report progress:");
+        var callback = new NativeCallback();
+
+        // C code will call onProgress() on each iteration
+        callback.processWithCallback(5);
+
+        System.out.println();
+        System.out.println("C code calling Java's transformString() for each element:");
+        String[] input = {"hello", "world", "jni"};
+        System.out.println("Input:  " + Arrays.toString(input));
+
+        String[] transformed = callback.processStringsNatively(input);
+        System.out.println("Output: " + Arrays.toString(transformed));
+        System.out.println();
+    }
+
+    private static void runThreadingExamples() {
+        System.out.println("--- Multi-Threading (NativeThreading) ---");
+        System.out.println("Native threads calling back into Java via AttachCurrentThread:");
+        var threading = new NativeThreading();
+
+        // Creates 4 native pthreads, each attaches to JVM and calls back
+        threading.runNativeThreads(4);
         System.out.println();
     }
 }

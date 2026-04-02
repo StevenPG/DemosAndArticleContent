@@ -2,3 +2,4 @@ rootProject.name = 'jni-vs-ffm-interop'
 
 include 'jni-example'
 include 'ffm-example'
+include 'jextract-example'

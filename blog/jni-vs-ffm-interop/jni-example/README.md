@@ -9,6 +9,8 @@ Demonstrates Java Native Interface (JNI) - Java's original mechanism for calling
 | `NativeStringUtils` | Passing strings between Java and C, returning new strings |
 | `NativeArrayOps` | Array pinning, in-place modification, creating new arrays from native code |
 | `NativeSystemInfo` | Calling POSIX system functions (gethostname, getpid, malloc/free) |
+| `NativeCallback` | **Upcalls** - C code calling back into Java (progress reporting, string transform) |
+| `NativeThreading` | **Multi-threading** - Native threads with AttachCurrentThread, global refs, JNI_OnLoad |
 
 ## How JNI Works
 
@@ -86,6 +88,25 @@ Sorted:      [3, 8, 17, 25, 42, 61, 99]
 Hostname:    <your-hostname>
 Process ID:  <your-pid>
 Native mem:  JNI native memory test
+
+--- Callbacks / Upcalls (NativeCallback) ---
+C code calling back into Java to report progress:
+  [Callback from C] Step 1: 20.0% complete
+  [Callback from C] Step 2: 40.0% complete
+  [Callback from C] Step 3: 60.0% complete
+  [Callback from C] Step 4: 80.0% complete
+  [Callback from C] Step 5: 100.0% complete
+
+C code calling Java's transformString() for each element:
+Input:  [hello, world, jni]
+Output: [[HELLO], [WORLD], [JNI]]
+
+--- Multi-Threading (NativeThreading) ---
+Native threads calling back into Java via AttachCurrentThread:
+  [Thread 0 → Java] result=<computed> (Java thread: Thread-N)
+  [Thread 1 → Java] result=<computed> (Java thread: Thread-N)
+  [Thread 2 → Java] result=<computed> (Java thread: Thread-N)
+  [Thread 3 → Java] result=<computed> (Java thread: Thread-N)
 ```
 
 ## Key JNI Concepts to Note
@@ -113,3 +134,25 @@ But the exception doesn't immediately unwind - you must return from the native f
 
 ### Naming Convention
 JNI function names MUST follow: `Java_<package>_<ClassName>_<methodName>`. This is rigid and gets unwieldy with deeply nested packages. Renaming a Java package means renaming all your C functions too.
+
+### Callbacks (Upcalls) - C Calling Java
+To call a Java method from C, you need three lookups:
+```c
+jclass cls = (*env)->GetObjectClass(env, obj);
+jmethodID method = (*env)->GetMethodID(env, cls, "onProgress", "(ID)V");
+(*env)->CallVoidMethod(env, obj, method, step, percent);
+```
+The `"(ID)V"` is a JNI type signature: `I`=int, `D`=double, `V`=void return. Use `javap -s ClassName` to find these signatures.
+
+### Threading - JNIEnv* Is Thread-Local
+The most dangerous JNI rule: **JNIEnv* must not be shared across threads**. If native code creates threads (e.g., via `pthread_create`), each thread must:
+1. Call `AttachCurrentThread()` to get its own `JNIEnv*`
+2. Use that `JNIEnv*` for all JNI calls on that thread
+3. Call `DetachCurrentThread()` before the thread exits
+
+Cache the `JavaVM*` pointer in `JNI_OnLoad()` and use it for `AttachCurrentThread()` from any thread.
+
+### Local vs Global References
+- **Local references** (default): Valid only during the current JNI call. Automatically cleaned up.
+- **Global references** (`NewGlobalRef`): Valid from any thread, survive across JNI calls. Must be explicitly deleted with `DeleteGlobalRef`.
+- In loops, call `DeleteLocalRef` to avoid exhausting the local reference table (typically 512 slots).

@@ -7,9 +7,11 @@ Demonstrates the Foreign Function & Memory API (FFM) - Java's modern native inte
 | Class | What It Demonstrates |
 |---|---|
 | `StringExamples` | Calling C stdlib functions (strlen, toupper) directly from Java |
-| `MemoryExamples` | Arena-based memory management, StructLayout, memory slicing |
-| `SystemCallExamples` | POSIX system calls (gethostname, getpid, malloc/free) - no C code needed |
-| `CustomLibraryExamples` | Loading and calling a custom shared library (.so) |
+| `MemoryExamples` | Arena, StructLayout, SequenceLayout (arrays of structs), memory slicing |
+| `SystemCallExamples` | POSIX system calls (gethostname, getpid, malloc/free) + **errno capture** |
+| `CustomLibraryExamples` | Loading and calling a custom shared library (.so) with struct pointers |
+| `UpcallExamples` | **Upcalls** - C's qsort() calling a Java comparator via function pointer |
+| `AdvancedExamples` | **Variadic functions** (snprintf), nested structs, union layouts |
 
 ## How FFM Works
 
@@ -89,6 +91,18 @@ add(17, 25) = 42
 factorial(12) = 479001600
 fibonacci(0..9) = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 distance((0,0), (3,4)) = 5.0
+
+--- Upcall Examples (Native → Java Callbacks via FFM) ---
+Before qsort: [42, 17, 8, 99, 3, 61, 25, 50, 1, 88]
+After qsort:  [1, 3, 8, 17, 25, 42, 50, 61, 88, 99]
+(Sorted using a Java comparator called from C's qsort!)
+
+--- Advanced FFM Examples ---
+snprintf:    "Java scored 42 points!" (22 chars)
+Rectangle { topLeft=(10,20), bottomRight=(100,80), color=0xFF0000FF }
+Rectangle size: 40 bytes
+Union: float 3.14 → raw int bits: 1078523331 (0x4048F5C3)
+Union size: 4 bytes (shared by all members)
 ```
 
 ## Key FFM Concepts to Note
@@ -133,3 +147,60 @@ xHandle.set(point, 0L, 3.14);  // Type-safe, named access
 ```
 
 JNI equivalent would require manually knowing that `x` is at offset 0 and `y` is at offset 8, or using JNI field accessor functions with `GetFieldID` calls.
+
+### Upcall Stubs (Callbacks)
+
+FFM can create a native function pointer that calls a Java method:
+
+```java
+// Create a function pointer from a Java method
+MemorySegment funcPtr = linker.upcallStub(javaMethodHandle, descriptor, arena);
+
+// Pass it to C's qsort, which calls it like a normal C function pointer
+qsort.invoke(array, count, elemSize, funcPtr);
+```
+
+Compare with JNI, which requires `FindClass` + `GetMethodID` + `CallVoidMethod` in C code, plus `ExceptionCheck` after each callback and `AttachCurrentThread` for native threads.
+
+### Variadic Function Calls
+
+FFM can call variadic functions like printf/snprintf directly:
+
+```java
+MethodHandle snprintf = linker.downcallHandle(addr, desc,
+    Linker.Option.firstVariadicArg(3));  // Args after index 2 are variadic
+snprintf.invoke(buffer, 256L, format, name, 42);
+```
+
+JNI **cannot** call variadic functions. You must write a separate C wrapper for each combination of argument types.
+
+### errno Capture
+
+FFM captures errno atomically as part of the native call return:
+
+```java
+MethodHandle open = linker.downcallHandle(addr, desc,
+    Linker.Option.captureCallState("errno"));
+int fd = (int) open.invoke(state, path, flags);
+// Read errno from state - guaranteed to be the value set by this call
+```
+
+### SequenceLayout (Arrays of Structs)
+
+`SequenceLayout` handles arrays of structs with proper stride calculation:
+
+```java
+SequenceLayout pointsArray = MemoryLayout.sequenceLayout(100, point2dLayout);
+VarHandle x = pointsArray.varHandle(sequenceElement(), groupElement("x"));
+x.set(points, 0L, 42L, 3.14);  // Set x of element 42
+```
+
+### Union Layouts
+
+`UnionLayout` models C unions where all fields share the same memory:
+
+```java
+UnionLayout value = MemoryLayout.unionLayout(
+    JAVA_INT.withName("asInt"),
+    JAVA_FLOAT.withName("asFloat"));
+// Size is max(4, 4) = 4 bytes. Both fields start at offset 0.

@@ -23,7 +23,9 @@ tasks.register('generateJniHeaders', Exec) {
             '-d', "${buildDir}/classes/java/main",
             file('src/main/java/com/stevenpg/jni/NativeStringUtils.java').absolutePath,
             file('src/main/java/com/stevenpg/jni/NativeArrayOps.java').absolutePath,
-            file('src/main/java/com/stevenpg/jni/NativeSystemInfo.java').absolutePath
+            file('src/main/java/com/stevenpg/jni/NativeSystemInfo.java').absolutePath,
+            file('src/main/java/com/stevenpg/jni/NativeCallback.java').absolutePath,
+            file('src/main/java/com/stevenpg/jni/NativeThreading.java').absolutePath
 }
 
 // Task to compile the native C library
@@ -42,7 +44,10 @@ tasks.register('compileNative', Exec) {
             '-o', "${outputDir}/libjniexamples.so",  // Change to .dylib for macOS
             'native_string_utils.c',
             'native_array_ops.c',
-            'native_system_info.c'
+            'native_system_info.c',
+            'native_callback.c',
+            'native_threading.c',
+            '-lpthread'
 }
 
 // Make run task depend on native compilation and set library path
