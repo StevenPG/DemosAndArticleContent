@@ -1,0 +1,75 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+    // Adds nativeCompile, nativeRun, nativeTest tasks and integrates with Spring AOT.
+    // The -Pagent flag (used below) runs tests with the tracing agent attached.
+    id 'org.graalvm.buildtools.native' version '0.10.3'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    runtimeOnly 'org.postgresql:postgresql'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // spring-boot-testcontainers provides Spring Boot 4's version management for
+    // Testcontainers modules. Without it, the BOM provides no version for
+    // org.testcontainers:* and Gradle fails to resolve them.
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers-postgresql'
+}
+
+configurations.testRuntimeClasspath {
+    // junit-platform-native 0.10.3 was built for JUnit Platform 1.x.
+    // Spring Boot 4 uses JUnit 6, so this artifact causes test discovery to fail
+    // on the JVM. We're running tests with the tracing agent (-Pagent test),
+    // not as a native binary, so we don't need the native JUnit integration.
+    exclude group: 'org.graalvm.buildtools', module: 'junit-platform-native'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+graalvmNative {
+    // The reachability metadata repository has pre-built native hints for popular libraries.
+    // This handles most of Spring, Jackson, and dozens of other libraries — we only need to supplement it
+    // with hints for our own code's custom reflection.
+    metadataRepository {
+        enabled = true
+    }
+
+    agent {
+        // Use "standard" mode, not "conditional". In conditional mode, each entry gets a
+        // "condition: typeReached: <caller>" attached. When tests are the callers, the
+        // condition becomes "typeReached: PluginLoaderIntegrationTest" — a class that
+        // doesn't exist in the production binary. The condition is never true, so the
+        // entries are inactive and Class.forName() fails at runtime.
+        //
+        // Standard mode records unconditional entries. The reachability metadata
+        // repository (enabled above) already handles Spring/library internals, so any
+        // extra entries captured here are deduplicated at build time.
+        defaultMode = "standard"
+    }
+
+    binaries {
+        main {
+            resources.autodetect()
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+  "rules": [
+    { "includeClasses": "com.example.**" },
+    { "includeClasses": "org.hibernate.**" }
+  ]
+}
