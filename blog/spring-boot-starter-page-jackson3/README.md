@@ -37,12 +37,12 @@ Zero configuration required. Auto-configuration activates automatically.
 ## Requirements
 
 - Java 17+
-- Gradle 8+ (or use `./gradlew` if you have generated the wrapper)
+- Gradle 9+ (or use `./gradlew` if you have generated the wrapper)
 
 Generate the Gradle wrapper if needed:
 
 ```bash
-gradle wrapper --gradle-version 8.14
+gradle wrapper --gradle-version 9.4.0
 ```
 
 ---
