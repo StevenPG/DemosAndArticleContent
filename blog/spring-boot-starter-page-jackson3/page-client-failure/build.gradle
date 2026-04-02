@@ -20,6 +20,7 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.data:spring-data-commons'
+    implementation 'org.springframework.boot:spring-boot-starter-restclient'
 
     // NOTE: spring-boot-starter-page-jackson3 is intentionally NOT included here.
     // This demonstrates the deserialization failure when the library is absent.

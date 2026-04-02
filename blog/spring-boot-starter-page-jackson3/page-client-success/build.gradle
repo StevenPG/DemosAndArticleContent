@@ -21,6 +21,7 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.data:spring-data-commons'
+    implementation 'org.springframework.boot:spring-boot-starter-restclient'
 
     // The library that fixes Page deserialization with Jackson 3
     implementation 'com.stevenpg:spring-boot-starter-page-jackson3:0.0.1'

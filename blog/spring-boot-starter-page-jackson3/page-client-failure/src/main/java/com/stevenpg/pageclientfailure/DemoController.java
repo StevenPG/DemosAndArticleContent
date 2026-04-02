@@ -46,6 +46,13 @@ public class DemoController {
             // This line is unreachable without the library — Jackson will always throw.
             Map<String, Object> response = new LinkedHashMap<>();
             response.put("status", "SUCCESS");
+            response.put("message", "Page<User> deserialized with spring-boot-starter-page-jackson3");
+            response.put("page", result.getNumber());
+            response.put("size", result.getSize());
+            response.put("totalElements", result.getTotalElements());
+            response.put("totalPages", result.getTotalPages());
+            response.put("first", result.isFirst());
+            response.put("last", result.isLast());
             response.put("content", result.getContent());
             return response;
 
