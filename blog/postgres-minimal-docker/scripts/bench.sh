@@ -37,9 +37,8 @@ pgbench \
   -h "$DB_HOST" \
   -p "$DB_PORT" \
   -U "$DB_USER" \
-  -d "$DB_NAME" \
-  --initialize \
-  --scale="$SCALE"
+  -i -s "$SCALE" \
+  "$DB_NAME"
 echo ""
 
 # ── 2. Read-only benchmark (SELECT-heavy) ────────────────────────────────────
@@ -48,13 +47,12 @@ pgbench \
   -h "$DB_HOST" \
   -p "$DB_PORT" \
   -U "$DB_USER" \
-  -d "$DB_NAME" \
-  --select-only \
-  --clients="$CLIENTS" \
-  --jobs="$CLIENTS" \
-  --time="$DURATION" \
-  --report-per-command \
-  --progress=5
+  -S \
+  -c "$CLIENTS" \
+  -j "$CLIENTS" \
+  -T "$DURATION" \
+  -P 5 \
+  "$DB_NAME"
 echo ""
 
 # ── 3. Read-write benchmark (TPC-B-like) ─────────────────────────────────────
@@ -63,12 +61,11 @@ pgbench \
   -h "$DB_HOST" \
   -p "$DB_PORT" \
   -U "$DB_USER" \
-  -d "$DB_NAME" \
-  --clients="$CLIENTS" \
-  --jobs="$CLIENTS" \
-  --time="$DURATION" \
-  --report-per-command \
-  --progress=5
+  -c "$CLIENTS" \
+  -j "$CLIENTS" \
+  -T "$DURATION" \
+  -P 5 \
+  "$DB_NAME"
 echo ""
 
 echo "Done."
