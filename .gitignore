@@ -5,3 +5,6 @@
 /blog/spring-boot-starter-page-jackson3/page-server/build
 /blog/spring-boot-starter-page-jackson3/build
 /blog/spring-boot-starter-page-jackson3/.idea
+.idea/DemosAndArticleContent.iml
+.idea/go.imports.xml
+/.idea
