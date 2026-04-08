@@ -1,0 +1,59 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+application {
+    mainClass = 'com.stevenpg.jextract.JextractExampleMain'
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Compile the geometry C library
+tasks.register('compileNative', Exec) {
+    def outputDir = file("${buildDir}/native")
+    doFirst {
+        outputDir.mkdirs()
+    }
+    workingDir "${projectDir}/src/main/native"
+    commandLine 'gcc', '-shared', '-fPIC',
+            '-o', "${outputDir}/libgeometry.so",  // Change to .dylib for macOS
+            'geometry.c', '-lm'
+}
+
+tasks.named('run') {
+    dependsOn compileNative
+    jvmArgs "-Djava.library.path=${buildDir}/native"
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+}
+
+// Optional: Task to run jextract (requires jextract to be installed)
+// This is a reference for how to integrate jextract into a build.
+// See: https://github.com/openjdk/jextract
+tasks.register('generateBindings', Exec) {
+    description = 'Generates Java FFM bindings from C headers using jextract'
+
+    // jextract must be on your PATH or specify the full path
+    def jextractCmd = 'jextract'
+    def headerFile = file("${projectDir}/src/main/native/geometry.h")
+    def outputDir = file("${projectDir}/src/main/generated-java")
+
+    doFirst {
+        outputDir.mkdirs()
+    }
+
+    commandLine jextractCmd,
+            '--output', outputDir.absolutePath,
+            '--target-package', 'com.stevenpg.generated',
+            '--library', 'geometry',
+            headerFile.absolutePath
+
+    // This task is NOT run automatically because jextract must be installed separately.
+    // To use it:
+    //   1. Download jextract from https://jdk.java.net/jextract/
+    //   2. Add it to your PATH
+    //   3. Run: ./gradlew :jextract-example:generateBindings
+}
