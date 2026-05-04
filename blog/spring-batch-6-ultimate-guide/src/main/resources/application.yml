@@ -1,10 +1,15 @@
 spring:
   batch:
-    jdbc:
-      initialize-schema: never   # manage schema manually in production
     job:
       # Do not run jobs automatically on startup — launch explicitly
       enabled: false
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+      schema-locations:
+        - classpath:org/springframework/batch/core/schema-postgresql.sql
+        - classpath:schema.sql
   datasource:
     url: jdbc:postgresql://localhost:5432/batchdb
     username: batch

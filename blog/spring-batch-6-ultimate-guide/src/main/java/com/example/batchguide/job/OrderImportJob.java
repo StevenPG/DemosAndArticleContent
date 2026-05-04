@@ -95,8 +95,10 @@ public class OrderImportJob {
 
                     FileSystemResource resource = new FileSystemResource(filePath);
                     if (!resource.exists()) {
+                        String absolutePath = new java.io.File(filePath).getAbsolutePath();
                         throw new IllegalArgumentException(
-                                "Input file does not exist: " + filePath);
+                                "Input file does not exist at: " + absolutePath +
+                                " (provided path: " + filePath + ")");
                     }
 
                     log.info("[VALIDATE  ] Input file confirmed: {}", filePath);
@@ -137,7 +139,8 @@ public class OrderImportJob {
             OrderSkipListener skipListener) {
 
         return new StepBuilder("importStep", jobRepository)
-                .<OrderRecord, Order>chunk(5, transactionManager)
+                .<OrderRecord, Order>chunk(5)
+                .transactionManager(transactionManager)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
@@ -146,7 +149,6 @@ public class OrderImportJob {
                 .skipLimit(10)
                 .retry(TransientDataAccessException.class)
                 .retryLimit(3)
-                .noRetry(ValidationException.class)
                 .listener(skipListener)
                 .build();
     }
