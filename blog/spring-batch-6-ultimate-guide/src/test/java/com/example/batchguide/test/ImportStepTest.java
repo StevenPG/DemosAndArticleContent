@@ -7,9 +7,9 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
-import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.step.StepExecution;
-import org.springframework.batch.test.JobLauncherTestUtils;
+import org.springframework.batch.infrastructure.item.ExecutionContext;
+import org.springframework.batch.test.JobOperatorTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +41,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>Filter count: 1 (ORD013: amount = 0.00)</li>
  * </ul>
  *
- * <p>{@code @SpringBatchTest} auto-configures {@link JobLauncherTestUtils} and
- * {@link JobRepositoryTestUtils}.  The test profile activates H2 via
- * {@code application-test.yml}.
+ * <p>{@code @SpringBatchTest} auto-configures {@link JobOperatorTestUtils} and
+ * {@link JobRepositoryTestUtils}. A real PostgreSQL instance is provided via
+ * Testcontainers (see {@link TestBatchConfig}).
  */
 @SpringBatchTest
 @SpringBootTest
@@ -52,25 +52,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ImportStepTest {
 
     @Autowired
-    private JobLauncherTestUtils jobLauncherTestUtils;
+    private JobOperatorTestUtils jobOperatorTestUtils;
 
     @Autowired
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
-    @Autowired
-    private JobLauncher jobLauncher;
-
-    /**
-     * Cleans up Spring Batch meta-data tables between test runs to avoid
-     * "JobInstance already exists" exceptions when re-running with the same parameters.
-     *
-     * Also explicitly wires the JobLauncher into JobLauncherTestUtils — in Spring
-     * Batch 6 the setter is no longer @Autowired so @SpringBatchTest no longer
-     * injects it automatically.
-     */
+    /** Clears batch meta-data before each test to avoid "JobInstance already exists" errors. */
     @BeforeEach
     void cleanUp() {
-        jobLauncherTestUtils.setJobLauncher(jobLauncher);
         jobRepositoryTestUtils.removeJobExecutions();
     }
 
@@ -86,8 +75,8 @@ class ImportStepTest {
                 .addLong("runId", System.currentTimeMillis())
                 .toJobParameters();
 
-        // Launch only the importStep — validateStep and reportStep are not executed
-        JobExecution execution = jobLauncherTestUtils.launchStep("importStep", params);
+        // Start only the importStep — validateStep and reportStep are not executed
+        JobExecution execution = jobOperatorTestUtils.startStep("importStep", params, new ExecutionContext());
 
         assertThat(execution.getStatus())
                 .as("importStep should complete successfully")
