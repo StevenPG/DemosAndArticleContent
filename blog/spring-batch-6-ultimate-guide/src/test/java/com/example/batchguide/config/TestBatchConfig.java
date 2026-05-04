@@ -1,28 +1,24 @@
 package com.example.batchguide.config;
 
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.context.annotation.Bean;
+import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
- * Test-specific supplemental Spring configuration for the Order Import batch tests.
+ * Test-specific Spring configuration that provides a real PostgreSQL instance via
+ * Testcontainers. Using an actual database avoids the SQL compatibility gaps between
+ * H2 PostgreSQL-compatibility mode and real PostgreSQL (e.g. ON CONFLICT ... EXCLUDED).
  *
- * <p>The primary test datasource (H2 in PostgreSQL-compatibility mode) is fully
- * auto-configured by Spring Boot from {@code application-test.yml}.  Spring Batch
- * meta-data tables are initialised by {@code spring.batch.initialize-schema: always}
- * in that profile.  Application tables ({@code orders}, {@code skipped_orders}) are
- * created by JPA's {@code ddl-auto: create-drop}.
- *
- * <p>This class is intentionally sparse: all infrastructure beans needed by the tests
- * ({@code DataSource}, {@code JdbcTemplate}, {@code JobRepository}, etc.) are
- * provided by Spring Boot auto-configuration and do not need to be re-declared here.
- *
- * <p>If a test needs to override a specific bean for isolation purposes, add a
- * {@code @Bean} method here and import this class with
- * {@code @Import(TestBatchConfig.class)} on the test class.
- *
- * <p>Currently used as a marker class so that future test-specific beans have a
- * natural home without scattering {@code @TestConfiguration} across multiple files.
+ * Import this class with @Import(TestBatchConfig.class) on any integration test that
+ * needs batch infrastructure.
  */
-@TestConfiguration
+@TestConfiguration(proxyBeanMethods = false)
 public class TestBatchConfig {
-    // No additional beans required — auto-configuration covers all infrastructure.
+
+    @Bean
+    @ServiceConnection
+    PostgreSQLContainer<?> postgresContainer() {
+        return new PostgreSQLContainer<>("postgres:16-alpine");
+    }
 }

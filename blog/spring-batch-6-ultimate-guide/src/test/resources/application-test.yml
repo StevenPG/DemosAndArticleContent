@@ -1,24 +1,19 @@
 spring:
-  datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;NON_KEYWORDS=VALUE
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
   batch:
     job:
       enabled: false
   jpa:
     hibernate:
-      # create-drop creates tables on startup and drops on context close
       ddl-auto: create-drop
     show-sql: false
   sql:
     init:
-      # Initialize only the Spring Batch meta-data tables from its bundled H2 schema.
-      # The application tables (orders, skipped_orders) are handled by JPA ddl-auto above.
+      # Initialize Spring Batch meta-data tables using the PostgreSQL schema bundled
+      # with spring-batch-core. Application tables (orders, skipped_orders) are
+      # handled by JPA ddl-auto above.
       mode: always
       schema-locations:
-        - classpath:org/springframework/batch/core/schema-h2.sql
+        - classpath:org/springframework/batch/core/schema-postgresql.sql
 
 logging:
   level:

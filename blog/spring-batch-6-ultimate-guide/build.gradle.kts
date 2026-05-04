@@ -33,9 +33,10 @@ dependencies {
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
 
-    testImplementation("com.h2database:h2")
-    testImplementation("org.springframework.batch:spring-batch-test")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
+    testImplementation("org.springframework.batch:spring-batch-test")
+    testImplementation("org.testcontainers:testcontainers-postgresql")
     testCompileOnly("org.projectlombok:lombok")
     testAnnotationProcessor("org.projectlombok:lombok")
 }

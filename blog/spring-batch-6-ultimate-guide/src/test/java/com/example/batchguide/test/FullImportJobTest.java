@@ -7,14 +7,18 @@ import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.job.JobExecution;
 import org.springframework.batch.core.job.parameters.JobParameters;
 import org.springframework.batch.core.job.parameters.JobParametersBuilder;
+import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.step.StepExecution;
 import org.springframework.batch.test.JobLauncherTestUtils;
 import org.springframework.batch.test.JobRepositoryTestUtils;
 import org.springframework.batch.test.context.SpringBatchTest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.test.context.ActiveProfiles;
+
+import com.example.batchguide.config.TestBatchConfig;
 
 import java.io.File;
 import java.util.Optional;
@@ -49,6 +53,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBatchTest
 @SpringBootTest
 @ActiveProfiles("test")
+@Import(TestBatchConfig.class)
 class FullImportJobTest {
 
     @Autowired
@@ -57,12 +62,20 @@ class FullImportJobTest {
     @Autowired
     private JobRepositoryTestUtils jobRepositoryTestUtils;
 
+    @Autowired
+    private JobLauncher jobLauncher;
+
     /**
      * Removes all previous job executions from the meta-data tables before each test
      * to prevent "JobInstance already exists" errors on repeated runs.
+     *
+     * Also explicitly wires the JobLauncher into JobLauncherTestUtils — in Spring
+     * Batch 6 the setter is no longer @Autowired so @SpringBatchTest no longer
+     * injects it automatically.
      */
     @BeforeEach
     void cleanUp() {
+        jobLauncherTestUtils.setJobLauncher(jobLauncher);
         jobRepositoryTestUtils.removeJobExecutions();
     }
 
