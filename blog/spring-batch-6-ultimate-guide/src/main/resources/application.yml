@@ -1,0 +1,27 @@
+spring:
+  batch:
+    job:
+      # Do not run jobs automatically on startup — launch explicitly
+      enabled: false
+  sql:
+    init:
+      mode: always
+      continue-on-error: true
+      schema-locations:
+        - classpath:org/springframework/batch/core/schema-postgresql.sql
+        - classpath:schema.sql
+  datasource:
+    url: jdbc:postgresql://localhost:5432/batchdb
+    username: batch
+    password: batch
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      # In production prefer validate or none; update is acceptable for local dev
+      ddl-auto: update
+    show-sql: false
+
+logging:
+  level:
+    com.example.batchguide: INFO
+    org.springframework.batch: INFO

@@ -1,0 +1,21 @@
+spring:
+  batch:
+    job:
+      enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  sql:
+    init:
+      # Initialize Spring Batch meta-data tables using the PostgreSQL schema bundled
+      # with spring-batch-core. Application tables (orders, skipped_orders) are
+      # handled by JPA ddl-auto above.
+      mode: always
+      schema-locations:
+        - classpath:org/springframework/batch/core/schema-postgresql.sql
+
+logging:
+  level:
+    com.example.batchguide: DEBUG
+    org.springframework.batch: INFO
