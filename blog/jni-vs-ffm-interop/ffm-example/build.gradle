@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+application {
+    mainClass = 'com.stevenpg.ffm.FfmExamplesMain'
+}
+
+// FFM is a standard API as of Java 22 (JEP 454) - no special flags needed on Java 25.
+// On Java 21 you would need: --enable-preview
+// On Java 19-20 you would need: --enable-preview --add-modules jdk.incubator.foreign
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Optional: compile a small native library for the custom library demo
+tasks.register('compileNative', Exec) {
+    def outputDir = file("${buildDir}/native")
+    doFirst {
+        outputDir.mkdirs()
+    }
+    workingDir "${projectDir}/src/main/native"
+    commandLine 'gcc', '-shared', '-fPIC',
+            '-o', "${outputDir}/libffmdemo.so",  // Change to .dylib for macOS
+            'math_utils.c'
+}
+
+tasks.named('run') {
+    dependsOn compileNative
+    jvmArgs "-Djava.library.path=${buildDir}/native"
+    // FFM requires explicit opt-in to call native code for safety
+    jvmArgs '--enable-native-access=ALL-UNNAMED'
+}
