@@ -1,0 +1,20 @@
+# Any AI
+.claude
+
+# Gradle build outputs
+/build/
+/.gradle/
+
+# H2 Database files
+*.db
+*.mv.db
+*.trace.db
+
+# Spring Boot
+.spring-boot-devtools.properties
+
+# Docker Compose override
+compose.override.yml
+
+# Logs
+*.log
