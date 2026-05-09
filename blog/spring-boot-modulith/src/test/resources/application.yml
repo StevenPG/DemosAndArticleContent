@@ -1,0 +1,11 @@
+spring:
+  sql:
+    init:
+      mode: never  # data.sql only runs in the full app, not isolated module tests
+  modulith:
+    events:
+      republish-outstanding-events-on-restart: false
+    moments:
+      # Enables TimeMachine instead of Moments — exposes shiftBy() for tests so we can
+      # advance the clock programmatically without waiting for the scheduler to fire.
+      enable-time-machine: true
