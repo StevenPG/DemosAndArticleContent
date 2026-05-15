@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS
+.DS_Store
+
+# Jazzer crash reproducer files dropped in the working directory during live fuzzing.
+# Discovered crashes that should be KEPT belong in the seed corpus under
+# src/test/resources/.../<TestClass>Inputs/<method>/ — not at the repo root.
+crash-*
+.cifuzz-corpus/

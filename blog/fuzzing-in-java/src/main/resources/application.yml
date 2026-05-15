@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: fuzzing-demo
+
+server:
+  port: 8080
+  error:
+    # Suppress the default Spring "whitelabel" error page so every response
+    # — including 4xx and 5xx — comes from GlobalExceptionHandler as JSON.
+    whitelabel:
+      enabled: false
+    include-message: always
+    include-binding-errors: always
+
+logging:
+  level:
+    com.stevenpg.fuzzingdemo: DEBUG
