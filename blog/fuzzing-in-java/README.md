@@ -9,7 +9,7 @@ crash input, so the moment you clone the repo and run the tests, three of them f
 Your job is to fix the bugs and watch the suite go green — the same loop a fuzzer drives
 in a real codebase.
 
-- **Stack:** Java 25 · Gradle 9.5 · Spring Boot 4.0 · [Jazzer](https://github.com/CodeIntelligenceTesting/jazzer) 0.24
+- **Stack:** Java 25 · Gradle 9.5 · Spring Boot 4.0 · [Jazzer](https://github.com/CodeIntelligenceTesting/jazzer) 0.30
 - **Fuzzer:** Jazzer — the de-facto standard coverage-guided fuzzer for the JVM, used by Google's OSS-Fuzz.
 
 ---
@@ -169,8 +169,7 @@ to mean exactly one thing: your code threw an exception it didn't handle.
 
 ## Notes on versions
 
-- **Java bytecode target is 21**, not 25 (`options.release = 21` in `build.gradle.kts`).
-  Jazzer 0.24's bundled ASM cannot yet parse Java 25 class files, so the project compiles
-  to Java 21 bytecode while still running on a Java 25 JVM. No Java-25-only APIs are used,
-  so this is a zero-cost compatibility shim.
+- The project compiles to and runs on **Java 25**. Jazzer 0.30 instruments Java 25 class
+  files (bytecode major version 69) without issue — including JDK internals — so no
+  bytecode-downgrade workaround is needed.
 - Running the app: `./gradlew bootRun` starts it on port 8080.

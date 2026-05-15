@@ -13,14 +13,6 @@ java {
     }
 }
 
-// Jazzer 0.24.0 bundles ASM 9.x which does not yet support Java 25 class files (major version 69).
-// Compiling to Java 21 bytecode makes our classes instrumentable by Jazzer while the JVM itself
-// still runs on Java 25. All language features we use (records, text blocks, pattern matching)
-// are available in Java 21, so this is a zero-cost compatibility shim.
-tasks.withType<JavaCompile> {
-    options.release = 21
-}
-
 repositories {
     mavenCentral()
 }
@@ -34,7 +26,7 @@ dependencies {
     // Jazzer: the most widely used Java fuzzing framework.
     // @FuzzTest methods run as regression tests during `./gradlew test` (corpus replay mode).
     // Set JAZZER_FUZZ=1 or pass -Djazzer.fuzz=true to run live coverage-guided fuzzing.
-    testImplementation("com.code-intelligence:jazzer-junit:0.24.0")
+    testImplementation("com.code-intelligence:jazzer-junit:0.30.0")
 }
 
 tasks.withType<Test> {
