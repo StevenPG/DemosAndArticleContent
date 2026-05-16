@@ -41,5 +41,8 @@ tasks.withType<Test> {
     // Surface Jazzer's findings clearly when a fuzz test fails.
     testLogging {
         events("passed", "skipped", "failed")
+        showExceptions = true
+        showCauses = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     }
 }
