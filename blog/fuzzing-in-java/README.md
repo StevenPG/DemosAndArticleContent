@@ -146,13 +146,16 @@ JAZZER_FUZZ=1 ./gradlew test --tests "*.ProductControllerFuzzTest.fuzzCreateProd
 
 ### Two ways to receive fuzzed input
 
-- **`byte[] data`** — the raw bytes *are* the input. Perfect when the thing you fuzz is
-  itself a byte stream: an HTTP request body, a single query value. Seed corpus files are
-  literal and human-readable (just open `crash-metadata-npe.json`). Used by the three
-  buggy tests.
+- **`byte[] data`** — the raw bytes *are* the input. Works well when the target is itself
+  a byte stream (a parser, a single query parameter). Seed corpus files are literal —
+  you can open and read them. The downside: validation layers absorb most random bytes as
+  `400`, leaving the fuzzer with no coverage signal to guide it deeper.
 - **`FuzzedDataProvider data`** — a cursor that hands out typed values (`consumeInt`,
-  `consumeString`, …). Perfect for assembling structured, multi-field requests. Jazzer
-  mutates the typed values intelligently. Used by the parameter-fuzzing tests.
+  `consumeString`, `consumeBoolean`, …). Use this to assemble structured, multi-field
+  requests so that Bean Validation always passes and the fuzzer explores controller logic
+  instead of stalling at the rejection layer. Seed corpus files are opaque binary (the raw
+  byte stream `FuzzedDataProvider` consumed), but the crashing JSON body is printed in the
+  `AssertionError` message when a crash is replayed.
 
 ### The invariant being tested
 
@@ -164,6 +167,78 @@ Every fuzz test asserts the same property: **no input should ever produce an HTT
 `GlobalExceptionHandler` extends `ResponseEntityExceptionHandler` so malformed requests,
 unknown routes, and validation failures all return clean `4xx` responses — leaving `5xx`
 to mean exactly one thing: your code threw an exception it didn't handle.
+
+---
+
+## Finding fresh bugs
+
+This is the loop you run when you want the fuzzer to discover new issues on its own.
+
+### 1. Run a discovery session
+
+```bash
+# Fuzz one test — stop at the first crash (default).
+JAZZER_FUZZ=1 ./gradlew test \
+  --tests "*.ProductControllerFuzzTest.fuzzCreateProduct"
+
+# Or collect up to 10 crash files before stopping.
+JAZZER_FUZZ=1 JAZZER_KEEP_GOING=10 ./gradlew test \
+  --tests "*.ProductControllerFuzzTest.fuzzCreateProduct"
+```
+
+The fuzzer mutates inputs, follows coverage, and drills toward unexplored branches. When
+it triggers a `5xx` it prints the crashing input and writes a file to the **project root**:
+
+```
+artifact_prefix='.../fuzzing-in-java/'; Test unit written to .../crash-<sha1hash>
+```
+
+The console output also shows the exact JSON that caused the crash:
+
+```
+java.lang.AssertionError: Crashing input: {"name":"x","price":1.00,"metadata":{"category":null}}
+```
+
+### 2. Place the crash file in the seed corpus
+
+Move the generated file into the Jazzer seed corpus directory for the test method that
+found it. The path follows this convention:
+
+```
+src/test/resources/<package>/<TestClassName>Inputs/<methodName>/
+```
+
+For example, a crash found by `ProductControllerFuzzTest.fuzzCreateProduct`:
+
+```bash
+mv crash-<sha1hash> \
+   src/test/resources/com/stevenpg/fuzzingdemo/fuzz/ProductControllerFuzzTestInputs/fuzzCreateProduct/crash-my-description
+```
+
+Name the file something that describes the bug — `crash-null-category`, `crash-overflow`,
+etc. The filename becomes the test case name in Jazzer's output.
+
+### 3. Verify regression mode catches it
+
+```bash
+./gradlew test --tests "*.ProductControllerFuzzTest.fuzzCreateProduct"
+```
+
+You should see the named crash file fail:
+
+```
+ProductControllerFuzzTest > fuzzCreateProduct(FuzzedDataProvider) > crash-my-description FAILED
+    java.lang.AssertionError: Crashing input: {...}
+```
+
+No live fuzzing, no long wait — the crashing input is replayed in milliseconds. Commit the
+file and the bug is locked in as a regression test: CI fails on it until someone fixes the
+code, and the fix is guarded against ever coming back.
+
+### 4. Fix the bug, confirm the suite is green
+
+Apply the fix, run `./gradlew test`, and watch the crash case turn from `FAILED` to
+`PASSED`. The seed file stays in the corpus permanently as a regression guard.
 
 ---
 

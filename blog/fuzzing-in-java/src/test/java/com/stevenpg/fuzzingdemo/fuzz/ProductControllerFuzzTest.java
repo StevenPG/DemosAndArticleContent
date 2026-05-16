@@ -27,13 +27,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * constraints but then crashes inside {@code ProductController#resolveCategory}
  * when the null value has {@code .toUpperCase()} called on it.
  *
- * A coverage-guided fuzzer discovers this path because:
- *   1. It generates a JSON body where "metadata" is present (increases coverage).
- *   2. It then places the key "category" inside the map (more coverage).
- *   3. It sets a null value for that key (reaches the unchecked call).
- *   4. The NullPointerException propagates to a 500, failing the invariant.
+ * WHY FuzzedDataProvider INSTEAD OF byte[]
+ * ─────────────────────────────────────────
+ * Sending raw bytes as a JSON body causes the fuzzer to stall: nearly every
+ * mutation produces either invalid JSON or a body missing required fields, both
+ * of which return 400 before reaching any application logic. Coverage stays flat
+ * and the fuzzer has no signal to guide it toward the buggy code path.
  *
- * The pre-committed corpus reproduces step 4 directly.
+ * By constructing the request field-by-field with FuzzedDataProvider, the fuzzer
+ * always generates inputs that pass Bean Validation, giving it coverage signal
+ * inside the controller. It then quickly discovers that setting the "category"
+ * metadata value to null triggers a NullPointerException and a 500 response.
  */
 @SpringBootTest
 class ProductControllerFuzzTest {
@@ -53,20 +57,48 @@ class ProductControllerFuzzTest {
     // -------------------------------------------------------------------------
 
     /**
-     * Sends the raw fuzz bytes directly as the JSON POST body for /api/products.
+     * Constructs a structurally valid POST /api/products body from fuzz data so that
+     * Bean Validation always passes and the fuzzer's mutations reach controller logic.
      *
-     * ⚠️ This test FAILS in regression mode against the pre-committed seed corpus file
-     * {@code ProductControllerFuzzTestInputs/fuzzCreateProduct/crash-metadata-npe.json},
-     * which sends {@code "metadata": {"category": null}}. The planted bug in
-     * {@code ProductController#resolveCategory} calls {@code .toUpperCase()} on that
-     * null map value, throwing NullPointerException — surfaced as a 500.
+     * With raw byte[] input every mutation produces invalid JSON or missing required
+     * fields, all of which return 400 — the fuzzer sees flat coverage and never reaches
+     * {@code resolveCategory}. By building the request field-by-field here, the fuzzer
+     * always gets past validation and can explore the code paths that follow, including
+     * the {@code metadata.get("category").toUpperCase()} NPE when the map value is null.
      */
     @FuzzTest
-    void fuzzCreateProduct(byte[] data) throws Exception {
-        mockMvc.perform(post("/api/products")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(data))
-                .andExpect(status().is(lessThan(500)));
+    void fuzzCreateProduct(FuzzedDataProvider data) throws Exception {
+        // Required fields — always present so @NotBlank / @NotNull pass.
+        String name = sanitizeForJson(data.consumeString(200));
+        if (name.isBlank()) name = "x";
+
+        // consumeInt keeps price within @DecimalMin(0.01) / @DecimalMax(999999.99).
+        String price = String.format("%.2f", data.consumeInt(1, 9_999_999) / 100.0);
+
+        // metadata is where the bug lives: {"category": null} triggers the NPE.
+        String metadata = "";
+        if (data.consumeBoolean()) {
+            String value = data.consumeBoolean()
+                    ? "null"
+                    : "\"" + sanitizeForJson(data.consumeString(50)) + "\"";
+            metadata = ",\"metadata\":{\"category\":" + value + "}";
+        }
+
+        String body = "{\"name\":\"" + name + "\",\"price\":" + price + metadata + "}";
+
+        try {
+            mockMvc.perform(post("/api/products")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().is(lessThan(500)));
+        } catch (AssertionError e) {
+            throw new AssertionError("Crashing input: " + body, e);
+        }
+    }
+
+    /** Strip characters that would break the hand-rolled JSON string literals above. */
+    private static String sanitizeForJson(String s) {
+        return s.replace("\\", "").replace("\"", "").replace("\n", "").replace("\r", "");
     }
 
     // -------------------------------------------------------------------------
