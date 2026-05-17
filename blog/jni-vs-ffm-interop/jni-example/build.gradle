@@ -1,0 +1,57 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+application {
+    mainClass = 'com.stevenpg.jni.JniExamplesMain'
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Task to generate JNI header files from compiled Java classes
+tasks.register('generateJniHeaders', Exec) {
+    dependsOn classes
+    def outputDir = file("${projectDir}/src/main/native")
+    doFirst {
+        outputDir.mkdirs()
+    }
+    commandLine 'javac', '-h', outputDir.absolutePath,
+            '-d', "${buildDir}/classes/java/main",
+            file('src/main/java/com/stevenpg/jni/NativeStringUtils.java').absolutePath,
+            file('src/main/java/com/stevenpg/jni/NativeArrayOps.java').absolutePath,
+            file('src/main/java/com/stevenpg/jni/NativeSystemInfo.java').absolutePath,
+            file('src/main/java/com/stevenpg/jni/NativeCallback.java').absolutePath,
+            file('src/main/java/com/stevenpg/jni/NativeThreading.java').absolutePath
+}
+
+// Task to compile the native C library
+// Adjust the paths for your platform (this example targets Linux)
+tasks.register('compileNative', Exec) {
+    dependsOn generateJniHeaders
+    def javaHome = System.getenv('JAVA_HOME') ?: '/usr/lib/jvm/java-25'
+    def outputDir = file("${buildDir}/native")
+    doFirst {
+        outputDir.mkdirs()
+    }
+    workingDir "${projectDir}/src/main/native"
+    commandLine 'gcc', '-shared', '-fPIC',
+            "-I${javaHome}/include",
+            "-I${javaHome}/include/linux",  // Change to /darwin for macOS
+            '-o', "${outputDir}/libjniexamples.so",  // Change to .dylib for macOS
+            'native_string_utils.c',
+            'native_array_ops.c',
+            'native_system_info.c',
+            'native_callback.c',
+            'native_threading.c',
+            '-lpthread'
+}
+
+// Make run task depend on native compilation and set library path
+tasks.named('run') {
+    dependsOn compileNative
+    jvmArgs "-Djava.library.path=${buildDir}/native"
+}
