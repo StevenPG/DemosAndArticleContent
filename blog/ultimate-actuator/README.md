@@ -102,6 +102,10 @@ their packages.)
 - Spring Boot 4 ships **Testcontainers 2.x**: renamed artifacts
   (`testcontainers-junit-jupiter`, `testcontainers-postgresql`) and a non-generic
   `PostgreSQLContainer` in `org.testcontainers.postgresql`.
+- **CycloneDX SBOM:** Spring Boot 3.5 integrates with the CycloneDX Gradle plugin
+  **2.x** API (`CycloneDxTask`); Spring Boot 4 integrates with the **3.x** API
+  (`CyclonedxAggregateTask`). Both auto-embed the SBOM at
+  `META-INF/sbom/application.cdx.json` for the `sbom` endpoint.
 - New baselines: **Java 17+**, **Spring Framework 7**, **Jackson 3**.
 
 The actual diffs are visible by comparing the two projects file-for-file — each

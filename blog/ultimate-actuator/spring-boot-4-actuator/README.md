@@ -133,6 +133,21 @@ curl -u admin:admin -X POST localhost:8080/actuator/featureflags/new-checkout \
 curl -u admin:admin -X DELETE localhost:8080/actuator/featureflags/beta-search  # delete
 ```
 
+### Software Bill of Materials (`sbom`)
+
+The `org.cyclonedx.bom` Gradle plugin (3.x API for Spring Boot 4) generates a
+CycloneDX SBOM. Spring Boot's Gradle plugin automatically embeds it in the jar at
+`META-INF/sbom/application.cdx.json` and adds `Sbom-Format`/`Sbom-Location` manifest
+entries, so the `sbom` endpoint serves it with no extra configuration:
+
+```bash
+curl -u admin:admin localhost:8080/actuator/sbom              # lists available SBOMs -> ["application"]
+curl -u admin:admin localhost:8080/actuator/sbom/application  # the full CycloneDX document
+```
+
+> When running via `bootRun` you may need to generate the SBOM first
+> (`./gradlew cyclonedxBom`); a packaged `bootJar` always contains it.
+
 ---
 
 ## Where each feature lives in the code

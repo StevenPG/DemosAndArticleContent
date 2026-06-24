@@ -2,6 +2,11 @@ plugins {
     java
     id("org.springframework.boot") version "4.0.6"
     id("io.spring.dependency-management") version "1.1.7"
+    // CycloneDX SBOM generation. Spring Boot 4's Gradle plugin auto-detects this
+    // plugin, runs the `cyclonedxBom` task, embeds the result in the jar at
+    // META-INF/sbom/application.cdx.json, and the actuator `sbom` endpoint serves it.
+    // Spring Boot 4 integrates with the newer CycloneDX 3.x plugin API.
+    id("org.cyclonedx.bom") version "3.2.4"
 }
 
 group = "com.example"
