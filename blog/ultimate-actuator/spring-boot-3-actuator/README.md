@@ -35,6 +35,19 @@ curl -X POST localhost:8080/api/widgets -H 'Content-Type: application/json' \
      -d '{"name":"Flux Capacitor","color":"silver"}'
 ```
 
+### Try everything at once
+
+Two helper scripts make it easy to exercise the whole actuator surface:
+
+```bash
+./generate-traffic.sh   # drives the business API so metrics/httpexchanges/caches/audit have data
+./test-actuator.sh      # calls EVERY actuator endpoint and prints each response with a descriptor
+```
+
+Both honour `BASE_URL`, `USER`, `PASS` env vars (and `test-actuator.sh` also
+`MAXLINES` for output length and `INCLUDE_SHUTDOWN=1` to additionally call
+`/shutdown`). JSON is pretty-printed when `jq` is installed.
+
 ---
 
 ## The endpoint catalogue
