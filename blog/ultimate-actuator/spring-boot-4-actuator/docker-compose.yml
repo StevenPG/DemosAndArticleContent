@@ -1,0 +1,52 @@
+# Supporting infrastructure for the demo. Start it with:
+#   docker compose up -d
+#
+# Then run the app with `./gradlew bootRun` on the host.
+#
+#   Postgres    -> backs the `db`/`flyway` health & metrics            (localhost:5432)
+#   Prometheus  -> scrapes /actuator/prometheus                        (localhost:9090)
+#   Grafana     -> dashboards for the scraped metrics                  (localhost:3000)
+#   Tempo       -> receives OTLP traces from Micrometer Tracing        (localhost:3200)
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: actuator
+      POSTGRES_USER: actuator
+      POSTGRES_PASSWORD: actuator
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U actuator"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  prometheus:
+    image: prom/prometheus:latest
+    command: [ "--config.file=/etc/prometheus/prometheus.yml" ]
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  tempo:
+    image: grafana/tempo:latest
+    command: [ "-config.file=/etc/tempo.yml" ]
+    volumes:
+      - ./docker/tempo.yml:/etc/tempo.yml:ro
+    ports:
+      - "3200:3200"   # tempo query
+      - "4318:4318"   # OTLP http receiver (matches management.otlp.tracing.endpoint)
+
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - tempo

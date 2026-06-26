@@ -1,0 +1,10 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'ultimate-actuator-sb4'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      # The app runs on the host; from inside the Prometheus container the host
+      # is reachable as host.docker.internal (Docker Desktop) or via the gateway.
+      - targets: ['host.docker.internal:8080']

@@ -1,0 +1,141 @@
+spring:
+  application:
+    name: ultimate-actuator-sb4
+
+  # --- Datasource: points at the Postgres started by docker-compose.yml ---
+  datasource:
+    url: jdbc:postgresql://localhost:5432/actuator
+    username: actuator
+    password: actuator
+    hikari:
+      pool-name: ultimate-actuator-pool   # shows up in hikaricp.* metrics
+
+  jpa:
+    hibernate:
+      ddl-auto: none        # schema is owned by Flyway, not Hibernate
+    open-in-view: false
+    properties:
+      hibernate:
+        generate_statistics: true   # surfaces hibernate.* metrics
+
+  flyway:
+    enabled: true           # powers the /actuator/flyway endpoint
+
+# Custom @ConfigurationProperties (visible in /actuator/configprops and /actuator/env)
+demo:
+  greeting: "Hello from the Ultimate Spring Boot 4 Actuator demo!"
+  feature-x: true
+  api-key: "super-secret-value-that-configprops-will-sanitize"
+
+# =====================================================================================
+# ACTUATOR / MANAGEMENT CONFIGURATION
+# =====================================================================================
+management:
+  endpoints:
+    # Spring Boot 4 change: a global default access level for all endpoints.
+    # Values: none | read-only | unrestricted. Individual endpoints override below.
+    access:
+      default: read-only
+    web:
+      exposure:
+        # Expose EVERY endpoint over HTTP. In production you would narrow this list.
+        include: "*"
+      base-path: /actuator        # default; shown for clarity
+      # path-mapping lets you rename an endpoint's URL, e.g. health -> healthz
+      path-mapping:
+        health: healthz
+    jmx:
+      exposure:
+        include: "*"              # also expose everything over JMX
+
+  # ----- Health endpoint -----
+  endpoint:
+    health:
+      show-details: when_authorized   # full details only for the admin user
+      show-components: when_authorized
+      probes:
+        enabled: true                 # adds liveness/readiness probe support
+      # Map our custom DEGRADED status to HTTP 200 so degraded != outage
+      status:
+        http-mapping:
+          DEGRADED: 200
+        order: DOWN,OUT_OF_SERVICE,DEGRADED,UP,UNKNOWN
+      group:
+        # Kubernetes-style probe groups
+        liveness:
+          include: livenessState,ping
+        readiness:
+          include: readinessState,db,paymentGateway
+        # A custom group bundling business-level checks
+        business:
+          include: inventory,paymentGateway
+          show-details: always
+
+    # ----- Other endpoints -----
+    # Spring Boot 4 change: per-endpoint `enabled` is GONE. Use `access` instead:
+    #   access: none | read-only | unrestricted
+    shutdown:
+      access: unrestricted            # allows POST /actuator/shutdown (write op)
+    loggers:
+      access: unrestricted            # allows changing log levels at runtime (write op)
+    configprops:
+      show-values: when_authorized    # unmask property values for the admin user
+    env:
+      show-values: when_authorized
+
+  # ----- Info endpoint contributors -----
+  info:
+    env:
+      enabled: true     # exposes info.* properties defined below
+    java:
+      enabled: true     # JVM vendor/version
+    os:
+      enabled: true     # operating system details
+    process:
+      enabled: true     # process info (PID, etc.)
+    build:
+      enabled: true     # from META-INF/build-info.properties
+    git:
+      enabled: true
+      mode: full        # full git details when git.properties is present
+
+  # ----- Metrics -----
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,200ms,500ms
+  prometheus:
+    metrics:
+      export:
+        enabled: true   # /actuator/prometheus scrape endpoint
+
+  # ----- Distributed tracing (Micrometer Tracing -> OpenTelemetry -> OTLP) -----
+  tracing:
+    sampling:
+      probability: 1.0  # sample everything in the demo (lower this in prod)
+  otlp:
+    tracing:
+      endpoint: http://localhost:4318/v1/traces   # Tempo/Jaeger/OTel-Collector
+
+  # Observability defaults
+  observations:
+    annotations:
+      enabled: true     # enables @Observed handling for the Observation registry
+
+# Arbitrary info.* values surfaced by the `env` info contributor at /actuator/info
+info:
+  app:
+    name: ${spring.application.name}
+    description: An in-depth tour of Spring Boot 4 Actuator
+    environment: local
+
+# Add traceId/spanId to every log line so logs correlate with traces
+logging:
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
+  level:
+    com.example.actuator: INFO

@@ -1,0 +1,1033 @@
+Testing Spring Boot 4 actuator at http://localhost:8080/actuator (basic-auth user: admin)
+
+====================================================================
+>> Health: aggregated status + components
+   GET /actuator/healthz
+--------------------------------------------------------------------
+HTTP 200
+{
+  "components": {
+    "db": {
+      "details": {
+        "database": "PostgreSQL",
+        "validationQuery": "isValid()"
+      },
+      "status": "UP"
+    },
+    "diskSpace": {
+      "details": {
+        "total": 494384795648,
+        "free": 102696722432,
+        "threshold": 10485760,
+        "path": "/Users/stevengantz/Development/Github/DemosAndArticleContent/.",
+        "exists": true
+      },
+      "status": "UP"
+    },
+    "inventory": {
+      "details": {
+        "availableStock": 120,
+        "warehouse": "EU-WEST-1"
+      },
+      "status": "UP"
+    },
+    "livenessState": {
+      "status": "UP"
+    },
+    "paymentGateway": {
+      "details": {
+        "provider": "AcmePay",
+        "latencyMs": 42,
+        "uptime": "PT27.167895S"
+      },
+      "status": "UP"
+    },
+    "ping": {
+      "status": "UP"
+    },
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Health group: Kubernetes liveness probe
+   GET /actuator/healthz/liveness
+--------------------------------------------------------------------
+HTTP 200
+{
+  "components": {
+    "livenessState": {
+      "status": "UP"
+    },
+    "ping": {
+      "status": "UP"
+    }
+  },
+  "status": "UP"
+}
+
+====================================================================
+>> Health group: Kubernetes readiness probe
+   GET /actuator/healthz/readiness
+--------------------------------------------------------------------
+HTTP 200
+{
+  "components": {
+    "db": {
+      "details": {
+        "database": "PostgreSQL",
+        "validationQuery": "isValid()"
+      },
+      "status": "UP"
+    },
+    "paymentGateway": {
+      "details": {
+        "provider": "AcmePay",
+        "latencyMs": 42,
+        "uptime": "PT27.395118S"
+      },
+      "status": "UP"
+    },
+    "readinessState": {
+      "status": "UP"
+    }
+  },
+  "status": "UP"
+}
+
+====================================================================
+>> Health group: custom business checks
+   GET /actuator/healthz/business
+--------------------------------------------------------------------
+HTTP 200
+{
+  "components": {
+    "inventory": {
+      "details": {
+        "availableStock": 120,
+        "warehouse": "EU-WEST-1"
+      },
+      "status": "UP"
+    },
+    "paymentGateway": {
+      "details": {
+        "provider": "AcmePay",
+        "latencyMs": 42,
+        "uptime": "PT27.497547S"
+      },
+      "status": "UP"
+    }
+  },
+  "status": "UP"
+}
+
+====================================================================
+>> Info: build, git, java, os + custom contributor
+   GET /actuator/info
+--------------------------------------------------------------------
+HTTP 200
+{
+  "app": {
+    "name": "ultimate-actuator-sb4",
+    "description": "An in-depth tour of Spring Boot 4 Actuator",
+    "environment": "local"
+  },
+  "build": {
+    "artifact": "spring-boot-4-actuator",
+    "name": "spring-boot-4-actuator",
+    "time": "2026-06-26T00:33:30.579Z",
+    "version": "0.0.1-SNAPSHOT",
+    "group": "com.example"
+  },
+  "java": {
+    "jvm": {
+      "name": "OpenJDK 64-Bit Server VM",
+      "vendor": "Eclipse Adoptium",
+      "version": "25+36-LTS"
+    },
+    "runtime": {
+      "name": "OpenJDK Runtime Environment",
+      "version": "25+36-LTS"
+    },
+    "vendor": {
+      "name": "Eclipse Adoptium",
+      "version": "Temurin-25+36"
+    },
+    "version": "25"
+  },
+  "os": {
+    "arch": "aarch64",
+    "name": "Mac OS X",
+    "version": "26.5.1"
+  },
+  "process": {
+    "cpus": 12,
+    "memory": {
+      "garbageCollectors": [
+        {
+          "collectionCount": 14,
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Metrics: list of all meter names
+   GET /actuator/metrics
+--------------------------------------------------------------------
+HTTP 200
+{
+  "names": [
+    "application.ready.time",
+    "application.started.time",
+    "cache.eviction.weight",
+    "cache.evictions",
+    "cache.gets",
+    "cache.puts",
+    "cache.size",
+    "disk.free",
+    "disk.total",
+    "executor.active",
+    "executor.completed",
+    "executor.pool.core",
+    "executor.pool.max",
+    "executor.pool.size",
+    "executor.queue.remaining",
+    "executor.queued",
+    "greeting.read",
+    "greeting.read.active",
+    "hikaricp.connections",
+    "hikaricp.connections.acquire",
+    "hikaricp.connections.active",
+    "hikaricp.connections.creation",
+    "hikaricp.connections.idle",
+    "hikaricp.connections.max",
+    "hikaricp.connections.min",
+    "hikaricp.connections.pending",
+    "hikaricp.connections.timeout",
+    "hikaricp.connections.usage",
+    "http.server.requests",
+    "http.server.requests.active",
+    "jdbc.connections.active",
+    "jdbc.connections.idle",
+    "jdbc.connections.max",
+    "jdbc.connections.min",
+    "jvm.buffer.count",
+    "jvm.buffer.memory.used",
+    "jvm.buffer.total.capacity",
+    "jvm.classes.loaded",
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Metrics: HTTP request timer (drill-down)
+   GET /actuator/metrics/http.server.requests
+--------------------------------------------------------------------
+HTTP 200
+{
+  "availableTags": [
+    {
+      "tag": "exception",
+      "values": [
+        "InvalidDataAccessResourceUsageException",
+        "none"
+      ]
+    },
+    {
+      "tag": "method",
+      "values": [
+        "POST",
+        "DELETE",
+        "GET"
+      ]
+    },
+    {
+      "tag": "application",
+      "values": [
+        "ultimate-actuator"
+      ]
+    },
+    {
+      "tag": "spring.boot.version",
+      "values": [
+        "4"
+      ]
+    },
+    {
+      "tag": "error",
+      "values": [
+        "InvalidDataAccessResourceUsageException",
+        "none"
+      ]
+    },
+    {
+      "tag": "uri",
+      "values": [
+        "/api/widgets/{id}",
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Metrics: custom widgets.created counter
+   GET /actuator/metrics/widgets.created
+--------------------------------------------------------------------
+HTTP 200
+{
+  "availableTags": [
+    {
+      "tag": "application",
+      "values": [
+        "ultimate-actuator"
+      ]
+    },
+    {
+      "tag": "spring.boot.version",
+      "values": [
+        "4"
+      ]
+    },
+    {
+      "tag": "source",
+      "values": [
+        "service"
+      ]
+    }
+  ],
+  "baseUnit": "widgets",
+  "description": "Total number of widgets created since startup",
+  "measurements": [
+    {
+      "statistic": "COUNT",
+      "value": 0.0
+    }
+  ],
+  "name": "widgets.created"
+}
+
+====================================================================
+>> Prometheus: scrape format
+   GET /actuator/prometheus
+--------------------------------------------------------------------
+HTTP 200
+# HELP application_ready_time_seconds Time taken for the application to be ready to service requests
+# TYPE application_ready_time_seconds gauge
+application_ready_time_seconds{application="ultimate-actuator",main_application_class="com.example.actuator.UltimateActuatorApplication",spring_boot_version="4"} 2.402
+# HELP application_started_time_seconds Time taken to start the application
+# TYPE application_started_time_seconds gauge
+application_started_time_seconds{application="ultimate-actuator",main_application_class="com.example.actuator.UltimateActuatorApplication",spring_boot_version="4"} 2.399
+# HELP cache_eviction_weight_total The sum of weights of evicted entries. This total does not include manual invalidations.
+# TYPE cache_eviction_weight_total counter
+cache_eviction_weight_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",spring_boot_version="4"} 0.0
+# HELP cache_evictions_total The number of times the cache was evicted.
+# TYPE cache_evictions_total counter
+cache_evictions_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",spring_boot_version="4"} 0.0
+# HELP cache_gets_total The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).
+# TYPE cache_gets_total counter
+cache_gets_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",result="hit",spring_boot_version="4"} 0.0
+cache_gets_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",result="miss",spring_boot_version="4"} 3.0
+# HELP cache_puts_total The number of entries added to the cache
+# TYPE cache_puts_total counter
+cache_puts_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",spring_boot_version="4"} 0.0
+# HELP cache_size The number of entries in this cache. This may be an approximation, depending on the type of cache.
+# TYPE cache_size gauge
+cache_size{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",spring_boot_version="4"} 0.0
+# HELP disk_free_bytes Usable space for path
+# TYPE disk_free_bytes gauge
+disk_free_bytes{application="ultimate-actuator",path="/Users/stevengantz/Development/Github/DemosAndArticleContent/.",spring_boot_version="4"} 1.02696718336E11
+# HELP disk_total_bytes Total space for path
+# TYPE disk_total_bytes gauge
+disk_total_bytes{application="ultimate-actuator",path="/Users/stevengantz/Development/Github/DemosAndArticleContent/.",spring_boot_version="4"} 4.94384795648E11
+# HELP executor_active_threads The approximate number of threads that are actively executing tasks
+# TYPE executor_active_threads gauge
+executor_active_threads{application="ultimate-actuator",name="applicationTaskExecutor",spring_boot_version="4"} 0.0
+executor_active_threads{application="ultimate-actuator",name="taskScheduler",spring_boot_version="4"} 0.0
+# HELP executor_completed_tasks_total The approximate total number of tasks that have completed execution
+# TYPE executor_completed_tasks_total counter
+executor_completed_tasks_total{application="ultimate-actuator",name="applicationTaskExecutor",spring_boot_version="4"} 0.0
+executor_completed_tasks_total{application="ultimate-actuator",name="taskScheduler",spring_boot_version="4"} 1.0
+# HELP executor_pool_core_threads The core number of threads for the pool
+# TYPE executor_pool_core_threads gauge
+executor_pool_core_threads{application="ultimate-actuator",name="applicationTaskExecutor",spring_boot_version="4"} 8.0
+executor_pool_core_threads{application="ultimate-actuator",name="taskScheduler",spring_boot_version="4"} 1.0
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Environment: property sources (sanitized)
+   GET /actuator/env
+--------------------------------------------------------------------
+HTTP 200
+{
+  "activeProfiles": [],
+  "defaultProfiles": [
+    "default"
+  ],
+  "propertySources": [
+    {
+      "name": "server.ports",
+      "properties": {
+        "local.server.port": {
+          "value": 8080
+        }
+      }
+    },
+    {
+      "name": "servletContextInitParams",
+      "properties": {}
+    },
+    {
+      "name": "systemProperties",
+      "properties": {
+        "java.specification.version": {
+          "value": "25"
+        },
+        "sun.jnu.encoding": {
+          "value": "UTF-8"
+        },
+        "java.class.path": {
+          "value": "/Users/stevengantz/Development/Github/DemosAndArticleContent/blog/ultimate-actuator/spring-boot-4-actuator/build/classes/java/main:/Users/stevengantz/Development/Github/DemosAndArticleContent/blog/ultimate-actuator/spring-boot-4-actuator/build/resources/main:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.46/a5cfe99fdf320e84955ef653f2ce1bf789d11385/lombok-1.18.46.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-configuration-processor/4.0.6/85a814e8afbc6c5a6637489760028688bb77860/spring-boot-configuration-processor-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-web/4.0.6/979ace917673f8846293e5a8ed2156c89804cb86/spring-boot-starter-web-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-validation/4.0.6/1073fb7a768fe557bd5cc7bd26a2ed3ef08cc701/spring-boot-starter-validation-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-actuator/4.0.6/a225366838915974c39449e201de012d4d88a609/spring-boot-starter-actuator-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-security/4.0.6/91ca1c3f8bd520a21d1c0f76d4dfc00f063cf341/spring-boot-starter-security-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-data-jpa/4.0.6/7ae183d29edb5b8583685ea71021105eafc99ad9/spring-boot-starter-data-jpa-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.flywaydb/flyway-core/11.14.1/869ad74f22948c22904fd99cb78b9d5b8b8e18b4/flyway-core-11.14.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.flywaydb/flyway-database-postgresql/11.14.1/9d4df925a247eb7dcac1e812dc9ab9e81f5ec393/flyway-database-postgresql-11.14.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-cache/4.0.6/2c56dac2a6f68db4d0fecfac1b069589617e00cc/spring-boot-starter-cache-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.github.ben-manes.caffeine/caffeine/3.2.3/c097f0f6d21a0e6db88ea55836e26419b30dfe19/caffeine-3.2.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-tracing-bridge-otel/1.6.5/b9dca2742ac2e0ec54873306e2dc4c87bdc6e36a/micrometer-tracing-bridge-otel-1.6.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-exporter-otlp/1.55.0/cb70230f3dfed778047865de58880572446e6464/opentelemetry-exporter-otlp-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-aspects/7.0.7/e507bc50ddca9ee54c37191f9c96e5f491459d3c/spring-aspects-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-jackson/4.0.6/38895733cded8ac4007d7ee028e3bf1f718514f1/spring-boot-starter-jackson-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-tomcat/4.0.6/b646e4b063dacdf5079efcfa685c4a8803ff4ac1/spring-boot-starter-tomcat-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-http-converter/4.0.6/2e880be042b7543e6767d99a8f5777d41e92be93/spring-boot-http-converter-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-webmvc/4.0.6/2a5877540d8f8bd4df5071d1848fc0a30384117b/spring-boot-webmvc-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter/4.0.6/589f058443a5ca53cf38253fa05aa69dd0e87e0e/spring-boot-starter-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-validation/4.0.6/51358336fd67ff8db81cf53d1f3cdc86206889bb/spring-boot-validation-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-micrometer-metrics/4.0.6/fb1dcfc7713f6279ce3919c5a81008632d901594/spring-boot-starter-micrometer-metrics-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-actuator-autoconfigure/4.0.6/bdd2d4f29031aa35993dbe6425b1092913aac531/spring-boot-actuator-autoconfigure-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-health/4.0.6/992fd269677bb02b751ef1f58621abcff3855ea0/spring-boot-health-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-observation/1.16.5/9dff48a7a9dd84d9083e30a36855bb21a7d6836e/micrometer-observation-1.16.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-jakarta9/1.16.5/2e98cb69f333a3d2eb78f338c99cb7f11d9c533a/micrometer-jakarta9-1.16.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-security/4.0.6/4e2146079f700242c9ded2e149ccd9ab771eb83a/spring-boot-security-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-aop/7.0.7/21045648cc638653fb872da3b3fdd50b1cb7b370/spring-aop-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-jdbc/4.0.6/134232052dcbf089ff52e37aea3ae81c9448c746/spring-boot-starter-jdbc-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-data-jpa/4.0.6/e4f73ed89d180378acdad704b1b88d8cfd191862/spring-boot-data-jpa-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-jdbc/4.0.6/fd649f51a6cef57b011167676f67ccfd51901932/spring-boot-jdbc-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.21.2/71ab8ff75b4fd74afdee0004173fdd15de1d6a28/jackson-databind-2.21.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-cache/4.0.6/96dbd97ff2dd9f559de24c426fdc12947360bbcf/spring-boot-cache-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jspecify/jspecify/1.0.0/7425a601c1c7ec76645a78d22b8c6a627edee507/jspecify-1.0.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.google.errorprone/error_prone_annotations/2.43.0/a4f9062316c31850b03085e45717f564fd563ceb/error_prone_annotations-2.43.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-tracing/1.6.5/f1348dde177c5a2c1cfb16e758e53b40dbb9fef1/micrometer-tracing-1.6.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/2.0.17/d9e58ac9c7779ba3bf8142aff6c830617a7fe60f/slf4j-api-2.0.17.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-api/1.55.0/a71c43562e4d55c75997ccaa0c0513e5f881b703/opentelemetry-api-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry.semconv/opentelemetry-semconv/1.37.0/c6f9a930842c93c08fd87349db3defcbc228e925/opentelemetry-semconv-1.37.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-common/1.55.0/c43e69b259fe060b67520e4f011fa776a2dcca58/opentelemetry-sdk-common-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-trace/1.55.0/b0334b4edb3d14e181f9f4fdc40a0dd5a6bcbffd/opentelemetry-sdk-trace-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk/1.55.0/457309ce1ed276bd9b1f4029c97c22721f58f346/opentelemetry-sdk-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-extension-trace-propagators/1.55.0/2c4f1eddd4ba35a82d27d6c784e3d4fbb3c8a3a/opentelemetry-extension-trace-propagators-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-metrics/1.55.0/2db32c617c5d37c9ee69d58009edcc9a12ba6a24/opentelemetry-sdk-metrics-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-logs/1.55.0/b4c62673fb2f2385b691d6600a194f98fbc8625/opentelemetry-sdk-logs-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.aspectj/aspectjweaver/1.9.25.1/a713c790da4d794c7dfb542b550d4e44898d5e23/aspectjweaver-1.9.25.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-jackson/4.0.6/506bcf91451a44789dd5d9ef1855d524069140ef/spring-boot-jackson-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-tomcat-runtime/4.0.6/93cb616795ce25f7fd58ef3d1dcc8c3ed2d82578/spring-boot-starter-tomcat-runtime-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-tomcat/4.0.6/46bcbbdd2bddd2a6932bbdcf9ac2d943a83f0629/spring-boot-tomcat-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot/4.0.6/5bcc4d77a2ff7d18274f2394b5eea1d658e46305/spring-boot-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-web/7.0.7/8c6ba7dd1ef6a3d9246b08885185806426daa7ec/spring-web-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-servlet/4.0.6/8a1d703662d560a7826c61a908f5307e795cb370/spring-boot-servlet-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-webmvc/7.0.7/5d7758ed288cda1eacae4b96defb9eed3a7e561d/spring-webmvc-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-logging/4.0.6/eb85ce7bf1c9bdc660a267d9cb481470609bac30/spring-boot-starter-logging-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-autoconfigure/4.0.6/95db07bd446a6bc10e791a1502a0c542a81872d1/spring-boot-autoconfigure-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.annotation/jakarta.annotation-api/3.0.0/54f928fadec906a99d558536756d171917b9d936/jakarta.annotation-api-3.0.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.yaml/snakeyaml/2.5/2d53ddec134280cb384c1e35d094e5f71c1f2316/snakeyaml-2.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-el/11.0.21/ab5200daf4fac467fa0e73598cdc10de6ce1c139/tomcat-embed-el-11.0.21.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.hibernate.validator/hibernate-validator/9.0.1.Final/28c0e41ecc84d1f0b8b6d81d16e0784e63364e68/hibernate-validator-9.0.1.Final.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-micrometer-metrics/4.0.6/96dbcd4eab73a4fcb2e277c6416d2c0758132689/spring-boot-micrometer-metrics-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-actuator/4.0.6/e5470926718d2c85f574eff0f0f1f264a605a7f/spring-boot-actuator-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-commons/1.16.5/f8c25a4e35d5049d41d8446b111b9891ae407881/micrometer-commons-1.16.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-core/1.16.5/eed1add84bba09a75ac35733cb0ed6bf5a1d3cb7/micrometer-core-1.16.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-config/7.0.5/9d6b471cfcc8fc30bcc139e04f3781242bd5b001/spring-security-config-7.0.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-web/7.0.5/e78938fc30d0cbf40996f7e7d5d955b15bacfe01/spring-security-web-7.0.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-beans/7.0.7/1278f23233223c480880b62234c96fb3545ba104/spring-beans-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-core/7.0.7/4f85340fd463031cd93a0629a0323bb467ae51aa/spring-core-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.zaxxer/HikariCP/7.0.2/c2b43c946b86a14a96342379e22b004c56c6166d/HikariCP-7.0.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-data-commons/4.0.6/4702c0e63d5164330fbaef7a5e55d0d173cc3ab9/spring-boot-data-commons-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-hibernate/4.0.6/1583369af62ba1e587e6f82c8c95dff5694e63b/spring-boot-hibernate-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.data/spring-data-jpa/4.0.5/fbb375863a4deb4df21b803756b97b767e18559a/spring-data-jpa-4.0.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-sql/4.0.6/2526bc5a53f0ca3c029a4c02a1360a25c9e226d4/spring-boot-sql-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-transaction/4.0.6/c7ebf15df555b5e8895e936609b1afa0ba2c1264/spring-boot-transaction-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-jdbc/7.0.7/7369c7cc321b649f291c6222e5982d75878845c5/spring-jdbc-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-annotations/2.21/b1bc1868bf02dc0bd6c7836257a036a331005309/jackson-annotations-2.21.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-core/2.21.2/7d11eac823392f28d8ee7bda77eaadfccbab83e5/jackson-core-2.21.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-context-support/7.0.7/22df8ea5093b7e040848616eff0ca557ee7da8e6/spring-context-support-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/context-propagation/1.2.1/8951419f78e7bc7e0db246cd9d987d254b014e29/context-propagation-1.2.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/aopalliance/aopalliance/1.0/235ba8b489512805ac13a8f9ea77a1ca5ebe3e8/aopalliance-1.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-context/1.55.0/a3e7c14152b6b6c62e0c64f991791fa0c5cbf02d/opentelemetry-context-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/tools.jackson.core/jackson-databind/3.1.2/2550e04829fc14566ddab7b9564ba886a9c6a532/jackson-databind-3.1.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-web-server/4.0.6/8a087bc97418b3082fe402b3241260180fa7133e/spring-boot-web-server-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-core/11.0.21/6d53989fe9f9416eb1295a9c53c7b6fb8e3c04bb/tomcat-embed-core-11.0.21.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-websocket/11.0.21/abed2f9a4a8d7e8b8dfe492b1c6e58ea73825db/tomcat-embed-websocket-11.0.21.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-context/7.0.7/bd71294ceaa815abcdbbf5e116c9382103845139/spring-context-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-expression/7.0.7/90c3dc3174244786c33eb3a2be8c5006cfc7389b/spring-expression-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-classic/1.5.32/2b1042c50f508f2eb402bd4d22ccbdf94cc37d2e/logback-classic-1.5.32.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-to-slf4j/2.25.4/68df56640a5d245192e91bd2ac89e504b477cc10/log4j-to-slf4j-2.25.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.slf4j/jul-to-slf4j/2.0.17/524cb6ccc2b68a57604750e1ab8b13b5a786a6aa/jul-to-slf4j-2.0.17.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.validation/jakarta.validation-api/3.1.1/ec8622148afc5564235d17af80ea80288d0e7f92/jakarta.validation-api-3.1.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jboss.logging/jboss-logging/3.6.3.Final/1cc9f976725720bb4a66f80af3e3aa6b9890d969/jboss-logging-3.6.3.Final.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml/classmate/1.7.3/f61c7e7b81e9249b0f6a05914eff9d54fb09f4a0/classmate-1.7.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-micrometer-observation/4.0.6/ab486802d7623d00f02ee9838d94af66636b440c/spring-boot-micrometer-observation-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-core/7.0.5/9d331a891df2aa811eb91ffad056bb5077e471e8/spring-security-core-7.0.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/commons-logging/commons-logging/1.3.6/63e78ca6cd446c0ad166d14f03ed99e7efb3896d/commons-logging-1.3.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-persistence/4.0.6/43caab2de2aeaf4a7ae9aa5c5e049722697c06a2/spring-boot-persistence-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.data/spring-data-commons/4.0.5/eed2c7272ba1b13456124949a2bdcbd035ab1154/spring-data-commons-4.0.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-jpa/4.0.6/2298c83f9e4473998fe1c695d42f3fcc161f6eb3/spring-boot-jpa-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.hibernate.orm/hibernate-core/7.2.12.Final/9e10d41a4cd7fbb045cb978676dffe23a0adf1e0/hibernate-core-7.2.12.Final.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-orm/7.0.7/c5f883ce3bf4407a8c86751e3fa3a2fac4482626/spring-orm-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-tx/7.0.7/c398a2ab7706e16c90be33ff9eaafcb2872d73bf/spring-tx-7.0.7.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.antlr/antlr4-runtime/4.13.2/fc3db6d844df652a3d5db31c87fa12757f13691d/antlr4-runtime-4.13.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-common/1.55.0/a979f45396c5332f43b9198ebf3eb52f5451e83f/opentelemetry-common-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/tools.jackson.core/jackson-core/3.1.2/d0da2e67ffb0b7cf5aba0436b315aa3eb3eb37ca/jackson-core-3.1.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-core/1.5.32/fdfb3ff9a842303d4a95207294a6c6bc64e2605d/logback-core-1.5.32.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-api/2.25.4/89ff2217b193fb187b134aa6ebcbfa8a28b018a9/log4j-api-2.25.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/biz.aQute.bnd/biz.aQute.bnd.annotation/7.1.0/2f2be18c936d08cf46ea6cfa0043f34afdf38705/biz.aQute.bnd.annotation-7.1.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.osgi/org.osgi.annotation.bundle/2.0.0/f5c2cd6e670c3c5d440d3003efd5ef2ead5c68eb/org.osgi.annotation.bundle-2.0.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.osgi/org.osgi.annotation.versioning/1.1.2/dc3cd4ec96c0b3c5459fe00694bd73a816ecf93e/org.osgi.annotation.versioning-1.1.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-crypto/7.0.5/e18e190fe0b55b0e28ae4a64c59bb2efe5406466/spring-security-crypto-7.0.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.persistence/jakarta.persistence-api/3.2.0/bb75a113f3fa191c2c7ee7b206d8e674251b3129/jakarta.persistence-api-3.2.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.transaction/jakarta.transaction-api/2.0.1/51a520e3fae406abb84e2e1148e6746ce3f80a1a/jakarta.transaction-api-2.0.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.osgi/org.osgi.resource/1.0.0/343c88949132984b3f2d4175a72c40b77dc65619/org.osgi.resource-1.0.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.osgi/org.osgi.service.serviceloader/1.0.0/3728ff37909c6a3c1870b3e851342d9f2bd3cc63/org.osgi.service.serviceloader-1.0.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-devtools/4.0.6/2f45ebafbfc961cf55d4aa4a49bc1637bd6d0d2/spring-boot-devtools-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.postgresql/postgresql/42.7.10/35100a3f0899551e27af8fed4a3414619a4663b3/postgresql-42.7.10.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-registry-prometheus/1.16.5/cde72d1c305727e20397170a8c46c2fa88c12e9e/micrometer-registry-prometheus-1.16.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-exporter-otlp-common/1.55.0/b26d3a697e4d42fa12e61e5e9c6dfacb46250766/opentelemetry-exporter-otlp-common-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-exporter-sender-okhttp/1.55.0/3057a2a4776bb095342599524e82a92cfef676b9/opentelemetry-exporter-sender-okhttp-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.55.0/f20fc03f7ea80cd062520f6cda3b1a61a107860f/opentelemetry-sdk-extension-autoconfigure-spi-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.checkerframework/checker-qual/3.52.0/9c17f496846ab1fca8975c6a50ceac0b3bbe63f0/checker-qual-3.52.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-core/1.4.3/1f00dc12e0bef05dff593a9abd7a4d626b675b0b/prometheus-metrics-core-1.4.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-tracer-common/1.4.3/67af5fc22c23e695d986a6301e61964efe9c9f80/prometheus-metrics-tracer-common-1.4.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-exposition-formats/1.4.3/14eeb4e0a6a366d6b7562e4457e2a863b837b5bd/prometheus-metrics-exposition-formats-1.4.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-exporter-common/1.55.0/c464ca72cbf4af1961ab366a1074534ca0fdc6cf/opentelemetry-exporter-common-1.55.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.hdrhistogram/HdrHistogram/2.2.2/7959933ebcc0f05b2eaa5af0a0c8689fa257b15c/HdrHistogram-2.2.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.latencyutils/LatencyUtils/2.0.3/769c0b82cb2421c8256300e907298a9410a2a3d3/LatencyUtils-2.0.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-model/1.4.3/b18da634ccdc033468c0a17e56996de09b4e6b36/prometheus-metrics-model-1.4.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-config/1.4.3/785bf741491702f0e755a6a5c9c58a8127db0683/prometheus-metrics-config-1.4.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-exposition-textformats/1.4.3/3a4f58da44fdb1a26bbda60cf38930db62f2f887/prometheus-metrics-exposition-textformats-1.4.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.squareup.okhttp3/okhttp-jvm/5.2.1/239374c8de427f72657c0145dda769fccb17a7b2/okhttp-jvm-5.2.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.hibernate.models/hibernate-models/1.0.1/3158c5f9309494b905de62c72f6f02d108aea651/hibernate-models-1.0.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.17.8/af5735f63d00ca47a9375fae5c7471a36331c6ed/byte-buddy-1.17.8.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.xml.bind/jakarta.xml.bind-api/4.0.4/d6d2327f3817d9a33a3b6b8f2e15a96bc2e7afdc/jakarta.xml.bind-api-4.0.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/jaxb-runtime/4.0.6/fb95ebb62564657b2fedfe165b859789ef3a8711/jaxb-runtime-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.inject/jakarta.inject-api/2.0.1/4c28afe1991a941d7702fe1362c365f0a8641d1e/jakarta.inject-api-2.0.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/2.2.21/fa374a986e128314c3db00a20aae55f72a258511/kotlin-stdlib-2.2.21.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.activation/jakarta.activation-api/2.1.4/9e5c2a0d75dde71a0bedc4dbdbe47b78a5dc50f8/jakarta.activation-api-2.1.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/jaxb-core/4.0.6/8e61282303777fc98a00cc3affd0560d68748a75/jaxb-core-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.squareup.okio/okio-jvm/3.16.1/2c8e9a56ce1a1b30ec920fb93a3a9980cf34b015/okio-jvm-3.16.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.eclipse.angus/angus-activation/2.0.3/7f80607ea5014fef0b1779e6c33d63a88a45a563/angus-activation-2.0.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/txw2/4.0.6/4f4cd53b5ff9a2c5aa1211f15ed2569c57dfb044/txw2-4.0.6.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.sun.istack/istack-commons-runtime/4.1.2/18ec117c85f3ba0ac65409136afa8e42bc74e739/istack-commons-runtime-4.1.2.jar"
+        },
+        "java.vm.vendor": {
+          "value": "Eclipse Adoptium"
+        },
+        "sun.arch.data.model": {
+          "value": "64"
+        },
+        "java.vendor.url": {
+          "value": "https://adoptium.net/"
+        },
+        "catalina.useNaming": {
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> @ConfigurationProperties beans (sanitized)
+   GET /actuator/configprops
+--------------------------------------------------------------------
+HTTP 200
+{
+  "contexts": {
+    "ultimate-actuator-sb4": {
+      "beans": {
+        "management.httpexchanges-org.springframework.boot.actuate.autoconfigure.web.exchanges.HttpExchangesProperties": {
+          "inputs": {
+            "recording": {
+              "include": [
+                {},
+                {},
+                {}
+              ]
+            }
+          },
+          "prefix": "management.httpexchanges",
+          "properties": {
+            "recording": {
+              "include": [
+                "REQUEST_HEADERS",
+                "TIME_TAKEN",
+                "RESPONSE_HEADERS"
+              ]
+            }
+          }
+        },
+        "management.endpoints.web-org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties": {
+          "inputs": {
+            "pathMapping": {
+              "health": {
+                "value": "healthz",
+                "origin": "class path resource [application.yml] - 46:17"
+              }
+            },
+            "basePath": {
+              "value": "/actuator",
+              "origin": "class path resource [application.yml] - 43:18"
+            },
+            "exposure": {
+              "exclude": [],
+              "include": [
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Beans: every Spring bean
+   GET /actuator/beans
+--------------------------------------------------------------------
+HTTP 200
+{
+  "contexts": {
+    "ultimate-actuator-sb4": {
+      "beans": {
+        "org.springframework.boot.servlet.autoconfigure.actuate.web.ServletEndpointManagementContextConfiguration": {
+          "aliases": [],
+          "dependencies": [],
+          "scope": "singleton",
+          "type": "org.springframework.boot.servlet.autoconfigure.actuate.web.ServletEndpointManagementContextConfiguration"
+        },
+        "applicationTaskExecutor": {
+          "aliases": [
+            "bootstrapExecutor"
+          ],
+          "dependencies": [
+            "org.springframework.boot.autoconfigure.task.TaskExecutorConfigurations$TaskExecutorConfiguration",
+            "threadPoolTaskExecutorBuilder"
+          ],
+          "resource": "class path resource [org/springframework/boot/autoconfigure/task/TaskExecutorConfigurations$TaskExecutorConfiguration.class]",
+          "scope": "singleton",
+          "type": "org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor"
+        },
+        "spring.data.web-org.springframework.boot.data.autoconfigure.web.DataWebProperties": {
+          "aliases": [],
+          "dependencies": [],
+          "scope": "singleton",
+          "type": "org.springframework.boot.data.autoconfigure.web.DataWebProperties"
+        },
+        "healthEndpointGroups": {
+          "aliases": [],
+          "dependencies": [
+            "org.springframework.boot.health.autoconfigure.actuate.endpoint.HealthEndpointConfiguration",
+            "org.springframework.boot.web.server.servlet.context.AnnotationConfigServletWebServerApplicationContext@20b93c4a",
+            "management.endpoint.health-org.springframework.boot.health.autoconfigure.actuate.endpoint.HealthEndpointProperties"
+          ],
+          "resource": "class path resource [org/springframework/boot/health/autoconfigure/actuate/endpoint/HealthEndpointConfiguration.class]",
+          "scope": "singleton",
+          "type": "org.springframework.boot.health.autoconfigure.actuate.endpoint.AvailabilityProbesHealthEndpointGroups"
+        },
+        "org.springframework.boot.health.autoconfigure.application.DiskSpaceHealthContributorAutoConfiguration": {
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Conditions: auto-configuration report
+   GET /actuator/conditions
+--------------------------------------------------------------------
+HTTP 200
+{
+  "contexts": {
+    "ultimate-actuator-sb4": {
+      "negativeMatches": {
+        "JmxEndpointAutoConfiguration.JmxJackson2EndpointConfiguration": {
+          "notMatched": [
+            {
+              "condition": "OnClassCondition",
+              "message": "@ConditionalOnMissingClass found unwanted class 'tools.jackson.databind.json.JsonMapper'"
+            }
+          ],
+          "matched": []
+        },
+        "InfoContributorAutoConfiguration#gitInfoContributor": {
+          "notMatched": [
+            {
+              "condition": "OnBeanCondition",
+              "message": "@ConditionalOnSingleCandidate (types: org.springframework.boot.info.GitProperties; SearchStrategy: all) did not find any beans"
+            }
+          ],
+          "matched": [
+            {
+              "condition": "OnEnabledInfoContributorCondition",
+              "message": "@ConditionalOnEnabledInfoContributor management.info.git.enabled is true"
+            }
+          ]
+        },
+        "InfoContributorAutoConfiguration#sslInfo": {
+          "notMatched": [
+            {
+              "condition": "OnEnabledInfoContributorCondition",
+              "message": "@ConditionalOnEnabledInfoContributor management.info.ssl.enabled is not true"
+            }
+          ],
+          "matched": [
+            {
+              "condition": "OnBeanCondition",
+              "message": "@ConditionalOnMissingBean (types: org.springframework.boot.info.SslInfo; SearchStrategy: all) did not find any beans"
+            }
+          ]
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Mappings: all request mappings
+   GET /actuator/mappings
+--------------------------------------------------------------------
+HTTP 200
+{
+  "contexts": {
+    "ultimate-actuator-sb4": {
+      "mappings": {
+        "servletFilters": [
+          {
+            "className": "org.springframework.boot.servlet.filter.OrderedRequestContextFilter",
+            "name": "requestContextFilter",
+            "servletNameMappings": [],
+            "urlPatternMappings": [
+              "/*"
+            ]
+          },
+          {
+            "className": "org.springframework.web.filter.ServerHttpObservationFilter",
+            "name": "webMvcObservationFilter",
+            "servletNameMappings": [],
+            "urlPatternMappings": [
+              "/*"
+            ]
+          },
+          {
+            "className": "org.apache.tomcat.websocket.server.WsFilter",
+            "name": "Tomcat WebSocket (JSR356) Filter",
+            "servletNameMappings": [],
+            "urlPatternMappings": [
+              "/*"
+            ]
+          },
+          {
+            "className": "org.springframework.boot.servlet.filter.OrderedCharacterEncodingFilter",
+            "name": "characterEncodingFilter",
+            "servletNameMappings": [],
+            "urlPatternMappings": [
+              "/*"
+            ]
+          },
+          {
+            "className": "org.springframework.boot.web.servlet.DelegatingFilterProxyRegistrationBean$1",
+            "name": "springSecurityFilterChain",
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Loggers: all configured levels
+   GET /actuator/loggers
+--------------------------------------------------------------------
+HTTP 200
+{
+  "levels": [
+    "OFF",
+    "ERROR",
+    "WARN",
+    "INFO",
+    "DEBUG",
+    "TRACE"
+  ],
+  "loggers": {
+    "ROOT": {
+      "configuredLevel": "INFO",
+      "effectiveLevel": "INFO"
+    },
+    "_org": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework.web": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework.web.servlet": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework.web.servlet.HandlerMapping": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework.web.servlet.HandlerMapping.Mappings": {
+      "effectiveLevel": "INFO"
+    },
+    "com": {
+      "effectiveLevel": "INFO"
+    },
+    "com.example": {
+      "effectiveLevel": "INFO"
+    },
+    "com.example.actuator": {
+      "configuredLevel": "DEBUG",
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Loggers: a single logger
+   GET /actuator/loggers/com.example.actuator
+--------------------------------------------------------------------
+HTTP 200
+{
+  "configuredLevel": "DEBUG",
+  "effectiveLevel": "DEBUG"
+}
+
+====================================================================
+>> Loggers: set level to DEBUG (write op)
+   POST /actuator/loggers/com.example.actuator
+--------------------------------------------------------------------
+HTTP 204
+
+
+====================================================================
+>> Thread dump
+   GET /actuator/threaddump
+--------------------------------------------------------------------
+HTTP 200
+{
+  "threads": [
+    {
+      "blockedCount": 0,
+      "blockedTime": -1,
+      "daemon": true,
+      "inNative": false,
+      "lockOwnerId": -1,
+      "lockedMonitors": [],
+      "lockedSynchronizers": [],
+      "priority": 10,
+      "stackTrace": [
+        {
+          "className": "java.lang.ref.Reference",
+          "fileName": "Reference.java",
+          "lineNumber": -2,
+          "methodName": "waitForReferencePendingList",
+          "moduleName": "java.base",
+          "moduleVersion": "25",
+          "nativeMethod": true
+        },
+        {
+          "className": "java.lang.ref.Reference",
+          "fileName": "Reference.java",
+          "lineNumber": 246,
+          "methodName": "processPendingReferences",
+          "moduleName": "java.base",
+          "moduleVersion": "25",
+          "nativeMethod": false
+        },
+        {
+          "className": "java.lang.ref.Reference$ReferenceHandler",
+          "fileName": "Reference.java",
+          "lineNumber": 208,
+          "methodName": "run",
+          "moduleName": "java.base",
+          "moduleVersion": "25",
+          "nativeMethod": false
+        }
+      ],
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Heap dump (binary - saved to file)
+   GET /actuator/heapdump
+--------------------------------------------------------------------
+HTTP 200
+   saved 89156448 bytes to /var/folders/9n/v0d30d_j3x52kjk0sq_bcwhc0000gn/T/heapdump.XXXXXX.hprof.XPe1LiWzqb
+
+====================================================================
+>> HTTP exchanges: recent request/response history
+   GET /actuator/httpexchanges
+--------------------------------------------------------------------
+HTTP 200
+{
+  "exchanges": [
+    {
+      "timestamp": "2026-06-26T00:34:01.778781Z",
+      "request": {
+        "headers": {
+          "Host": [
+            "localhost:8080"
+          ],
+          "User-Agent": [
+            "curl/8.7.1"
+          ],
+          "Accept": [
+            "*/*"
+          ]
+        },
+        "method": "GET",
+        "uri": "http://localhost:8080/actuator/heapdump"
+      },
+      "response": {
+        "headers": {
+          "Accept-Ranges": [
+            "bytes"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-XSS-Protection": [
+            "0"
+          ],
+          "Cache-Control": [
+            "no-cache, no-store, max-age=0, must-revalidate"
+          ],
+          "Pragma": [
+            "no-cache"
+          ],
+          "Expires": [
+            "0"
+          ],
+          "X-Frame-Options": [
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Caches: managers and cache names
+   GET /actuator/caches
+--------------------------------------------------------------------
+HTTP 200
+{
+  "cacheManagers": {
+    "cacheManager": {
+      "caches": {
+        "widgets": {
+          "target": "com.github.benmanes.caffeine.cache.BoundedLocalCache$BoundedLocalManualCache"
+        }
+      }
+    }
+  }
+}
+
+====================================================================
+>> Scheduled tasks
+   GET /actuator/scheduledtasks
+--------------------------------------------------------------------
+HTTP 200
+{
+  "cron": [
+    {
+      "expression": "0 0 3 * * *",
+      "nextExecution": {
+        "time": "2026-06-26T06:59:59.999834Z"
+      },
+      "runnable": {
+        "target": "com.example.actuator.actuator.ScheduledMaintenanceTasks.nightlyCleanup"
+      }
+    }
+  ],
+  "custom": [],
+  "fixedDelay": [],
+  "fixedRate": [
+    {
+      "initialDelay": 0,
+      "interval": 60000,
+      "lastExecution": {
+        "status": "SUCCESS",
+        "time": "2026-06-26T00:33:33.306375Z"
+      },
+      "nextExecution": {
+        "time": "2026-06-26T00:34:33.305862Z"
+      },
+      "runnable": {
+        "target": "com.example.actuator.actuator.ScheduledMaintenanceTasks.heartbeat"
+      }
+    }
+  ]
+}
+
+====================================================================
+>> Flyway: applied database migrations
+   GET /actuator/flyway
+--------------------------------------------------------------------
+HTTP 404
+{
+  "timestamp": "2026-06-26T00:34:02.332Z",
+  "status": 404,
+  "error": "Not Found",
+  "trace": "org.springframework.web.servlet.resource.NoResourceFoundException: No static resource actuator/flyway for request '/actuator/flyway'.\n\tat org.springframework.web.servlet.resource.ResourceHttpRequestHandler.handleRequest(ResourceHttpRequestHandler.java:526)\n\tat org.springframework.web.servlet.mvc.HttpRequestHandlerAdapter.handle(HttpRequestHandlerAdapter.java:50)\n\tat org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:963)\n\tat org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:866)\n\tat org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1000)\n\tat org.springframework.web.servlet.FrameworkServlet.doGet(FrameworkServlet.java:892)\n\tat jakarta.servlet.http.HttpServlet.service(HttpServlet.java:622)\n\tat org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:874)\n\tat jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128)\n\tat org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.boot.servlet.actuate.web.exchanges.HttpExchangesFilter.doFilterInternal(HttpExchangesFilter.java:89)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)\n\tat org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:235)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:493)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:354)\n\tat org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:86)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:132)\n\tat org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:101)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)\n\tat org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:181)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.authentication.www.BasicAuthenticationFilter.doFilterInternal(BasicAuthenticationFilter.java:247)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:110)\n\tat org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:96)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)\n\tat org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)\n\tat org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:337)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:237)\n\tat org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:195)\n\tat org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)\n\tat org.springframework.web.filter.ServletRequestPathFilter.doFilter(ServletRequestPathFilter.java:52)\n\tat org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)\n\tat org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)\n\tat org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebSecurityConfiguration.java:317)\n\tat org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:355)\n\tat org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:272)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:110)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)\n\tat org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77)\n\tat org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492)\n\tat org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)\n\tat org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)\n\tat org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)\n\tat org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341)\n\tat org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)\n\tat org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)\n\tat org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)\n\tat org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1801)\n\tat org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)\n\tat org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946)\n\tat org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480)\n\tat org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57)\n\tat java.base/java.lang.Thread.run(Thread.java:1474)\n",
+  "message": "No static resource actuator/flyway.",
+  "path": "/actuator/flyway"
+}
+
+====================================================================
+>> Audit events: security + custom events
+   GET /actuator/auditevents
+--------------------------------------------------------------------
+HTTP 200
+{
+  "events": [
+    {
+      "data": {
+        "details": {
+          "remoteAddress": "127.0.0.1"
+        }
+      },
+      "principal": "anonymousUser",
+      "timestamp": "2026-06-26T00:33:35.904107Z",
+      "type": "AUTHORIZATION_FAILURE"
+    },
+    {
+      "data": {
+        "details": {
+          "remoteAddress": "127.0.0.1"
+        }
+      },
+      "principal": "anonymousUser",
+      "timestamp": "2026-06-26T00:33:40.836458Z",
+      "type": "AUTHORIZATION_FAILURE"
+    },
+    {
+      "data": {
+        "details": {
+          "remoteAddress": "127.0.0.1"
+        }
+      },
+      "principal": "anonymousUser",
+      "timestamp": "2026-06-26T00:33:45.835209Z",
+      "type": "AUTHORIZATION_FAILURE"
+    },
+    {
+      "data": {
+        "details": {
+          "remoteAddress": "0:0:0:0:0:0:0:1"
+        }
+      },
+      "principal": "admin",
+      "timestamp": "2026-06-26T00:33:50.136168Z",
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Startup: application start-up step timings
+   GET /actuator/startup
+--------------------------------------------------------------------
+HTTP 200
+{
+  "springBootVersion": "4.0.6",
+  "timeline": {
+    "events": [
+      {
+        "duration": "PT0.007859S",
+        "endTime": "2026-06-26T00:33:30.916162Z",
+        "startTime": "2026-06-26T00:33:30.908303Z",
+        "startupStep": {
+          "id": 0,
+          "name": "spring.boot.application.starting",
+          "tags": [
+            {
+              "key": "mainApplicationClass",
+              "value": "com.example.actuator.UltimateActuatorApplication"
+            }
+          ]
+        }
+      },
+      {
+        "duration": "PT0.077732S",
+        "endTime": "2026-06-26T00:33:31.014453Z",
+        "startTime": "2026-06-26T00:33:30.936721Z",
+        "startupStep": {
+          "id": 1,
+          "name": "spring.boot.application.environment-prepared",
+          "tags": []
+        }
+      },
+      {
+        "duration": "PT0.000081S",
+        "endTime": "2026-06-26T00:33:31.033656Z",
+        "startTime": "2026-06-26T00:33:31.033575Z",
+        "startupStep": {
+          "id": 2,
+          "name": "spring.boot.application.context-prepared",
+          "tags": []
+        }
+      },
+      {
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> SBOM: available SBOM ids
+   GET /actuator/sbom
+--------------------------------------------------------------------
+HTTP 200
+{
+  "ids": [
+    "application"
+  ]
+}
+
+====================================================================
+>> SBOM: application CycloneDX document
+   GET /actuator/sbom/application
+--------------------------------------------------------------------
+HTTP 200
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:5bca73df-6eea-43e1-9ce1-38ad0ddba5bd",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-06-24T19:54:53Z",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "author": "CycloneDX",
+          "name": "cyclonedx-gradle-plugin",
+          "version": "3.2.4"
+        }
+      ]
+    },
+    "component": {
+      "type": "application",
+      "bom-ref": "pkg:maven/com.example/spring-boot-4-actuator@0.0.1-SNAPSHOT?project_path=%3A",
+      "group": "com.example",
+      "name": "spring-boot-4-actuator",
+      "version": "0.0.1-SNAPSHOT",
+      "purl": "pkg:maven/com.example/spring-boot-4-actuator@0.0.1-SNAPSHOT?project_path=%3A",
+      "modified": false,
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/StevenPG/DemosAndArticleContent.git"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:maven/aopalliance/aopalliance@1.0?type=jar",
+      "group": "aopalliance",
+      "name": "aopalliance",
+      "version": "1.0",
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Custom @Endpoint: all feature flags (read)
+   GET /actuator/featureflags
+--------------------------------------------------------------------
+HTTP 200
+{
+  "beta-search": true,
+  "new-checkout": false
+}
+
+====================================================================
+>> Custom @Endpoint: single flag (read + @Selector)
+   GET /actuator/featureflags/beta-search
+--------------------------------------------------------------------
+HTTP 200
+{
+  "enabled": true,
+  "name": "beta-search"
+}
+
+====================================================================
+>> Custom @Endpoint: enable a flag (write op)
+   POST /actuator/featureflags/new-checkout
+--------------------------------------------------------------------
+HTTP 405
+{
+  "timestamp": "2026-06-26T00:34:03.125Z",
+  "status": 405,
+  "error": "Method Not Allowed",
+  "trace": "org.springframework.web.HttpRequestMethodNotSupportedException: Request method 'POST' is not supported\n\tat org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.handleNoMatch(RequestMappingInfoHandlerMapping.java:260)\n\tat org.springframework.web.servlet.handler.AbstractHandlerMethodMapping.lookupHandlerMethod(AbstractHandlerMethodMapping.java:434)\n\tat org.springframework.web.servlet.handler.AbstractHandlerMethodMapping.getHandlerInternal(AbstractHandlerMethodMapping.java:376)\n\tat org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.getHandlerInternal(RequestMappingInfoHandlerMapping.java:116)\n\tat org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.getHandlerInternal(RequestMappingInfoHandlerMapping.java:68)\n\tat org.springframework.web.servlet.handler.AbstractHandlerMapping.getHandler(AbstractHandlerMapping.java:544)\n\tat org.springframework.web.servlet.DispatcherServlet.getHandler(DispatcherServlet.java:1157)\n\tat org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:951)\n\tat org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:866)\n\tat org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1000)\n\tat org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:903)\n\tat jakarta.servlet.http.HttpServlet.service(HttpServlet.java:649)\n\tat org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:874)\n\tat jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128)\n\tat org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.boot.servlet.actuate.web.exchanges.HttpExchangesFilter.doFilterInternal(HttpExchangesFilter.java:89)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)\n\tat org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:235)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:493)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:354)\n\tat org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:86)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:132)\n\tat org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:101)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)\n\tat org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:181)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.authentication.www.BasicAuthenticationFilter.doFilterInternal(BasicAuthenticationFilter.java:247)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:110)\n\tat org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:96)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)\n\tat org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)\n\tat org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:337)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:237)\n\tat org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:195)\n\tat org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)\n\tat org.springframework.web.filter.ServletRequestPathFilter.doFilter(ServletRequestPathFilter.java:52)\n\tat org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)\n\tat org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)\n\tat org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebSecurityConfiguration.java:317)\n\tat org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:355)\n\tat org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:272)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:110)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)\n\tat org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77)\n\tat org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492)\n\tat org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)\n\tat org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)\n\tat org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)\n\tat org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341)\n\tat org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)\n\tat org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)\n\tat org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)\n\tat org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1801)\n\tat org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)\n\tat org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946)\n\tat org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480)\n\tat org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57)\n\tat java.base/java.lang.Thread.run(Thread.java:1474)\n",
+  "message": "Method 'POST' is not supported.",
+  "path": "/actuator/featureflags/new-checkout"
+}
+
+====================================================================
+>> Custom @Endpoint: delete a flag (delete op)
+   DELETE /actuator/featureflags/beta-search
+--------------------------------------------------------------------
+HTTP 405
+{
+  "timestamp": "2026-06-26T00:34:03.224Z",
+  "status": 405,
+  "error": "Method Not Allowed",
+  "trace": "org.springframework.web.HttpRequestMethodNotSupportedException: Request method 'DELETE' is not supported\n\tat org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.handleNoMatch(RequestMappingInfoHandlerMapping.java:260)\n\tat org.springframework.web.servlet.handler.AbstractHandlerMethodMapping.lookupHandlerMethod(AbstractHandlerMethodMapping.java:434)\n\tat org.springframework.web.servlet.handler.AbstractHandlerMethodMapping.getHandlerInternal(AbstractHandlerMethodMapping.java:376)\n\tat org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.getHandlerInternal(RequestMappingInfoHandlerMapping.java:116)\n\tat org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping.getHandlerInternal(RequestMappingInfoHandlerMapping.java:68)\n\tat org.springframework.web.servlet.handler.AbstractHandlerMapping.getHandler(AbstractHandlerMapping.java:544)\n\tat org.springframework.web.servlet.DispatcherServlet.getHandler(DispatcherServlet.java:1157)\n\tat org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:951)\n\tat org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:866)\n\tat org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1000)\n\tat org.springframework.web.servlet.FrameworkServlet.doDelete(FrameworkServlet.java:925)\n\tat jakarta.servlet.http.HttpServlet.service(HttpServlet.java:651)\n\tat org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:874)\n\tat jakarta.servlet.http.HttpServlet.service(HttpServlet.java:710)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:128)\n\tat org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.boot.servlet.actuate.web.exchanges.HttpExchangesFilter.doFilterInternal(HttpExchangesFilter.java:89)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108)\n\tat org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:235)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$FilterObservation$SimpleFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:493)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$1(ObservationFilterChainDecorator.java:354)\n\tat org.springframework.security.web.ObservationFilterChainDecorator.lambda$wrapSecured$0(ObservationFilterChainDecorator.java:86)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:132)\n\tat org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:101)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126)\n\tat org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:181)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.authentication.www.BasicAuthenticationFilter.doFilterInternal(BasicAuthenticationFilter.java:247)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:110)\n\tat org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:96)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90)\n\tat org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82)\n\tat org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:231)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.wrapFilter(ObservationFilterChainDecorator.java:244)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$AroundFilterObservation$SimpleAroundFilterObservation.lambda$wrap$0(ObservationFilterChainDecorator.java:337)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$ObservationFilter.doFilter(ObservationFilterChainDecorator.java:228)\n\tat org.springframework.security.web.ObservationFilterChainDecorator$VirtualFilterChain.doFilter(ObservationFilterChainDecorator.java:141)\n\tat org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:237)\n\tat org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:195)\n\tat org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)\n\tat org.springframework.web.filter.ServletRequestPathFilter.doFilter(ServletRequestPathFilter.java:52)\n\tat org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113)\n\tat org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74)\n\tat org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebSecurityConfiguration.java:317)\n\tat org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:355)\n\tat org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:272)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.ServerHttpObservationFilter.doFilterInternal(ServerHttpObservationFilter.java:110)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:199)\n\tat org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116)\n\tat org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:107)\n\tat org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:165)\n\tat org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:77)\n\tat org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:492)\n\tat org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:113)\n\tat org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:83)\n\tat org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:72)\n\tat org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:341)\n\tat org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:397)\n\tat org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63)\n\tat org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:903)\n\tat org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1801)\n\tat org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52)\n\tat org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:946)\n\tat org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:480)\n\tat org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:57)\n\tat java.base/java.lang.Thread.run(Thread.java:1474)\n",
+  "message": "Method 'DELETE' is not supported.",
+  "path": "/actuator/featureflags/beta-search"
+}
+
+====================================================================
+>> Custom @WebEndpoint: release notes
+   GET /actuator/releasenotes
+--------------------------------------------------------------------
+HTTP 200
+{
+  "current": "1.4.0",
+  "highlights": [
+    "Added the /actuator/featureflags custom endpoint",
+    "Wired Prometheus + OpenTelemetry tracing",
+    "Liveness/readiness probes for Kubernetes"
+  ]
+}
+
+====================================================================
+>> Shutdown: SKIPPED
+   POST /actuator/shutdown stops the app. Re-run with INCLUDE_SHUTDOWN=1 to call it.
+
+Done.
