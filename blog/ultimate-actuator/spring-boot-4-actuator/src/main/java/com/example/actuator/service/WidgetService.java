@@ -14,7 +14,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.listener.AuditApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -67,7 +69,7 @@ public class WidgetService {
     public Widget findById(Long id) {
         log.info("Cache miss - loading widget {} from the database", id);
         return repository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("No widget with id " + id));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No widget with id " + id));
     }
 
     @Timed(value = "widgets.list", description = "Time spent listing all widgets", histogram = true)

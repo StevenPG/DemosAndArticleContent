@@ -11,7 +11,7 @@
 # Usage:
 #   ./test-actuator.sh
 #   BASE_URL=http://localhost:8080 ./test-actuator.sh
-#   USER=admin PASS=admin ./test-actuator.sh
+#   ACT_USER=admin ACT_PASS=admin ./test-actuator.sh
 #   MAXLINES=200 ./test-actuator.sh           # show more of each (big) response
 #   INCLUDE_SHUTDOWN=1 ./test-actuator.sh      # also POST /shutdown (STOPS THE APP)
 #
@@ -20,8 +20,8 @@
 set -uo pipefail
 
 BASE_URL="${BASE_URL:-http://localhost:8080}"
-USER="${USER:-admin}"
-PASS="${PASS:-admin}"
+ACT_USER="${ACT_USER:-admin}"
+ACT_PASS="${ACT_PASS:-admin}"
 MAXLINES="${MAXLINES:-40}"
 ACT="${BASE_URL}/actuator"
 
@@ -36,7 +36,7 @@ call() {
   echo "   ${method} ${url#"$BASE_URL"}"
   echo "--------------------------------------------------------------------"
 
-  local args=(-s -m 30 -u "${USER}:${PASS}" -X "$method" -w $'\n__HTTP__%{http_code}')
+  local args=(-s -m 30 -u "${ACT_USER}:${ACT_PASS}" -X "$method" -w $'\n__HTTP__%{http_code}')
   [[ -n "$data" ]] && args+=(-H 'Content-Type: application/json' -d "$data")
 
   local raw status body
@@ -70,13 +70,13 @@ heapdump() {
   echo "--------------------------------------------------------------------"
   local out status
   out="$(mktemp -t heapdump.XXXXXX.hprof)"
-  status=$(curl -s -m 120 -u "${USER}:${PASS}" -o "$out" -w '%{http_code}' "${ACT}/heapdump" 2>/dev/null)
+  status=$(curl -s -m 120 -u "${ACT_USER}:${ACT_PASS}" -o "$out" -w '%{http_code}' "${ACT}/heapdump" 2>/dev/null)
   if [[ -z "$status" || "$status" == "000" ]]; then echo "   (request failed)"; return; fi
   echo "HTTP ${status}"
   echo "   saved $(wc -c < "$out" | tr -d ' ') bytes to ${out}"
 }
 
-echo "Testing Spring Boot 4 actuator at ${ACT} (basic-auth user: ${USER})"
+echo "Testing Spring Boot 4 actuator at ${ACT} (basic-auth user: ${ACT_USER})"
 
 # ---- Health ----
 call GET "${ACT}/healthz"           "Health: aggregated status + components"

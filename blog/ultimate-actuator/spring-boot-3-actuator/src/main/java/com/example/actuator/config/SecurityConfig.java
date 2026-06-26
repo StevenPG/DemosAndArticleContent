@@ -6,6 +6,7 @@ import org.springframework.boot.actuate.info.InfoEndpoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
@@ -42,7 +43,7 @@ public class SecurityConfig {
                         .anyRequest().permitAll())
                 .httpBasic(httpBasic -> {})
                 // CSRF disabled only to keep the demo's POST/DELETE calls simple via curl.
-                .csrf(csrf -> csrf.disable());
+                .csrf(AbstractHttpConfigurer::disable);
         return http.build();
     }
 

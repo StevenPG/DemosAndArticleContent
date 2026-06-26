@@ -1,0 +1,1049 @@
+Testing Spring Boot 3 actuator at http://localhost:8080/actuator (basic-auth user: admin)
+
+====================================================================
+>> Health: aggregated status + components
+   GET /actuator/healthz
+--------------------------------------------------------------------
+HTTP 200
+{
+  "status": "UP",
+  "groups": [
+    "business",
+    "liveness",
+    "readiness"
+  ],
+  "components": {
+    "db": {
+      "status": "UP",
+      "details": {
+        "database": "PostgreSQL",
+        "validationQuery": "isValid()"
+      }
+    },
+    "diskSpace": {
+      "status": "UP",
+      "details": {
+        "total": 494384795648,
+        "free": 102559162368,
+        "threshold": 10485760,
+        "path": "/Users/stevengantz/Development/Github/DemosAndArticleContent/.",
+        "exists": true
+      }
+    },
+    "inventory": {
+      "status": "UP",
+      "details": {
+        "availableStock": 120,
+        "warehouse": "EU-WEST-1"
+      }
+    },
+    "livenessState": {
+      "status": "UP"
+    },
+    "paymentGateway": {
+      "status": "UP",
+      "details": {
+        "provider": "AcmePay",
+        "latencyMs": 42,
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Health group: Kubernetes liveness probe
+   GET /actuator/healthz/liveness
+--------------------------------------------------------------------
+HTTP 200
+{
+  "status": "UP",
+  "components": {
+    "livenessState": {
+      "status": "UP"
+    },
+    "ping": {
+      "status": "UP"
+    }
+  }
+}
+
+====================================================================
+>> Health group: Kubernetes readiness probe
+   GET /actuator/healthz/readiness
+--------------------------------------------------------------------
+HTTP 200
+{
+  "status": "UP",
+  "components": {
+    "db": {
+      "status": "UP",
+      "details": {
+        "database": "PostgreSQL",
+        "validationQuery": "isValid()"
+      }
+    },
+    "paymentGateway": {
+      "status": "UP",
+      "details": {
+        "provider": "AcmePay",
+        "latencyMs": 42,
+        "uptime": "PT4M0.226633S"
+      }
+    },
+    "readinessState": {
+      "status": "UP"
+    }
+  }
+}
+
+====================================================================
+>> Health group: custom business checks
+   GET /actuator/healthz/business
+--------------------------------------------------------------------
+HTTP 200
+{
+  "status": "UP",
+  "components": {
+    "inventory": {
+      "status": "UP",
+      "details": {
+        "availableStock": 120,
+        "warehouse": "EU-WEST-1"
+      }
+    },
+    "paymentGateway": {
+      "status": "UP",
+      "details": {
+        "provider": "AcmePay",
+        "latencyMs": 42,
+        "uptime": "PT4M0.322741S"
+      }
+    }
+  }
+}
+
+====================================================================
+>> Info: build, git, java, os + custom contributor
+   GET /actuator/info
+--------------------------------------------------------------------
+HTTP 200
+{
+  "app": {
+    "name": "ultimate-actuator-sb3",
+    "description": "An in-depth tour of Spring Boot 3 Actuator",
+    "environment": "local"
+  },
+  "build": {
+    "artifact": "spring-boot-3-actuator",
+    "name": "spring-boot-3-actuator",
+    "time": "2026-06-26T00:21:09.178Z",
+    "version": "0.0.1-SNAPSHOT",
+    "group": "com.example"
+  },
+  "java": {
+    "version": "25",
+    "vendor": {
+      "name": "Eclipse Adoptium",
+      "version": "Temurin-25+36"
+    },
+    "runtime": {
+      "name": "OpenJDK Runtime Environment",
+      "version": "25+36-LTS"
+    },
+    "jvm": {
+      "name": "OpenJDK 64-Bit Server VM",
+      "vendor": "Eclipse Adoptium",
+      "version": "25+36-LTS"
+    }
+  },
+  "os": {
+    "name": "Mac OS X",
+    "version": "26.5.1",
+    "arch": "aarch64"
+  },
+  "demo": {
+    "docs": "https://docs.spring.io/spring-boot/reference/actuator/index.html",
+    "team": "Platform Engineering",
+    "startedAt": "2026-06-26T00:25:11.562300Z",
+    "name": "Ultimate Spring Boot 3 Actuator demo"
+  }
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Metrics: list of all meter names
+   GET /actuator/metrics
+--------------------------------------------------------------------
+HTTP 200
+{
+  "names": [
+    "application.ready.time",
+    "application.started.time",
+    "cache.eviction.weight",
+    "cache.evictions",
+    "cache.gets",
+    "cache.puts",
+    "cache.size",
+    "disk.free",
+    "disk.total",
+    "executor.active",
+    "executor.completed",
+    "executor.pool.core",
+    "executor.pool.max",
+    "executor.pool.size",
+    "executor.queue.remaining",
+    "executor.queued",
+    "greeting.read",
+    "greeting.read.active",
+    "hikaricp.connections",
+    "hikaricp.connections.acquire",
+    "hikaricp.connections.active",
+    "hikaricp.connections.creation",
+    "hikaricp.connections.idle",
+    "hikaricp.connections.max",
+    "hikaricp.connections.min",
+    "hikaricp.connections.pending",
+    "hikaricp.connections.timeout",
+    "hikaricp.connections.usage",
+    "http.server.requests",
+    "http.server.requests.active",
+    "jdbc.connections.active",
+    "jdbc.connections.idle",
+    "jdbc.connections.max",
+    "jdbc.connections.min",
+    "jvm.buffer.count",
+    "jvm.buffer.memory.used",
+    "jvm.buffer.total.capacity",
+    "jvm.classes.loaded",
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Metrics: HTTP request timer (drill-down)
+   GET /actuator/metrics/http.server.requests
+--------------------------------------------------------------------
+HTTP 200
+{
+  "name": "http.server.requests",
+  "baseUnit": "seconds",
+  "measurements": [
+    {
+      "statistic": "COUNT",
+      "value": 96.0
+    },
+    {
+      "statistic": "TOTAL_TIME",
+      "value": 3.3824567480000005
+    },
+    {
+      "statistic": "MAX",
+      "value": 0.179271917
+    }
+  ],
+  "availableTags": [
+    {
+      "tag": "exception",
+      "values": [
+        "IllegalArgumentException",
+        "none"
+      ]
+    },
+    {
+      "tag": "method",
+      "values": [
+        "POST",
+        "DELETE",
+        "GET"
+      ]
+    },
+    {
+      "tag": "application",
+      "values": [
+        "ultimate-actuator"
+      ]
+    },
+    {
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Metrics: custom widgets.created counter
+   GET /actuator/metrics/widgets.created
+--------------------------------------------------------------------
+HTTP 200
+{
+  "name": "widgets.created",
+  "description": "Total number of widgets created since startup",
+  "baseUnit": "widgets",
+  "measurements": [
+    {
+      "statistic": "COUNT",
+      "value": 3.0
+    }
+  ],
+  "availableTags": [
+    {
+      "tag": "application",
+      "values": [
+        "ultimate-actuator"
+      ]
+    },
+    {
+      "tag": "spring.boot.version",
+      "values": [
+        "3"
+      ]
+    },
+    {
+      "tag": "source",
+      "values": [
+        "service"
+      ]
+    }
+  ]
+}
+
+====================================================================
+>> Prometheus: scrape format
+   GET /actuator/prometheus
+--------------------------------------------------------------------
+HTTP 200
+# HELP application_ready_time_seconds Time taken for the application to be ready to service requests
+# TYPE application_ready_time_seconds gauge
+application_ready_time_seconds{application="ultimate-actuator",main_application_class="com.example.actuator.UltimateActuatorApplication",spring_boot_version="3"} 1.018
+# HELP application_started_time_seconds Time taken to start the application
+# TYPE application_started_time_seconds gauge
+application_started_time_seconds{application="ultimate-actuator",main_application_class="com.example.actuator.UltimateActuatorApplication",spring_boot_version="3"} 1.018
+# HELP cache_eviction_weight_total The sum of weights of evicted entries. This total does not include manual invalidations.
+# TYPE cache_eviction_weight_total counter
+cache_eviction_weight_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",spring_boot_version="3"} 0.0
+# HELP cache_evictions_total The number of times the cache was evicted.
+# TYPE cache_evictions_total counter
+cache_evictions_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",spring_boot_version="3"} 0.0
+# HELP cache_gets_total The number of times cache lookup methods have returned a cached (hit) or uncached (newly loaded or null) value (miss).
+# TYPE cache_gets_total counter
+cache_gets_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",result="hit",spring_boot_version="3"} 1.0
+cache_gets_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",result="miss",spring_boot_version="3"} 2.0
+# HELP cache_puts_total The number of entries added to the cache
+# TYPE cache_puts_total counter
+cache_puts_total{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",spring_boot_version="3"} 0.0
+# HELP cache_size The number of entries in this cache. This may be an approximation, depending on the type of cache.
+# TYPE cache_size gauge
+cache_size{application="ultimate-actuator",cache="widgets",cache_manager="cacheManager",name="widgets",spring_boot_version="3"} 1.0
+# HELP disk_free_bytes Usable space for path
+# TYPE disk_free_bytes gauge
+disk_free_bytes{application="ultimate-actuator",path="/Users/stevengantz/Development/Github/DemosAndArticleContent/.",spring_boot_version="3"} 1.02559174656E11
+# HELP disk_total_bytes Total space for path
+# TYPE disk_total_bytes gauge
+disk_total_bytes{application="ultimate-actuator",path="/Users/stevengantz/Development/Github/DemosAndArticleContent/.",spring_boot_version="3"} 4.94384795648E11
+# HELP executor_active_threads The approximate number of threads that are actively executing tasks
+# TYPE executor_active_threads gauge
+executor_active_threads{application="ultimate-actuator",name="applicationTaskExecutor",spring_boot_version="3"} 0.0
+executor_active_threads{application="ultimate-actuator",name="taskScheduler",spring_boot_version="3"} 0.0
+# HELP executor_completed_tasks_total The approximate total number of tasks that have completed execution
+# TYPE executor_completed_tasks_total counter
+executor_completed_tasks_total{application="ultimate-actuator",name="applicationTaskExecutor",spring_boot_version="3"} 0.0
+executor_completed_tasks_total{application="ultimate-actuator",name="taskScheduler",spring_boot_version="3"} 5.0
+# HELP executor_pool_core_threads The core number of threads for the pool
+# TYPE executor_pool_core_threads gauge
+executor_pool_core_threads{application="ultimate-actuator",name="applicationTaskExecutor",spring_boot_version="3"} 8.0
+executor_pool_core_threads{application="ultimate-actuator",name="taskScheduler",spring_boot_version="3"} 1.0
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Environment: property sources (sanitized)
+   GET /actuator/env
+--------------------------------------------------------------------
+HTTP 200
+{
+  "activeProfiles": [],
+  "defaultProfiles": [
+    "default"
+  ],
+  "propertySources": [
+    {
+      "name": "server.ports",
+      "properties": {
+        "local.server.port": {
+          "value": 8080
+        }
+      }
+    },
+    {
+      "name": "servletContextInitParams",
+      "properties": {}
+    },
+    {
+      "name": "systemProperties",
+      "properties": {
+        "java.specification.version": {
+          "value": "25"
+        },
+        "sun.jnu.encoding": {
+          "value": "UTF-8"
+        },
+        "java.class.path": {
+          "value": "/Users/stevengantz/Development/Github/DemosAndArticleContent/blog/ultimate-actuator/spring-boot-3-actuator/build/classes/java/main:/Users/stevengantz/Development/Github/DemosAndArticleContent/blog/ultimate-actuator/spring-boot-3-actuator/build/resources/main:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.46/a5cfe99fdf320e84955ef653f2ce1bf789d11385/lombok-1.18.46.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-configuration-processor/3.5.15/dd1f197a202c7ea67c4fef05c3fe259b55fb2640/spring-boot-configuration-processor-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-web/3.5.15/cf64b9b6974c201da9e6848994ea0975bdea0374/spring-boot-starter-web-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-validation/3.5.15/68579b1fb8b699eac6d11d2181a65f99d0e37714/spring-boot-starter-validation-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-actuator/3.5.15/3fda024804d236681f4d7fa2e5d1d9d44b5f6650/spring-boot-starter-actuator-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-security/3.5.15/34b74928608450d9f568122f5f7bd2bef4e7e789/spring-boot-starter-security-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-data-jpa/3.5.15/e5b9beb34d2a88b296fd5f0b35a87fad6426063/spring-boot-starter-data-jpa-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.flywaydb/flyway-core/11.7.2/2e40f0465ab29c807a38aae56b4e636451a9ff99/flyway-core-11.7.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.flywaydb/flyway-database-postgresql/11.7.2/6cca0e7f6fdded39ddc302c97d9e12ecc8c9b96a/flyway-database-postgresql-11.7.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-cache/3.5.15/fb0813715e6e07535e602f3ef1bc9ee8d37417ca/spring-boot-starter-cache-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.github.ben-manes.caffeine/caffeine/3.2.4/c63b303adf59c733d2a96125ad6670e938a2c15d/caffeine-3.2.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-tracing-bridge-otel/1.5.12/b1b6fcc509102acedd79cbee9c34f45206d93dee/micrometer-tracing-bridge-otel-1.5.12.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-exporter-otlp/1.49.0/13c344de7e46f87be7ccb28d29e08bb078f92af5/opentelemetry-exporter-otlp-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-aop/3.5.15/1543da925a6062651b54cce19d187b2f0f0d31bf/spring-boot-starter-aop-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter/3.5.15/d5939013cbaee1f0c012e2324ea6256412a2672e/spring-boot-starter-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-json/3.5.15/1507254007468c2d29ad2dd753a6a745d89658/spring-boot-starter-json-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-tomcat/3.5.15/635ffde7e1b1809738e6a6cd6ab310672c626bf4/spring-boot-starter-tomcat-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-web/6.2.19/f1dc7b238611aeaf9e256a230aa089057cf0e5b3/spring-web-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-webmvc/6.2.19/836c68c8797106000e44153686b1cfa1a806a998/spring-webmvc-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-el/10.1.55/202f2de13bd61be720cf302f28d63eda558d29f3/tomcat-embed-el-10.1.55.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.hibernate.validator/hibernate-validator/8.0.3.Final/4425f554297a1c5ba03a3f30e559a9fd91048cf8/hibernate-validator-8.0.3.Final.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-actuator-autoconfigure/3.5.15/856037a950881b9e0337625a4a29f3c90ac2a52f/spring-boot-actuator-autoconfigure-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-observation/1.15.12/1d96fcaec8d2516236dfcb9914108e14bfd02238/micrometer-observation-1.15.12.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-jakarta9/1.15.12/723026e4168c2ff38d30b04ce6b28da7bfd688e5/micrometer-jakarta9-1.15.12.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-aop/6.2.19/86a538bb7b2be38a0afc4ef049784def10a86c62/spring-aop-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-config/6.5.11/c698bc32f1f10f85b3ade54575077eaebc9b86c3/spring-security-config-6.5.11.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-web/6.5.11/eeee13020ef81f290633e68fe062bccba062774e/spring-security-web-6.5.11.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-jdbc/3.5.15/5a3434cca3911a18eb95e5996cd8266dc8546ccb/spring-boot-starter-jdbc-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.hibernate.orm/hibernate-core/6.6.53.Final/29bfa3d861a32774520b1d1aea61cccff57029d5/hibernate-core-6.6.53.Final.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.data/spring-data-jpa/3.5.12/3a127325aaa0956cf7d5c5a913b8cc5e9d5e7a64/spring-data-jpa-3.5.12.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-aspects/6.2.19/46fd86518ca130f01ecdf68922eef4997ab3feb1/spring-aspects-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.dataformat/jackson-dataformat-toml/2.21.4/8a16502ac35d743e3ca0d2351174766e8be5b24/jackson-dataformat-toml-2.21.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.datatype/jackson-datatype-jsr310/2.21.4/51f9ede30826b05cdf8a70b47bc68bd6271dfaaa/jackson-datatype-jsr310-2.21.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-context-support/6.2.19/a3c10a96896252b025988cf4832bfbf896cfd26d/spring-context-support-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jspecify/jspecify/1.0.0/7425a601c1c7ec76645a78d22b8c6a627edee507/jspecify-1.0.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.google.errorprone/error_prone_annotations/2.49.0/8b42a2e3865f6e0576da3fad51dbb96732ff0f14/error_prone_annotations-2.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-tracing/1.5.12/14c3fff147ce278ca56177d26ce1a138f560b4c/micrometer-tracing-1.5.12.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.slf4j/slf4j-api/2.0.18/78a9e7a37cd6360e0b818e86341b24123d28d4df/slf4j-api-2.0.18.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-api/1.49.0/caff686096f0f99257c16dda87a3ca45b9f0cd25/opentelemetry-api-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry.semconv/opentelemetry-semconv/1.32.0/1b7114e94ed7ac6ebc79f885dabb174a428c1c88/opentelemetry-semconv-1.32.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-common/1.49.0/6434472ab86600910d8b5f0346653bbc8f8b7067/opentelemetry-sdk-common-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-trace/1.49.0/f6ebec3f8e5181a0d1be82cfb5c9a5a9b6be14c7/opentelemetry-sdk-trace-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk/1.49.0/85e0b7a9920118e25a79851b71228a5000db74d8/opentelemetry-sdk-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-extension-trace-propagators/1.49.0/c75a1fb9ba9b5e26160fbaebf5225822994b09f5/opentelemetry-extension-trace-propagators-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-metrics/1.49.0/1eae6b8b460b24bec7ce68786e7bb63d7b93e170/opentelemetry-sdk-metrics-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-logs/1.49.0/7b8897105c46f560a6a43bd08277a55641fa4405/opentelemetry-sdk-logs-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.aspectj/aspectjweaver/1.9.25.1/a713c790da4d794c7dfb542b550d4e44898d5e23/aspectjweaver-1.9.25.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot/3.5.15/c06a102c231e4a0a53085d93c3a121f3a05d6825/spring-boot-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-autoconfigure/3.5.15/2ae6e14e304afe1e56bca3eb607e89b6dbf76f77/spring-boot-autoconfigure-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-logging/3.5.15/82c0e91a8b0dda9f581476011527442688ff9dcc/spring-boot-starter-logging-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.annotation/jakarta.annotation-api/2.1.1/48b9bda22b091b1f48b13af03fe36db3be6e1ae3/jakarta.annotation-api-2.1.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-core/6.2.19/691459d4644894dae8e5c2d9550a4cfb8302f62f/spring-core-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.yaml/snakeyaml/2.4/e0666b825b796f85521f02360e77f4c92c5a7a07/snakeyaml-2.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-databind/2.21.4/9e495680be707d466527d734368ebf36e464da2/jackson-databind-2.21.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.datatype/jackson-datatype-jdk8/2.21.4/a1b9fe3b6e8d4418fe09a1ba9a8f6640137cfb5/jackson-datatype-jdk8-2.21.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.module/jackson-module-parameter-names/2.21.4/5f1439ff7bebf7601e12a9ee7919b81ab9cb7c78/jackson-module-parameter-names-2.21.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-core/10.1.55/740c1000c60766b3a4d99903434fd1a1d67ec229/tomcat-embed-core-10.1.55.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.tomcat.embed/tomcat-embed-websocket/10.1.55/b07cf802e82f358903a07f70757a4bcbe4fece20/tomcat-embed-websocket-10.1.55.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-beans/6.2.19/6d6b4774db3b036df46be6332d93b09d70e5c147/spring-beans-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-context/6.2.19/e218e4c4ecad1e821905628b2c4ce8561d937baa/spring-context-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-expression/6.2.19/c7202d23797fa778c5ed55e502ac1a9f0d34012a/spring-expression-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.validation/jakarta.validation-api/3.0.2/92b6631659ba35ca09e44874d3eb936edfeee532/jakarta.validation-api-3.0.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jboss.logging/jboss-logging/3.6.3.Final/1cc9f976725720bb4a66f80af3e3aa6b9890d969/jboss-logging-3.6.3.Final.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml/classmate/1.7.3/f61c7e7b81e9249b0f6a05914eff9d54fb09f4a0/classmate-1.7.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-actuator/3.5.15/861e2c4717ae17995546d4d52ae59013f6da90ea/spring-boot-actuator-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-commons/1.15.12/eb539638d48571fa6ce4ea3eb8417cab37a63438/micrometer-commons-1.15.12.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-core/1.15.12/5064deed80753c36607e21d7a7439b8007f48c52/micrometer-core-1.15.12.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-core/6.5.11/d57309ff65d122a2fa45a3a8f47b01e9183cb6e6/spring-security-core-6.5.11.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.zaxxer/HikariCP/6.3.3/7c5aec1e47a97ff40977e0193018865304ea9585/HikariCP-6.3.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-jdbc/6.2.19/d7b6ea705a71dbbb4499437dd54b9217ce6c251a/spring-jdbc-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.persistence/jakarta.persistence-api/3.1.0/66901fa1c373c6aff65c13791cc11da72060a8d6/jakarta.persistence-api-3.1.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.transaction/jakarta.transaction-api/2.0.1/51a520e3fae406abb84e2e1148e6746ce3f80a1a/jakarta.transaction-api-2.0.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.data/spring-data-commons/3.5.12/9072db6ae68a3da86343769c9495afde229ef6d1/spring-data-commons-3.5.12.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-orm/6.2.19/6030d84f0f99f95a852edee7b0e8612fdf2fa863/spring-orm-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-tx/6.2.19/aa1a170d935a3c39176d27a2353c34c2861b7dc/spring-tx-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.antlr/antlr4-runtime/4.13.0/5a02e48521624faaf5ff4d99afc88b01686af655/antlr4-runtime-4.13.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-core/2.21.4/56a503ba45016714394807ea89f95f5093760089/jackson-core-2.21.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.fasterxml.jackson.core/jackson-annotations/2.21/b1bc1868bf02dc0bd6c7836257a036a331005309/jackson-annotations-2.21.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/context-propagation/1.1.4/34626ca90025962251727692c9defe18d64f6924/context-propagation-1.1.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/aopalliance/aopalliance/1.0/235ba8b489512805ac13a8f9ea77a1ca5ebe3e8/aopalliance-1.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-context/1.49.0/824271413685e92b21d0554637edb1d4446ba3d0/opentelemetry-context-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-classic/1.5.34/e598899bad5824511cd3019299254230468e1fa2/logback-classic-1.5.34.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-to-slf4j/2.24.3/da1143e2a2531ee1c2d90baa98eb50a28a39d5a7/log4j-to-slf4j-2.24.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.slf4j/jul-to-slf4j/2.0.18/79739c98001d5c9d078d087d5a348ec9e474ec8f/jul-to-slf4j-2.0.18.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework/spring-jcl/6.2.19/39b9c7d631961f3649511b08ef167420b086184b/spring-jcl-6.2.19.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-crypto/6.5.11/2cbc07fa7650ef2f49bcc5ac35e7666c79614f55/spring-security-crypto-6.5.11.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/ch.qos.logback/logback-core/1.5.34/378692f76c337b3325c15bffb89e013dc1f897b4/logback-core-1.5.34.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.apache.logging.log4j/log4j-api/2.24.3/b02c125db8b6d295adf72ae6e71af5d83bce2370/log4j-api-2.24.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-devtools/3.5.15/3088e614e8f85e81184a06880dfb8253f8772385/spring-boot-devtools-3.5.15.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.postgresql/postgresql/42.7.11/4c21cdd1b3938f400703716d37c4e8ca4d332808/postgresql-42.7.11.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.micrometer/micrometer-registry-prometheus/1.15.12/4081772a7a9b95f66de1b9738c2cbbc6241d97ae/micrometer-registry-prometheus-1.15.12.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-exporter-otlp-common/1.49.0/3cbc37d54ed2afe360b45a239a4441682449ad53/opentelemetry-exporter-otlp-common-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-exporter-sender-okhttp/1.49.0/fc22759ea44f9b874f1589e50582ac5c2c961770/opentelemetry-exporter-sender-okhttp-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-sdk-extension-autoconfigure-spi/1.49.0/8e50edb776225ff7c9fc60e34702ef748fca765d/opentelemetry-sdk-extension-autoconfigure-spi-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-core/1.3.10/30c645782bc458a4868f59a9218c8395250a9f69/prometheus-metrics-core-1.3.10.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-tracer-common/1.3.10/abf6e4d1a41d96e37b200606e121697751794a45/prometheus-metrics-tracer-common-1.3.10.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-exposition-formats/1.3.10/9f8433c962ff720dc2c83f6c2e8af069dd36a898/prometheus-metrics-exposition-formats-1.3.10.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.hibernate.common/hibernate-commons-annotations/7.0.3.Final/e183c4be8bb41d12e9f19b374e00c34a0a85f439/hibernate-commons-annotations-7.0.3.Final.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.smallrye/jandex/3.2.0/f17ad860f62a08487b9edabde608f8ac55c62fa7/jandex-3.2.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.17.8/af5735f63d00ca47a9375fae5c7471a36331c6ed/byte-buddy-1.17.8.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.xml.bind/jakarta.xml.bind-api/4.0.5/161811f36cad3c65991502e80317f2f6703361df/jakarta.xml.bind-api-4.0.5.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/jaxb-runtime/4.0.9/500c199572538675d2819c938fbafe34935d8d6b/jaxb-runtime-4.0.9.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.inject/jakarta.inject-api/2.0.1/4c28afe1991a941d7702fe1362c365f0a8641d1e/jakarta.inject-api-2.0.1.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.antlr/antlr4-runtime/4.13.2/fc3db6d844df652a3d5db31c87fa12757f13691d/antlr4-runtime-4.13.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.opentelemetry/opentelemetry-exporter-common/1.49.0/e3a7e383ee7042380a6ce9280d49c6efd8a58555/opentelemetry-exporter-common-1.49.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.squareup.okhttp3/okhttp/4.12.0/2f4525d4a200e97e1b87449c2cd9bd2e25b7e8cd/okhttp-4.12.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.hdrhistogram/HdrHistogram/2.2.2/7959933ebcc0f05b2eaa5af0a0c8689fa257b15c/HdrHistogram-2.2.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.latencyutils/LatencyUtils/2.0.3/769c0b82cb2421c8256300e907298a9410a2a3d3/LatencyUtils-2.0.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-model/1.3.10/e74c144f68e0258cbbdea64d4e387e65ebae6329/prometheus-metrics-model-1.3.10.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-config/1.3.10/4fe03e3cc60188a32385bbd4559368842815e435/prometheus-metrics-config-1.3.10.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/io.prometheus/prometheus-metrics-exposition-textformats/1.3.10/7475c21ee94b4c46ff0394a2df02b3d2c5443690/prometheus-metrics-exposition-textformats-1.3.10.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/jakarta.activation/jakarta.activation-api/2.1.4/9e5c2a0d75dde71a0bedc4dbdbe47b78a5dc50f8/jakarta.activation-api-2.1.4.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/jaxb-core/4.0.9/3f32ec949d109d666fa30994223d1c25a47b105f/jaxb-core-4.0.9.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk8/1.9.25/20d44e880a284f7b5cd99dd69450b403073f49b2/kotlin-stdlib-jdk8-1.9.25.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.eclipse.angus/angus-activation/2.0.3/7f80607ea5014fef0b1779e6c33d63a88a45a563/angus-activation-2.0.3.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.glassfish.jaxb/txw2/4.0.9/70325ebdebca3e7aae1dfa395fd41fc25d8a6f4e/txw2-4.0.9.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.sun.istack/istack-commons-runtime/4.1.2/18ec117c85f3ba0ac65409136afa8e42bc74e739/istack-commons-runtime-4.1.2.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/com.squareup.okio/okio-jvm/3.6.0/5600569133b7bdefe1daf9ec7f4abeb6d13e1786/okio-jvm-3.6.0.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib/1.9.25/f700a2f2b8f0d6d0fde48f56d894dc722fb029d7/kotlin-stdlib-1.9.25.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-stdlib-jdk7/1.9.25/1c166692314a2639e5edfed0d23ed7eee4a5c7a5/kotlin-stdlib-jdk7-1.9.25.jar:/Users/stevengantz/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/13.0/919f0dfe192fb4e063e7dacadee7f8bb9a2672a9/annotations-13.0.jar"
+        },
+        "java.vm.vendor": {
+          "value": "Eclipse Adoptium"
+        },
+        "sun.arch.data.model": {
+          "value": "64"
+        },
+        "java.vendor.url": {
+          "value": "https://adoptium.net/"
+        },
+        "catalina.useNaming": {
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> @ConfigurationProperties beans (sanitized)
+   GET /actuator/configprops
+--------------------------------------------------------------------
+HTTP 200
+{
+  "contexts": {
+    "ultimate-actuator-sb3": {
+      "beans": {
+        "demo-com.example.actuator.config.DemoProperties": {
+          "prefix": "demo",
+          "properties": {
+            "apiKey": "super-secret-value-that-configprops-will-sanitize",
+            "featureX": true,
+            "greeting": "Hello from the Ultimate Spring Boot 3 Actuator demo!"
+          },
+          "inputs": {
+            "apiKey": {
+              "value": "super-secret-value-that-configprops-will-sanitize",
+              "origin": "class path resource [application.yml] - 28:12"
+            },
+            "featureX": {
+              "value": true,
+              "origin": "class path resource [application.yml] - 27:14"
+            },
+            "greeting": {
+              "value": "Hello from the Ultimate Spring Boot 3 Actuator demo!",
+              "origin": "class path resource [application.yml] - 26:13"
+            }
+          }
+        },
+        "spring.ssl-org.springframework.boot.autoconfigure.ssl.SslProperties": {
+          "prefix": "spring.ssl",
+          "properties": {
+            "bundle": {
+              "pem": {},
+              "jks": {},
+              "watch": {
+                "file": {
+                  "quietPeriod": "PT10S"
+                }
+              }
+            }
+          },
+          "inputs": {
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Beans: every Spring bean
+   GET /actuator/beans
+--------------------------------------------------------------------
+HTTP 200
+{
+  "contexts": {
+    "ultimate-actuator-sb3": {
+      "beans": {
+        "spring.jpa-org.springframework.boot.autoconfigure.orm.jpa.JpaProperties": {
+          "aliases": [],
+          "scope": "singleton",
+          "type": "org.springframework.boot.autoconfigure.orm.jpa.JpaProperties",
+          "dependencies": []
+        },
+        "applicationTaskExecutor": {
+          "aliases": [
+            "bootstrapExecutor"
+          ],
+          "scope": "singleton",
+          "type": "org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor",
+          "resource": "class path resource [org/springframework/boot/autoconfigure/task/TaskExecutorConfigurations$TaskExecutorConfiguration.class]",
+          "dependencies": [
+            "org.springframework.boot.autoconfigure.task.TaskExecutorConfigurations$TaskExecutorConfiguration",
+            "threadPoolTaskExecutorBuilder"
+          ]
+        },
+        "healthEndpointGroups": {
+          "aliases": [],
+          "scope": "singleton",
+          "type": "org.springframework.boot.actuate.autoconfigure.availability.AvailabilityProbesHealthEndpointGroups",
+          "resource": "class path resource [org/springframework/boot/actuate/autoconfigure/health/HealthEndpointConfiguration.class]",
+          "dependencies": [
+            "org.springframework.boot.actuate.autoconfigure.health.HealthEndpointConfiguration",
+            "org.springframework.boot.web.servlet.context.AnnotationConfigServletWebServerApplicationContext@4e1bdd63",
+            "management.endpoint.health-org.springframework.boot.actuate.autoconfigure.health.HealthEndpointProperties"
+          ]
+        },
+        "management.endpoint.health-org.springframework.boot.actuate.autoconfigure.health.HealthEndpointProperties": {
+          "aliases": [],
+          "scope": "singleton",
+          "type": "org.springframework.boot.actuate.autoconfigure.health.HealthEndpointProperties",
+          "dependencies": []
+        },
+        "org.springframework.boot.autoconfigure.web.servlet.MultipartAutoConfiguration": {
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Conditions: auto-configuration report
+   GET /actuator/conditions
+--------------------------------------------------------------------
+HTTP 200
+{
+  "contexts": {
+    "ultimate-actuator-sb3": {
+      "positiveMatches": {
+        "AuditAutoConfiguration": [
+          {
+            "condition": "OnPropertyCondition",
+            "message": "@ConditionalOnBooleanProperty (management.auditevents.enabled=true) matched"
+          },
+          {
+            "condition": "OnBeanCondition",
+            "message": "@ConditionalOnBean (types: org.springframework.boot.actuate.audit.AuditEventRepository; SearchStrategy: all) found bean 'auditEventRepository'"
+          }
+        ],
+        "AuditAutoConfiguration#auditListener": [
+          {
+            "condition": "OnBeanCondition",
+            "message": "@ConditionalOnMissingBean (types: org.springframework.boot.actuate.audit.listener.AbstractAuditListener; SearchStrategy: all) did not find any beans"
+          }
+        ],
+        "AuditAutoConfiguration.AuthenticationAuditConfiguration": [
+          {
+            "condition": "OnClassCondition",
+            "message": "@ConditionalOnClass found required class 'org.springframework.security.authentication.event.AbstractAuthenticationEvent'"
+          }
+        ],
+        "AuditAutoConfiguration.AuthenticationAuditConfiguration#authenticationAuditListener": [
+          {
+            "condition": "OnBeanCondition",
+            "message": "@ConditionalOnMissingBean (types: org.springframework.boot.actuate.security.AbstractAuthenticationAuditListener; SearchStrategy: all) did not find any beans"
+          }
+        ],
+        "AuditAutoConfiguration.AuthorizationAuditConfiguration": [
+          {
+            "condition": "OnClassCondition",
+            "message": "@ConditionalOnClass found required class 'org.springframework.security.access.event.AbstractAuthorizationEvent'"
+          }
+        ],
+        "AuditAutoConfiguration.AuthorizationAuditConfiguration#authorizationAuditListener": [
+          {
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Mappings: all request mappings
+   GET /actuator/mappings
+--------------------------------------------------------------------
+HTTP 200
+{
+  "contexts": {
+    "ultimate-actuator-sb3": {
+      "mappings": {
+        "dispatcherServlets": {
+          "dispatcherServlet": [
+            {
+              "predicate": "{DELETE [/actuator/caches]}",
+              "handler": "Actuator web endpoint 'caches'",
+              "details": {
+                "handlerMethod": {
+                  "className": "org.springframework.boot.actuate.endpoint.web.servlet.AbstractWebMvcEndpointHandlerMapping.OperationHandler",
+                  "name": "handle",
+                  "descriptor": "(Ljakarta/servlet/http/HttpServletRequest;Ljava/util/Map;)Ljava/lang/Object;"
+                },
+                "requestMappingConditions": {
+                  "consumes": [],
+                  "headers": [],
+                  "methods": [
+                    "DELETE"
+                  ],
+                  "params": [],
+                  "patterns": [
+                    "/actuator/caches"
+                  ],
+                  "produces": []
+                }
+              }
+            },
+            {
+              "predicate": "{GET [/actuator/httpexchanges], produces [application/vnd.spring-boot.actuator.v3+json || application/vnd.spring-boot.actuator.v2+json || application/json]}",
+              "handler": "Actuator web endpoint 'httpexchanges'",
+              "details": {
+                "handlerMethod": {
+                  "className": "org.springframework.boot.actuate.endpoint.web.servlet.AbstractWebMvcEndpointHandlerMapping.OperationHandler",
+                  "name": "handle",
+                  "descriptor": "(Ljakarta/servlet/http/HttpServletRequest;Ljava/util/Map;)Ljava/lang/Object;"
+                },
+                "requestMappingConditions": {
+                  "consumes": [],
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Loggers: all configured levels
+   GET /actuator/loggers
+--------------------------------------------------------------------
+HTTP 200
+{
+  "levels": [
+    "OFF",
+    "ERROR",
+    "WARN",
+    "INFO",
+    "DEBUG",
+    "TRACE"
+  ],
+  "loggers": {
+    "ROOT": {
+      "configuredLevel": "INFO",
+      "effectiveLevel": "INFO"
+    },
+    "_org": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework.web": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework.web.servlet": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework.web.servlet.HandlerMapping": {
+      "effectiveLevel": "INFO"
+    },
+    "_org.springframework.web.servlet.HandlerMapping.Mappings": {
+      "effectiveLevel": "INFO"
+    },
+    "com": {
+      "effectiveLevel": "INFO"
+    },
+    "com.example": {
+      "effectiveLevel": "INFO"
+    },
+    "com.example.actuator": {
+      "configuredLevel": "DEBUG",
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Loggers: a single logger
+   GET /actuator/loggers/com.example.actuator
+--------------------------------------------------------------------
+HTTP 200
+{
+  "configuredLevel": "DEBUG",
+  "effectiveLevel": "DEBUG"
+}
+
+====================================================================
+>> Loggers: set level to DEBUG (write op)
+   POST /actuator/loggers/com.example.actuator
+--------------------------------------------------------------------
+HTTP 204
+
+
+====================================================================
+>> Thread dump
+   GET /actuator/threaddump
+--------------------------------------------------------------------
+HTTP 200
+{
+  "threads": [
+    {
+      "threadName": "Reference Handler",
+      "threadId": 14,
+      "blockedTime": -1,
+      "blockedCount": 0,
+      "waitedTime": -1,
+      "waitedCount": 0,
+      "lockOwnerId": -1,
+      "daemon": true,
+      "inNative": false,
+      "suspended": false,
+      "threadState": "RUNNABLE",
+      "priority": 10,
+      "stackTrace": [
+        {
+          "moduleName": "java.base",
+          "moduleVersion": "25",
+          "methodName": "waitForReferencePendingList",
+          "fileName": "Reference.java",
+          "lineNumber": -2,
+          "className": "java.lang.ref.Reference",
+          "nativeMethod": true
+        },
+        {
+          "moduleName": "java.base",
+          "moduleVersion": "25",
+          "methodName": "processPendingReferences",
+          "fileName": "Reference.java",
+          "lineNumber": 246,
+          "className": "java.lang.ref.Reference",
+          "nativeMethod": false
+        },
+        {
+          "moduleName": "java.base",
+          "moduleVersion": "25",
+          "methodName": "run",
+          "fileName": "Reference.java",
+          "lineNumber": 208,
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Heap dump (binary - saved to file)
+   GET /actuator/heapdump
+--------------------------------------------------------------------
+HTTP 404
+   saved 14811 bytes to /var/folders/9n/v0d30d_j3x52kjk0sq_bcwhc0000gn/T/heapdump.XXXXXX.hprof.Lwwwg9IpqW
+
+====================================================================
+>> HTTP exchanges: recent request/response history
+   GET /actuator/httpexchanges
+--------------------------------------------------------------------
+HTTP 200
+{
+  "exchanges": [
+    {
+      "timestamp": "2026-06-26T00:25:13.138723Z",
+      "request": {
+        "uri": "http://localhost:8080/actuator/heapdump",
+        "method": "GET",
+        "headers": {
+          "host": [
+            "localhost:8080"
+          ],
+          "user-agent": [
+            "curl/8.7.1"
+          ],
+          "accept": [
+            "*/*"
+          ]
+        }
+      },
+      "response": {
+        "status": 404,
+        "headers": {
+          "Vary": [
+            "Origin",
+            "Access-Control-Request-Method",
+            "Access-Control-Request-Headers"
+          ],
+          "X-Content-Type-Options": [
+            "nosniff"
+          ],
+          "X-XSS-Protection": [
+            "0"
+          ],
+          "Cache-Control": [
+            "no-cache, no-store, max-age=0, must-revalidate"
+          ],
+          "Pragma": [
+            "no-cache"
+          ],
+          "Expires": [
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Caches: managers and cache names
+   GET /actuator/caches
+--------------------------------------------------------------------
+HTTP 200
+{
+  "cacheManagers": {
+    "cacheManager": {
+      "caches": {
+        "widgets": {
+          "target": "com.github.benmanes.caffeine.cache.BoundedLocalCache$BoundedLocalManualCache"
+        }
+      }
+    }
+  }
+}
+
+====================================================================
+>> Scheduled tasks
+   GET /actuator/scheduledtasks
+--------------------------------------------------------------------
+HTTP 200
+{
+  "cron": [
+    {
+      "runnable": {
+        "target": "com.example.actuator.actuator.ScheduledMaintenanceTasks.nightlyCleanup"
+      },
+      "expression": "0 0 3 * * *",
+      "nextExecution": {
+        "time": "2026-06-26T07:00:00.001093Z"
+      }
+    }
+  ],
+  "fixedDelay": [],
+  "fixedRate": [
+    {
+      "runnable": {
+        "target": "com.example.actuator.actuator.ScheduledMaintenanceTasks.heartbeat"
+      },
+      "initialDelay": 0,
+      "interval": 60000,
+      "lastExecution": {
+        "status": "SUCCESS",
+        "time": "2026-06-26T00:25:11.642652Z"
+      },
+      "nextExecution": {
+        "time": "2026-06-26T00:26:11.638113Z"
+      }
+    }
+  ],
+  "custom": []
+}
+
+====================================================================
+>> Flyway: applied database migrations
+   GET /actuator/flyway
+--------------------------------------------------------------------
+HTTP 200
+{
+  "contexts": {
+    "ultimate-actuator-sb3": {
+      "flywayBeans": {
+        "flyway": {
+          "migrations": [
+            {
+              "type": "SQL",
+              "checksum": 1838173027,
+              "version": "1",
+              "description": "create widget table",
+              "script": "V1__create_widget_table.sql",
+              "state": "SUCCESS",
+              "installedBy": "actuator",
+              "installedOn": "2026-06-26T00:20:04.518Z",
+              "installedRank": 1,
+              "executionTime": 3
+            },
+            {
+              "type": "SQL",
+              "checksum": 1885065594,
+              "version": "2",
+              "description": "seed widgets",
+              "script": "V2__seed_widgets.sql",
+              "state": "SUCCESS",
+              "installedBy": "actuator",
+              "installedOn": "2026-06-26T00:20:04.530Z",
+              "installedRank": 2,
+              "executionTime": 1
+            }
+          ]
+        }
+      }
+    }
+  }
+}
+
+====================================================================
+>> Audit events: security + custom events
+   GET /actuator/auditevents
+--------------------------------------------------------------------
+HTTP 200
+{
+  "events": [
+    {
+      "timestamp": "2026-06-26T00:21:14.661989Z",
+      "principal": "anonymousUser",
+      "type": "AUTHORIZATION_FAILURE",
+      "data": {
+        "details": {
+          "remoteAddress": "127.0.0.1"
+        }
+      }
+    },
+    {
+      "timestamp": "2026-06-26T00:21:19.645101Z",
+      "principal": "anonymousUser",
+      "type": "AUTHORIZATION_FAILURE",
+      "data": {
+        "details": {
+          "remoteAddress": "127.0.0.1"
+        }
+      }
+    },
+    {
+      "timestamp": "2026-06-26T00:21:24.645868Z",
+      "principal": "anonymousUser",
+      "type": "AUTHORIZATION_FAILURE",
+      "data": {
+        "details": {
+          "remoteAddress": "127.0.0.1"
+        }
+      }
+    },
+    {
+      "timestamp": "2026-06-26T00:21:29.642498Z",
+      "principal": "anonymousUser",
+      "type": "AUTHORIZATION_FAILURE",
+      "data": {
+        "details": {
+          "remoteAddress": "127.0.0.1"
+        }
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Startup: application start-up step timings
+   GET /actuator/startup
+--------------------------------------------------------------------
+HTTP 200
+{
+  "timeline": {
+    "startTime": "2026-06-26T00:21:10.619599Z",
+    "events": [
+      {
+        "endTime": "2026-06-26T00:21:10.620088Z",
+        "duration": "PT0.000406S",
+        "startTime": "2026-06-26T00:21:10.619682Z",
+        "startupStep": {
+          "name": "spring.boot.application.starting",
+          "id": 0,
+          "tags": [
+            {
+              "key": "mainApplicationClass",
+              "value": "com.example.actuator.UltimateActuatorApplication"
+            }
+          ]
+        }
+      },
+      {
+        "endTime": "2026-06-26T00:21:10.630523Z",
+        "duration": "PT0.009984S",
+        "startTime": "2026-06-26T00:21:10.620539Z",
+        "startupStep": {
+          "name": "spring.boot.application.environment-prepared",
+          "id": 1,
+          "tags": []
+        }
+      },
+      {
+        "endTime": "2026-06-26T00:21:10.631220Z",
+        "duration": "PT0.000028S",
+        "startTime": "2026-06-26T00:21:10.631192Z",
+        "startupStep": {
+          "name": "spring.boot.application.context-prepared",
+          "id": 2,
+          "tags": []
+        }
+      },
+      {
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> SBOM: available SBOM ids
+   GET /actuator/sbom
+--------------------------------------------------------------------
+HTTP 200
+{
+  "ids": [
+    "application"
+  ]
+}
+
+====================================================================
+>> SBOM: application CycloneDX document
+   GET /actuator/sbom/application
+--------------------------------------------------------------------
+HTTP 200
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:d5f2fa65-befb-4917-9f5d-2f68fd50c83e",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-06-24T19:52:56Z",
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "author": "CycloneDX",
+          "name": "cyclonedx-gradle-plugin",
+          "version": "2.4.1"
+        }
+      ],
+      "services": []
+    },
+    "component": {
+      "type": "application",
+      "bom-ref": "pkg:maven/com.example/spring-boot-3-actuator@0.0.1-SNAPSHOT?project_path=%3A",
+      "group": "com.example",
+      "name": "spring-boot-3-actuator",
+      "version": "0.0.1-SNAPSHOT",
+      "purl": "pkg:maven/com.example/spring-boot-3-actuator@0.0.1-SNAPSHOT?project_path=%3A",
+      "modified": false,
+      "externalReferences": [
+        {
+          "type": "vcs",
+          "url": "https://github.com/StevenPG/DemosAndArticleContent.git"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pkg:maven/aopalliance/aopalliance@1.0?type=jar",
+      "group": "aopalliance",
+      "name": "aopalliance",
+   ... (truncated - set MAXLINES higher to see the rest)
+
+====================================================================
+>> Custom @Endpoint: all feature flags (read)
+   GET /actuator/featureflags
+--------------------------------------------------------------------
+HTTP 200
+{
+  "new-checkout": true
+}
+
+====================================================================
+>> Custom @Endpoint: single flag (read + @Selector)
+   GET /actuator/featureflags/beta-search
+--------------------------------------------------------------------
+HTTP 404
+{
+  "enabled": false,
+  "name": "beta-search"
+}
+
+====================================================================
+>> Custom @Endpoint: enable a flag (write op)
+   POST /actuator/featureflags/new-checkout
+--------------------------------------------------------------------
+HTTP 200
+{
+  "enabled": true,
+  "name": "new-checkout"
+}
+
+====================================================================
+>> Custom @Endpoint: delete a flag (delete op)
+   DELETE /actuator/featureflags/beta-search
+--------------------------------------------------------------------
+HTTP 204
+
+
+====================================================================
+>> Custom @WebEndpoint: release notes
+   GET /actuator/releasenotes
+--------------------------------------------------------------------
+HTTP 200
+{
+  "current": "1.4.0",
+  "highlights": [
+    "Added the /actuator/featureflags custom endpoint",
+    "Wired Prometheus + OpenTelemetry tracing",
+    "Liveness/readiness probes for Kubernetes"
+  ]
+}
+
+====================================================================
+>> Shutdown: SKIPPED
+   POST /actuator/shutdown stops the app. Re-run with INCLUDE_SHUTDOWN=1 to call it.
+
+Done.
