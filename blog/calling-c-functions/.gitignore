@@ -1,0 +1,12 @@
+# C library build output
+c-library/build/
+
+# Rust
+rust/target/
+rust/Cargo.lock
+
+# Java single-file run artifacts (if any class files are emitted)
+java/*.class
+
+# Go
+golang/mathlib-demo
