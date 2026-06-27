@@ -1,0 +1,9 @@
+[package]
+name = "mathlib-demo"
+version = "0.1.0"
+edition = "2024"
+# No third-party dependencies: the C interop uses only `std` + a build script.
+
+[[bin]]
+name = "mathlib-demo"
+path = "src/main.rs"
