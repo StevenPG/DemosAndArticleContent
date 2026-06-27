@@ -1,0 +1,58 @@
+
+========== Building C library ==========
+cc -O2 -Wall -Wextra -fPIC -Iinclude -dynamiclib -install_name @rpath/libmathlib.dylib -o build/libmathlib.dylib src/mathlib.c
+Built build/libmathlib.dylib
+
+========== Python (ctypes) ==========
+== scalars ==
+add(2, 3)        = 5
+fibonacci(20)    = 6765
+
+== strings ==
+greet("Ada")     = Hello, Ada!
+
+== structs & arrays ==
+distance(a, b)   = 5.0
+midpoint(a, b)   = Point(x=1.5, y=2.0)
+sum_array(1..10) = 55
+
+========== Java (FFM / Panama) ==========
+== scalars ==
+add(2, 3)        = 5
+fibonacci(20)    = 6765
+
+== strings ==
+greet("Ada")     = Hello, Ada!
+
+== structs & arrays ==
+distance(a, b)   = 5.0
+midpoint(a, b)   = Point(x=1.5, y=2.0)
+sum_array(1..10) = 55
+
+========== Rust (extern "C") ==========
+== scalars ==
+add(2, 3)        = 5
+fibonacci(20)    = 6765
+
+== strings ==
+greet("Ada")     = Hello, Ada!
+
+== structs & arrays ==
+distance(a, b)   = 5
+midpoint(a, b)   = Point { x: 1.5, y: 2 }
+sum_array(1..10) = 55
+
+========== Go (cgo) ==========
+== scalars ==
+add(2, 3)        = 5
+fibonacci(20)    = 6765
+
+== strings ==
+greet("Ada")     = Hello, Ada!
+
+== structs & arrays ==
+distance(a, b)   = 5
+midpoint(a, b)   = Point{x: 1.5, y: 2}
+sum_array(1..10) = 55
+
+========== Done ==========
