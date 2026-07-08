@@ -4,14 +4,20 @@
  * =========================================================================
  *
  * Note what is absent: no spring-boot-starter-webmvc, no Tomcat. This
- * service speaks only gRPC. Spring gRPC boots a Netty-based gRPC server on
+ * service speaks only gRPC. Spring Boot boots a Netty-based gRPC server on
  * port 9090 (configurable via spring.grpc.server.port).
  *
- * If you DO add a web starter alongside spring-grpc, Spring gRPC can
- * instead mount the gRPC services on the servlet container so HTTP and
- * gRPC share one port - see the spring-grpc-server-web-spring-boot-starter
- * artifact. We keep them separate here because it is the more common
- * production topology.
+ * NEW IN SPRING BOOT 4.1: gRPC support is a first-party Spring Boot
+ * feature. The starters live under org.springframework.boot
+ * (spring-boot-starter-grpc-server / -client), built on the Spring gRPC
+ * project's core (org.springframework.grpc:spring-grpc-core), and Boot's
+ * own BOM manages every io.grpc and protobuf version. Before 4.1 you wired
+ * the standalone Spring gRPC starters (or third-party ones) yourself.
+ *
+ * If you DO add a web starter alongside, the gRPC services can instead be
+ * mounted on the servlet container so HTTP and gRPC share one port
+ * (spring.grpc.server.servlet.enabled). We keep them separate here because
+ * it is the more common production topology.
  */
 plugins {
     java
@@ -26,30 +32,22 @@ java {
 }
 
 dependencies {
-    // Pins every io.grpc/protobuf artifact to versions tested with Spring gRPC.
-    implementation(platform("org.springframework.grpc:spring-grpc-dependencies:1.0.3"))
-
     // The shared contract: generated messages + service base classes.
     implementation(project(":inventory-proto"))
 
-    // Spring gRPC autoconfiguration: discovers every BindableService bean,
-    // builds the Netty server, applies interceptors/exception handlers,
-    // wires health + reflection services, etc.
-    implementation("org.springframework.grpc:spring-grpc-spring-boot-starter")
+    // Spring Boot 4.1's first-party gRPC server starter: discovers every
+    // BindableService bean, builds the Netty server, applies interceptors
+    // and exception handlers, and registers the standard reflection and
+    // health services (it brings io.grpc:grpc-services along). All
+    // versions are managed by Boot's own BOM - no extra platform needed.
+    implementation("org.springframework.boot:spring-boot-starter-grpc-server")
 
-    // grpc-services contributes the standard reflection service (used by
-    // grpcurl/Postman to discover the API at runtime) and the standard
-    // health service (grpc.health.v1.Health). Spring gRPC auto-registers
-    // both when this artifact is on the classpath.
-    implementation("io.grpc:grpc-services")
-
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-
-    // Spring gRPC test support: @AutoConfigureInProcessTransport swaps the
-    // Netty server for gRPC's in-process transport so integration tests
-    // exercise the full stack (marshalling, interceptors, exception
-    // handlers) without opening a real port.
-    testImplementation("org.springframework.grpc:spring-grpc-test")
+    // Boot 4.1's gRPC test starter: @AutoConfigureTestGrpcTransport swaps
+    // the Netty server for gRPC's in-process transport so integration
+    // tests exercise the full stack (marshalling, interceptors, exception
+    // handlers) without opening a real port. Includes
+    // spring-boot-starter-test transitively.
+    testImplementation("org.springframework.boot:spring-boot-starter-grpc-server-test")
 }
 
 tasks.withType<Test> {

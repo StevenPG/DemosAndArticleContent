@@ -21,8 +21,6 @@ java {
 }
 
 dependencies {
-    implementation(platform("org.springframework.grpc:spring-grpc-dependencies:1.0.3"))
-
     // Same shared contract as the server - the whole point of the
     // inventory-proto module.
     implementation(project(":inventory-proto"))
@@ -35,9 +33,10 @@ dependencies {
     // know when the app is up.
     implementation("org.springframework.boot:spring-boot-starter-actuator")
 
-    // Client-side Spring gRPC: channel management from configuration
-    // properties, client interceptors, and (optionally) stub beans.
-    implementation("org.springframework.grpc:spring-grpc-client-spring-boot-starter")
+    // Spring Boot 4.1's first-party gRPC client starter: named channels
+    // from configuration properties, client interceptors, and (optionally)
+    // auto-registered stub beans. Versions come from Boot's own BOM.
+    implementation("org.springframework.boot:spring-boot-starter-grpc-client")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

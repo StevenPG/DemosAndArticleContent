@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.grpc.test.autoconfigure.AutoConfigureInProcessTransport;
+import org.springframework.boot.grpc.test.autoconfigure.AutoConfigureTestGrpcTransport;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.grpc.client.GrpcChannelFactory;
 
@@ -32,15 +32,16 @@ import static org.assertj.core.api.Assertions.catchThrowableOfType;
 /**
  * Full-stack integration test WITHOUT opening a network port.
  *
- * <p>{@code @AutoConfigureInProcessTransport} (from spring-grpc-test) swaps
- * the Netty server for gRPC's in-process transport. Requests still flow
- * through the complete server pipeline - interceptors, exception handlers,
- * marshalling - so this tests exactly what production runs, minus TCP.
- * The {@link GrpcChannelFactory} injected here hands back an in-process
- * channel regardless of the address we pass it.
+ * <p>{@code @AutoConfigureTestGrpcTransport} (from Boot 4.1's
+ * spring-boot-starter-grpc-server-test) swaps the Netty server for gRPC's
+ * in-process transport. Requests still flow through the complete server
+ * pipeline - interceptors, exception handlers, marshalling - so this tests
+ * exactly what production runs, minus TCP. The {@link GrpcChannelFactory}
+ * injected here hands back an in-process channel regardless of the address
+ * we pass it.
  */
 @SpringBootTest
-@AutoConfigureInProcessTransport
+@AutoConfigureTestGrpcTransport
 class InventoryGrpcServiceIntegrationTest {
 
     @Autowired

@@ -1,7 +1,8 @@
 # Ultimate Guide to gRPC in Spring Boot 4.1 — Companion Project
 
-A complete, heavily-commented, two-service gRPC system built on **Spring Boot 4.1**
-and **Spring gRPC 1.0** (`org.springframework.grpc`). It demonstrates every major
+A complete, heavily-commented, two-service gRPC system built on **Spring Boot 4.1's
+first-party gRPC support** (`spring-boot-starter-grpc-server` / `-client`,
+new in 4.1). It demonstrates every major
 gRPC feature you'd use in production — all four RPC method types, shared proto
 contracts with build-time code generation, interceptors on both sides, exception
 handling, deadlines, health, reflection, and in-process testing — across two
@@ -95,15 +96,28 @@ Each file explains its side of the story in comments.
 
 ---
 
-## Spring Boot + gRPC: what Spring gRPC gives you
+## Spring Boot + gRPC: a short history, and what 4.1 changes
 
-Historically, gRPC in Spring Boot meant third-party starters
-(`grpc-spring-boot-starter` from yidongnan/grpc-ecosystem, or LogNet's). Since
-2024 there is an **official Spring project** — [Spring gRPC](https://docs.spring.io/spring-grpc/reference/)
-(`org.springframework.grpc`, 1.0 GA) — and it is what Spring Boot 4.x users
-should reach for. What it autoconfigures:
+gRPC in Spring Boot has gone through three eras:
 
-**Server side** (`spring-grpc-spring-boot-starter`):
+1. **Third-party starters** (yidongnan / grpc-ecosystem's
+   `grpc-spring-boot-starter`, LogNet's) — community-maintained, widely used,
+   never official.
+2. **Spring gRPC** (`org.springframework.grpc`, 1.0 GA in late 2025) — the
+   official Spring project ([docs](https://docs.spring.io/spring-grpc/reference/))
+   providing standalone starters for Boot 3.x/4.0.
+3. **Spring Boot 4.1: gRPC is a first-party Boot feature.** The
+   autoconfiguration moved into Boot itself. You now depend on
+   `org.springframework.boot:spring-boot-starter-grpc-server` and
+   `spring-boot-starter-grpc-client` (plus `-test` variants), Boot's own BOM
+   manages every `io.grpc:*` and `protobuf-java` version, and the programming
+   model (still the Spring gRPC core: `@GlobalServerInterceptor`,
+   `GrpcExceptionHandler`, `GrpcChannelFactory`...) comes along transitively.
+   No third-party anything, no extra BOM.
+
+This project uses the Boot 4.1 starters. What they autoconfigure:
+
+**Server side** (`spring-boot-starter-grpc-server`):
 
 - Boots a Netty gRPC server (default port 9090; servlet-embedded mode exists
   too if you want gRPC and MVC sharing one port).
@@ -112,15 +126,15 @@ should reach for. What it autoconfigures:
 - Applies `@GlobalServerInterceptor` beans to every service.
 - Routes exceptions through `GrpcExceptionHandler` beans (the gRPC analog of
   `@RestControllerAdvice`).
-- Registers the standard **reflection** and **health** services when
-  `io.grpc:grpc-services` is present.
+- Registers the standard **reflection** and **health** services
+  (`io.grpc:grpc-services` ships with the starter).
 - Everything under `spring.grpc.server.*`: port, TLS via SSL bundles,
   keep-alive, message size limits, graceful shutdown.
 
-**Client side** (`spring-grpc-client-spring-boot-starter`):
+**Client side** (`spring-boot-starter-grpc-client`):
 
-- **Named channels from configuration** — `spring.grpc.client.channels.<name>.*`
-  holds the address, TLS, and keep-alive settings; code asks
+- **Named channels from configuration** — `spring.grpc.client.channel.<name>.*`
+  holds the target, TLS, and keep-alive settings; code asks
   `GrpcChannelFactory` for the channel by name. Environments override config,
   not code.
 - Applies `@GlobalClientInterceptor` beans to every channel.
@@ -128,9 +142,9 @@ should reach for. What it autoconfigures:
   automatically (this project builds them explicitly in `GrpcClientConfig`
   so you can see the moving parts).
 
-The BOM `org.springframework.grpc:spring-grpc-dependencies` pins matching
-versions of `io.grpc:*` and `protobuf-java` — use it and never chase version
-skew between codegen and runtime.
+Because Boot's BOM manages `io.grpc:*` and `protobuf-java`, the only place
+versions appear at all is `inventory-proto/build.gradle.kts`, where the
+protoc/codegen versions are pinned to match.
 
 ---
 
@@ -176,7 +190,7 @@ Key points worth featuring:
 | Server streaming → **Server-Sent Events** bridge | `StorefrontController.streamStock` |
 | Channel configuration: `static://` addresses, plaintext vs TLS, keep-alive | `storefront-client/.../application.yml` |
 | Server configuration: port, reflection, health, graceful shutdown | `inventory-server/.../application.yml` |
-| **In-process transport testing** (`@AutoConfigureInProcessTransport`) | `InventoryGrpcServiceIntegrationTest` |
+| **In-process transport testing** (`@AutoConfigureTestGrpcTransport`) | `InventoryGrpcServiceIntegrationTest` |
 | Reflection service + grpcurl workflow | `scripts/grpcurl-examples.sh` |
 | Standard health service (`grpc.health.v1.Health`, k8s probes) | `application.yml` + grpcurl script |
 | Domain model vs wire model separation | `ProductRecord` + mapping helpers |
@@ -200,8 +214,9 @@ Key points worth featuring:
 ## Testing story
 
 - **`inventory-server`** runs full-stack integration tests over gRPC's
-  **in-process transport** (`@AutoConfigureInProcessTransport` from
-  `spring-grpc-test`): real marshalling, real interceptors, real exception
+  **in-process transport** (`@AutoConfigureTestGrpcTransport` from
+  `spring-boot-starter-grpc-server-test`): real marshalling, real
+  interceptors, real exception
   handlers — no network port. All four RPC types are covered, including the
   async streaming calls.
 - **`storefront-client`** verifies the Spring context: channel properties
@@ -265,8 +280,8 @@ If clients see `UNKNOWN`, your server is missing an exception handler — see
 | Component | Version |
 |---|---|
 | Java | 21 |
-| Spring Boot | 4.1.0 |
-| Spring gRPC | 1.0.3 (`spring-grpc-dependencies` BOM) |
-| grpc-java | 1.77.1 (via BOM) |
-| protobuf | 4.33.4 (via BOM) |
+| Spring Boot | 4.1.0 (gRPC starters are part of Boot as of 4.1) |
+| spring-grpc-core | 1.1.0 (managed by Boot's BOM) |
+| grpc-java | 1.80.0 (managed by Boot's BOM) |
+| protobuf | 4.34.2 (managed by Boot's BOM) |
 | protobuf Gradle plugin | 0.9.5 |

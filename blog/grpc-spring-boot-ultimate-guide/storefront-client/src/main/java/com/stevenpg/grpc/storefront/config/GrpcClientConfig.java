@@ -26,10 +26,11 @@ import io.grpc.ManagedChannel;
  *       baked in here.</li>
  * </ul>
  *
- * <p>Spring gRPC's {@link GrpcChannelFactory} resolves the name "inventory"
- * against configuration - see {@code spring.grpc.client.channels.inventory}
- * in application.yml - and applies every {@code @GlobalClientInterceptor}
- * bean to the channels it creates.
+ * <p>The {@link GrpcChannelFactory} (autoconfigured by Boot 4.1's gRPC
+ * client starter) resolves the name "inventory" against configuration -
+ * see {@code spring.grpc.client.channel.inventory} in application.yml -
+ * and applies every {@code @GlobalClientInterceptor} bean to the channels
+ * it creates.
  *
  * <p>Alternative worth knowing: instead of declaring stub beans manually,
  * {@code @ImportGrpcClients(target = "inventory", types = ...)} registers

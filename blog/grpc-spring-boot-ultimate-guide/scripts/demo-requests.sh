@@ -31,7 +31,8 @@ banner "2. UNARY with deadline - GET /api/products/SKU-0003 (GetProduct RPC)"
 curl -sf "$BASE/products/SKU-0003" | "${PRETTY[@]}"
 
 banner "3. ERROR MAPPING - unknown SKU -> gRPC NOT_FOUND -> HTTP 404"
-curl -s -w "\nHTTP status: %{http_code}\n" "$BASE/products/SKU-9999" | "${PRETTY[@]}" || true
+curl -s "$BASE/products/SKU-9999" | "${PRETTY[@]}" || true
+echo "HTTP status: $(curl -s -o /dev/null -w '%{http_code}' "$BASE/products/SKU-9999")"
 
 banner "4. SERVER STREAMING - live stock feed as Server-Sent Events (WatchStock RPC)"
 echo "(each event below was pushed by the server in real time, ~400ms apart)"

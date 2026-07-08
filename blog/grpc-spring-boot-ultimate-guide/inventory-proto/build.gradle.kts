@@ -32,18 +32,20 @@ java {
 
 /*
  * Versions of the protobuf compiler and the gRPC codegen plugin.
- * These match the versions managed by the Spring gRPC BOM
- * (spring-grpc-dependencies:1.0.3) used by the service modules, so the
- * generated code and the runtime libraries line up exactly.
+ * These match the versions Spring Boot 4.1's own BOM manages (Boot 4.1
+ * imports grpc-bom and protobuf-bom), so the code generated here lines up
+ * exactly with the runtime libraries the service modules resolve.
  */
-val protobufVersion = "4.33.4"
-val grpcVersion = "1.77.1"
+val protobufVersion = "4.34.2"
+val grpcVersion = "1.80.0"
 
 dependencies {
-    // The Spring gRPC BOM pins protobuf-java, grpc-stub, grpc-protobuf, etc.
-    // Using `api(platform(...))` exports those version constraints to every
-    // module that depends on inventory-proto.
-    api(platform("org.springframework.grpc:spring-grpc-dependencies:1.0.3"))
+    // Pin the gRPC/protobuf runtime for this module (and export the
+    // constraints to dependents via `api(platform(...))`). The service
+    // modules get the same versions from Spring Boot's dependency
+    // management - these BOMs exist so the versions are stated once.
+    api(platform("io.grpc:grpc-bom:$grpcVersion"))
+    api(platform("com.google.protobuf:protobuf-bom:$protobufVersion"))
 
     // Runtime libraries the *generated* code needs:
     api("io.grpc:grpc-protobuf")            // marshals protobuf messages over gRPC
