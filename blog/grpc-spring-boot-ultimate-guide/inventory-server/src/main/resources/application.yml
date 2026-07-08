@@ -1,0 +1,37 @@
+# =========================================================================
+#  inventory-server configuration
+# =========================================================================
+spring:
+  application:
+    name: inventory-server
+
+  grpc:
+    server:
+      # The gRPC listen port. 9090 is the default; set it explicitly anyway
+      # so readers see where it comes from.
+      port: 9090
+
+      # The standard gRPC reflection service (grpc.reflection.v1) lets tools
+      # like grpcurl and Postman discover services and message schemas at
+      # runtime - no .proto files needed on the caller's side. Enabled by
+      # default when io.grpc:grpc-services is on the classpath (the server
+      # starter brings it); disable it in locked-down production
+      # environments if you prefer.
+      reflection:
+        enabled: true
+
+      # The standard gRPC health service (grpc.health.v1.Health). Load
+      # balancers and Kubernetes (grpc_health_probe / native gRPC probes)
+      # use this to decide whether to route traffic here.
+      health:
+        enabled: true
+
+      # How long the server waits for in-flight RPCs when shutting down.
+      shutdown:
+        grace-period: 10s
+
+logging:
+  level:
+    # Watch Spring Boot wire the gRPC server together at startup.
+    org.springframework.grpc: info
+    org.springframework.boot.grpc: info

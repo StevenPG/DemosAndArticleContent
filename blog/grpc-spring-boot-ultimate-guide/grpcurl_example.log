@@ -1,0 +1,82 @@
+==> Which services does the server expose? (reflection)
+grpc.health.v1.Health
+grpc.reflection.v1.ServerReflection
+inventory.v1.InventoryService
+
+==> What methods does InventoryService have?
+inventory.v1.InventoryService.GetProduct
+inventory.v1.InventoryService.ListProducts
+inventory.v1.InventoryService.ProcessOrders
+inventory.v1.InventoryService.RecordShipments
+inventory.v1.InventoryService.WatchStock
+
+==> Full schema of a method, straight from the server
+inventory.v1.InventoryService.GetProduct is a method:
+rpc GetProduct ( .inventory.v1.GetProductRequest ) returns ( .inventory.v1.Product );
+
+==> UNARY call (JSON in, JSON out - grpcurl transcodes to protobuf)
+{
+  "sku": "SKU-0001",
+  "name": "Mechanical Keyboard",
+  "description": "Tenkeyless mechanical keyboard with hot-swappable switches",
+  "price_cents": "12999",
+  "currency": "USD",
+  "quantity_available": 87,
+  "category": "PRODUCT_CATEGORY_ELECTRONICS",
+  "updated_at": "2026-07-08T02:52:15.027625Z"
+}
+
+==> SERVER STREAMING - watch each message arrive live
+{
+  "sku": "SKU-0004",
+  "quantity_available": 116,
+  "sale": {
+    "units_sold": 2
+  },
+  "occurred_at": "2026-07-08T02:52:22.558128Z"
+}
+{
+  "sku": "SKU-0004",
+  "quantity_available": 118,
+  "restock": {
+    "units_added": 2,
+    "supplier": "Acme Wholesale"
+  },
+  "occurred_at": "2026-07-08T02:52:22.963074Z"
+}
+{
+  "sku": "SKU-0004",
+  "quantity_available": 117,
+  "sale": {
+    "units_sold": 1
+  },
+  "occurred_at": "2026-07-08T02:52:23.363802Z"
+}
+
+==> CLIENT STREAMING - multiple JSON objects on stdin become the stream
+{
+  "shipments_received": 2,
+  "total_units_added": 9,
+  "updated_quantities": {
+    "SKU-0002": 37,
+    "SKU-0003": 9
+  }
+}
+
+==> BIDIRECTIONAL STREAMING
+{
+  "order_id": "g-1",
+  "result": "RESULT_CONFIRMED",
+  "message": "Confirmed - 86 units remaining",
+  "total_price_cents": "12999"
+}
+{
+  "order_id": "g-2",
+  "result": "RESULT_REJECTED_UNKNOWN_SKU",
+  "message": "Unknown SKU SKU-9999"
+}
+
+==> Standard health service (what k8s gRPC probes call)
+{
+  "status": "SERVING"
+}
