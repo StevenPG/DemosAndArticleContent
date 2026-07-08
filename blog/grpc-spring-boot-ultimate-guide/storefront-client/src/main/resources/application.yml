@@ -1,0 +1,47 @@
+# =========================================================================
+#  storefront-client configuration
+# =========================================================================
+spring:
+  application:
+    name: storefront-client
+
+  grpc:
+    client:
+      channels:
+        # A NAMED channel. GrpcChannelFactory.createChannel("inventory")
+        # resolves to this block - address, TLS, keep-alive, all in config
+        # instead of code, and overridable per environment
+        # (e.g. SPRING_GRPC_CLIENT_CHANNELS_INVENTORY_ADDRESS in k8s).
+        inventory:
+          # "static://" = a fixed host list (no name-resolver discovery).
+          # Other schemes: dns:///inventory.svc:9090 for DNS-based
+          # round-robin, or a custom NameResolver for service meshes.
+          address: "static://localhost:9090"
+
+          # Plaintext for the local demo. In production flip to TLS with a
+          # Spring SSL bundle:
+          #   negotiation-type: tls
+          #   ssl.bundle: inventory-tls
+          negotiation-type: plaintext
+
+          # HTTP/2 keep-alive pings detect half-dead connections (NAT/LB
+          # silently dropping idle TCP) far faster than TCP timeouts.
+          enable-keep-alive: true
+          keep-alive-time: 30s
+          keep-alive-timeout: 5s
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.stevenpg.grpc.storefront: info

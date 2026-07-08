@@ -1,0 +1,231 @@
+// ===========================================================================
+//  inventory.proto - the single source of truth for the Inventory API
+// ===========================================================================
+//
+// In gRPC, the .proto file IS the API. From this one file, protoc generates:
+//   - Java message classes  (Product, GetProductRequest, ...)
+//   - A server base class   (InventoryServiceGrpc.InventoryServiceImplBase)
+//   - Client stubs          (blocking, async, and future variants)
+// ...and it could just as easily generate Go, Python, TypeScript, etc.
+//
+// Contrast with REST: instead of documenting endpoints in an OpenAPI spec
+// and hoping client code matches, the contract here is compiled and
+// type-checked on BOTH sides of the wire.
+
+// proto3 is the current protobuf language version. All fields are optional
+// by default and unset scalar fields serialize to nothing (zero bytes).
+syntax = "proto3";
+
+// Package versioning convention: suffix the package with `v1` so a breaking
+// redesign can live at inventory.v2 while v1 keeps serving old clients.
+package inventory.v1;
+
+// -- Java codegen options ---------------------------------------------------
+
+// Generate each message as its own top-level class instead of nesting them
+// all inside one giant outer class. Purely ergonomic.
+option java_multiple_files = true;
+
+// The Java package for generated code (independent of the proto package).
+option java_package = "com.stevenpg.grpc.inventory.proto";
+
+// Name of the outer class that holds file-level metadata.
+option java_outer_classname = "InventoryProto";
+
+// -- Imports ------------------------------------------------------------
+
+// "Well-known types" shipped with protobuf itself. Timestamp is the
+// canonical way to put a point-in-time on the wire (seconds + nanos, UTC).
+import "google/protobuf/timestamp.proto";
+
+// ===========================================================================
+//  The service definition - all four gRPC method types in one service
+// ===========================================================================
+//
+// gRPC supports exactly four shapes of RPC, defined by whether each side
+// sends one message or a stream of messages:
+//
+//   1. Unary            : client sends 1 request, server sends 1 response
+//   2. Server streaming : client sends 1 request, server sends N responses
+//   3. Client streaming : client sends N requests, server sends 1 response
+//   4. Bidirectional    : both sides stream, interleaved however they like
+//
+// All four run over a single HTTP/2 connection; streams are cheap.
+service InventoryService {
+
+  // ---- 1. UNARY -----------------------------------------------------------
+  // The classic request/response call - the gRPC equivalent of
+  // `GET /products/{sku}`. If the SKU is unknown the server responds with
+  // gRPC status NOT_FOUND (see GrpcExceptionConfig in inventory-server).
+  rpc GetProduct(GetProductRequest) returns (Product);
+
+  // Another unary call, returning a message with a `repeated` field -
+  // the equivalent of `GET /products`. Use this shape when the full result
+  // comfortably fits in one message.
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+
+  // ---- 2. SERVER STREAMING --------------------------------------------
+  // The client asks once, then the server pushes updates until it decides
+  // to stop (or the client cancels). Perfect for live dashboards, tailing
+  // logs, market data feeds... Here: a live feed of stock-level changes.
+  //
+  // `stream` before the RESPONSE type marks this as server streaming.
+  rpc WatchStock(WatchStockRequest) returns (stream StockUpdate);
+
+  // ---- 3. CLIENT STREAMING --------------------------------------------
+  // The client pushes many messages, the server replies once when the
+  // stream completes. Ideal for uploads and batch ingestion - the server
+  // can aggregate as messages arrive instead of buffering a giant payload.
+  // Here: a warehouse worker scanning incoming shipments one by one.
+  //
+  // `stream` before the REQUEST type marks this as client streaming.
+  rpc RecordShipments(stream Shipment) returns (ShipmentSummary);
+
+  // ---- 4. BIDIRECTIONAL STREAMING -------------------------------------
+  // Both sides stream independently over one call. The server can answer
+  // each message as it arrives (request/response pipelining, as done here)
+  // or produce completely unsolicited messages (chat, presence, gaming).
+  // Here: a point-of-sale terminal streaming orders while the server
+  // streams back per-order results in real time.
+  rpc ProcessOrders(stream OrderRequest) returns (stream OrderStatus);
+}
+
+// ===========================================================================
+//  Messages
+// ===========================================================================
+//
+// Field numbers (the `= 1`, `= 2` tags) - not field NAMES - are what goes on
+// the wire. Rules to live by:
+//   - Never reuse or renumber an existing field.
+//   - Renaming a field is safe (wire format only cares about numbers).
+//   - Removing a field? `reserve` its number so it is never recycled.
+//   - Numbers 1-15 encode in a single byte; give them to hot fields.
+
+// A product in the catalog.
+message Product {
+  // Stock-keeping unit - the natural key for a product, e.g. "SKU-0001".
+  string sku = 1;
+
+  string name = 2;
+  string description = 3;
+
+  // Money as an integer number of cents. NEVER use float/double for money -
+  // protobuf doubles have the same rounding problems they have everywhere.
+  int64 price_cents = 4;
+
+  // Currency code (ISO 4217), e.g. "USD".
+  string currency = 5;
+
+  // Units currently on hand across all warehouses.
+  int32 quantity_available = 6;
+
+  // Enums get a wire-efficient varint encoding and generated Java enums.
+  ProductCategory category = 7;
+
+  // Well-known type in action: when this record last changed.
+  google.protobuf.Timestamp updated_at = 8;
+}
+
+// proto3 enums MUST have a zero value, and by convention it is an
+// UNSPECIFIED sentinel: a missing/unset enum field reads as 0, and you want
+// "unset" to be distinguishable from a real value.
+enum ProductCategory {
+  PRODUCT_CATEGORY_UNSPECIFIED = 0;
+  PRODUCT_CATEGORY_ELECTRONICS = 1;
+  PRODUCT_CATEGORY_BOOKS = 2;
+  PRODUCT_CATEGORY_APPAREL = 3;
+  PRODUCT_CATEGORY_GROCERY = 4;
+}
+
+message GetProductRequest {
+  string sku = 1;
+}
+
+message ListProductsRequest {
+  // Optional filter; PRODUCT_CATEGORY_UNSPECIFIED (0) means "no filter".
+  ProductCategory category = 1;
+}
+
+message ListProductsResponse {
+  // `repeated` = a list. On the wire it is just the same field number
+  // appearing multiple times.
+  repeated Product products = 1;
+}
+
+message WatchStockRequest {
+  string sku = 1;
+
+  // How many updates the server should emit before completing the stream.
+  // A real system would stream until cancellation; a bounded stream keeps
+  // the demo deterministic. 0 falls back to a server-side default.
+  int32 max_updates = 2;
+}
+
+message StockUpdate {
+  string sku = 1;
+  int32 quantity_available = 2;
+
+  // What caused this update. A `oneof` means AT MOST ONE of these fields is
+  // set - protobuf's tagged union. Setting one automatically clears the
+  // others, and generated code exposes a ReasonCase enum to switch on.
+  oneof reason {
+    Sale sale = 3;
+    Restock restock = 4;
+  }
+
+  google.protobuf.Timestamp occurred_at = 5;
+
+  message Sale {
+    int32 units_sold = 1;
+  }
+
+  message Restock {
+    int32 units_added = 1;
+    string supplier = 2;
+  }
+}
+
+// One scanned delivery in a client-streaming upload.
+message Shipment {
+  string sku = 1;
+  int32 quantity = 2;
+  string supplier = 3;
+}
+
+// The single response summarizing an entire client-streamed batch.
+message ShipmentSummary {
+  int32 shipments_received = 1;
+  int32 total_units_added = 2;
+
+  // map<K,V> generates a real java.util.Map on both sides.
+  // Here: SKU -> new stock level after the batch was applied.
+  map<string, int32> updated_quantities = 3;
+}
+
+// One order flowing client -> server on the bidirectional stream.
+message OrderRequest {
+  // Client-chosen ID so responses can be correlated to requests - REQUIRED
+  // PRACTICE in bidirectional streaming, because nothing else ties a
+  // response message to the request that caused it.
+  string order_id = 1;
+  string sku = 2;
+  int32 quantity = 3;
+}
+
+// One result flowing server -> client on the bidirectional stream.
+message OrderStatus {
+  // Echoes OrderRequest.order_id for correlation.
+  string order_id = 1;
+  Result result = 2;
+  string message = 3;
+
+  // Total charged for the order, in cents (0 when rejected).
+  int64 total_price_cents = 4;
+
+  enum Result {
+    RESULT_UNSPECIFIED = 0;
+    RESULT_CONFIRMED = 1;
+    RESULT_REJECTED_OUT_OF_STOCK = 2;
+    RESULT_REJECTED_UNKNOWN_SKU = 3;
+  }
+}
