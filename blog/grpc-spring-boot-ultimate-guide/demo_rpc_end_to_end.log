@@ -1,0 +1,137 @@
+
+===================================================================
+  1. UNARY - GET /api/products (ListProducts RPC)
+===================================================================
+[
+  {
+    "sku": "SKU-0001",
+    "name": "Mechanical Keyboard",
+    "description": "Tenkeyless mechanical keyboard with hot-swappable switches",
+    "price": "129.99 USD",
+    "quantityAvailable": 65,
+    "category": "ELECTRONICS",
+    "updatedAt": "2026-07-08T02:41:38.887747Z"
+  },
+  {
+    "sku": "SKU-0002",
+    "name": "USB-C Dock",
+    "description": "11-in-1 USB-C docking station, dual 4K output",
+    "price": "89.50 USD",
+    "quantityAvailable": 20,
+    "category": "ELECTRONICS",
+    "updatedAt": "2026-07-08T02:41:38.793452Z"
+  },
+  {
+    "sku": "SKU-0003",
+    "name": "Distributed Systems Field Guide",
+    "description": "600 pages of consensus, clocks, and cautionary tales",
+    "price": "45.99 USD",
+    "quantityAvailable": 5,
+    "category": "BOOKS",
+    "updatedAt": "2026-07-08T02:41:27.368488Z"
+  },
+  {
+    "sku": "SKU-0004",
+    "name": "Conference Hoodie",
+    "description": "Soft-touch hoodie, unisex fit",
+    "price": "38.00 USD",
+    "quantityAvailable": 119,
+    "category": "APPAREL",
+    "updatedAt": "2026-07-08T02:41:38.888510Z"
+  },
+  {
+    "sku": "SKU-0005",
+    "name": "Cold Brew Concentrate",
+    "description": "1L cold brew concentrate, makes 8 cups",
+    "price": "14.99 USD",
+    "quantityAvailable": 60,
+    "category": "GROCERY",
+    "updatedAt": "2026-07-08T02:41:38.793331Z"
+  }
+]
+
+===================================================================
+  2. UNARY with deadline - GET /api/products/SKU-0003 (GetProduct RPC)
+===================================================================
+{
+  "sku": "SKU-0003",
+  "name": "Distributed Systems Field Guide",
+  "description": "600 pages of consensus, clocks, and cautionary tales",
+  "price": "45.99 USD",
+  "quantityAvailable": 5,
+  "category": "BOOKS",
+  "updatedAt": "2026-07-08T02:41:27.368488Z"
+}
+
+===================================================================
+  3. ERROR MAPPING - unknown SKU -> gRPC NOT_FOUND -> HTTP 404
+===================================================================
+{
+  "grpcStatus": "NOT_FOUND",
+  "message": "No product with SKU 'SKU-9999'"
+}
+HTTP status: 404
+
+===================================================================
+  4. SERVER STREAMING - live stock feed as Server-Sent Events (WatchStock RPC)
+===================================================================
+(each event below was pushed by the server in real time, ~400ms apart)
+event:stock-update
+data:{"sku":"SKU-0001","quantityAvailable":69,"reason":"RESTOCK","detail":"4 units from Acme Wholesale","occurredAt":"2026-07-08T02:51:34.608693Z"}
+
+event:stock-update
+data:{"sku":"SKU-0001","quantityAvailable":70,"reason":"RESTOCK","detail":"1 units from Acme Wholesale","occurredAt":"2026-07-08T02:51:35.013912Z"}
+
+event:stock-update
+data:{"sku":"SKU-0001","quantityAvailable":68,"reason":"SALE","detail":"2 units sold","occurredAt":"2026-07-08T02:51:35.415304Z"}
+
+event:stock-update
+data:{"sku":"SKU-0001","quantityAvailable":77,"reason":"RESTOCK","detail":"9 units from Acme Wholesale","occurredAt":"2026-07-08T02:51:35.820218Z"}
+
+
+===================================================================
+  5. CLIENT STREAMING - upload a batch of shipments (RecordShipments RPC)
+===================================================================
+{
+  "shipmentsReceived": 3,
+  "totalUnitsAdded": 88,
+  "updatedQuantities": {
+    "SKU-0001": 90,
+    "SKU-0005": 120,
+    "SKU-0002": 23
+  }
+}
+
+===================================================================
+  6. BIDIRECTIONAL STREAMING - stream orders, stream confirmations (ProcessOrders RPC)
+===================================================================
+{
+  "statuses": [
+    {
+      "orderId": "order-001",
+      "result": "CONFIRMED",
+      "message": "Confirmed - 88 units remaining",
+      "totalPrice": "259.98 USD"
+    },
+    {
+      "orderId": "order-002",
+      "result": "CONFIRMED",
+      "message": "Confirmed - 118 units remaining",
+      "totalPrice": "38.00 USD"
+    },
+    {
+      "orderId": "order-003",
+      "result": "REJECTED_OUT_OF_STOCK",
+      "message": "Insufficient stock for SKU-0005",
+      "totalPrice": null
+    },
+    {
+      "orderId": "order-004",
+      "result": "REJECTED_UNKNOWN_SKU",
+      "message": "Unknown SKU SKU-XXXX",
+      "totalPrice": null
+    }
+  ]
+}
+
+Done. Check .demo/*.log to see the interceptor logging on both sides.
