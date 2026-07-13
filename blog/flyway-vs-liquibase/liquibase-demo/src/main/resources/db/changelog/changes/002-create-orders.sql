@@ -1,0 +1,10 @@
+--liquibase formatted sql
+
+--changeset steve:002
+CREATE TABLE orders (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    customer_id BIGINT NOT NULL REFERENCES customers (id),
+    total NUMERIC(10, 2) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+--rollback DROP TABLE orders;

@@ -1,0 +1,5 @@
+spring:
+  application:
+    name: htmx-notes
+  thymeleaf:
+    cache: false

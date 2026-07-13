@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: testcontainers-ultimate-guide
+  jpa:
+    hibernate:
+      ddl-auto: none
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+
+carrier:
+  base-url: https://api.example-carrier.test

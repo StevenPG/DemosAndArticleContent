@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: bucket4j-redis-rate-limiting
+
+rate-limit:
+  redis-uri: redis://localhost:6379

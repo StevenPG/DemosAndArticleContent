@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: spring-ai-ollama-rag
+  ai:
+    ollama:
+      base-url: http://localhost:11434
+      init:
+        # Pull models automatically on startup if they aren't present.
+        pull-model-strategy: when_missing
+      chat:
+        options:
+          model: qwen3:8b
+          temperature: 0.2
+      embedding:
+        options:
+          model: nomic-embed-text
+
+blog:
+  # Point this at a directory of markdown files. For the article demo this is
+  # a checkout of the blog's src/content/blog directory.
+  corpus-dir: ./corpus

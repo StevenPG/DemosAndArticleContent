@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!-- The whole list. Search/create swap this in one go. -->
+<div id="note-list" th:fragment="note-list">
+    <th:block th:each="note : ${notes}">
+        <div th:replace="~{fragments :: note-card}"></div>
+    </th:block>
+    <p th:if="${#lists.isEmpty(notes)}">No notes match.</p>
+</div>
+
+<!-- One note in read mode. Inline edit/save swap a single card. -->
+<div th:fragment="note-card" class="card" th:id="'note-' + ${note.id}">
+    <h3 th:text="${note.title}">Title</h3>
+    <p th:text="${note.body}" style="white-space: pre-wrap">Body</p>
+    <div class="meta"
+         th:text="${#temporals.format(note.updatedAt.atZone(T(java.time.ZoneId).systemDefault()), 'yyyy-MM-dd HH:mm')}"></div>
+    <div class="actions">
+        <button th:attr="hx-get='/notes/' + ${note.id} + '/edit',hx-target='#note-' + ${note.id}"
+                hx-swap="outerHTML">Edit
+        </button>
+        <button th:attr="hx-delete='/notes/' + ${note.id},hx-target='#note-' + ${note.id}"
+                hx-swap="outerHTML"
+                hx-confirm="Delete this note?">Delete
+        </button>
+    </div>
+</div>
+
+<!-- One note in edit mode. -->
+<form th:fragment="note-edit" class="card" th:id="'note-' + ${note.id}"
+      th:attr="hx-put='/notes/' + ${note.id}"
+      hx-target="this" hx-swap="outerHTML">
+    <input name="title" th:value="${note.title}" required/>
+    <textarea name="body" rows="4" th:text="${note.body}" required></textarea>
+    <div class="actions">
+        <button type="submit">Save</button>
+        <button type="button"
+                th:attr="hx-get='/notes/' + ${note.id},hx-target='#note-' + ${note.id}"
+                hx-swap="outerHTML">Cancel
+        </button>
+    </div>
+</form>
+
+</body>
+</html>

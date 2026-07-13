@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: metrics-demo
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  # Add the app name to every metric so multi-service dashboards can filter.
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
