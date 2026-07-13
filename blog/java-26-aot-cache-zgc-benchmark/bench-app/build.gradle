@@ -1,0 +1,36 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    // Compile with 25 (Boot 4 baseline); the benchmark RUNS the jar with a
+    // JDK 26 `java` explicitly - the AOT cache is a runtime feature, and
+    // JEP 516 (any-GC object caching) needs the 26 JVM, not a 26 compiler.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Deliberately app-shaped, not hello-world: MVC + JPA/Hibernate + actuator
+    // loads ~20k classes at startup, comparable to Spring PetClinic (the app
+    // the OpenJDK team quotes for JEP 516's 41% startup improvement).
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'com.h2database:h2'
+}
+
+// Predictable jar name for the scripts (no version suffix).
+bootJar {
+    archiveFileName = 'bench-app.jar'
+}
