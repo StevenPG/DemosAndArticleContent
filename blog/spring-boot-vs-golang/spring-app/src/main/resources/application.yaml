@@ -1,0 +1,81 @@
+# Everything the app needs, in one declarative file. Auto-configuration turns
+# these keys into a DataSource, Flyway runner, Kafka factories, JWT decoder,
+# and OAuth2 client registrations at startup — the comparison point is that the
+# Go app builds each of those by hand in main().
+server:
+  port: 8080
+
+spring:
+  application:
+    name: spring-order-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orders_spring
+    username: orders
+    password: orders
+
+  jpa:
+    hibernate:
+      ddl-auto: validate # schema is owned by Flyway, Hibernate only verifies it
+    open-in-view: false
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: spring-order-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.orders.messaging
+        spring.json.value.default.type: com.example.orders.messaging.OrderEvent
+        # The Go producer doesn't add Spring's __TypeId__ header; always use the default type.
+        spring.json.use.type.headers: false
+
+  security:
+    oauth2:
+      # Inbound: validate JWTs minted by the Keycloak realm in docker-compose.
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8090/realms/demo
+      # Outbound: two client-credentials registrations, one per downstream API.
+      client:
+        provider:
+          keycloak:
+            token-uri: http://localhost:8090/realms/demo/protocol/openid-connect/token
+        registration:
+          payment:
+            provider: keycloak
+            client-id: payment-client
+            client-secret: payment-client-secret
+            authorization-grant-type: client_credentials
+            scope: payments:charge
+          inventory:
+            provider: keycloak
+            client-id: inventory-client
+            client-secret: inventory-client-secret
+            authorization-grant-type: client_credentials
+            scope: inventory:reserve
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  downstream:
+    payment:
+      base-url: http://localhost:9095
+    inventory:
+      base-url: http://localhost:9096
+  kafka:
+    orders-topic: order-events
+  reporting:
+    interval: 30s
