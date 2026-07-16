@@ -46,23 +46,60 @@
 
     async function main() {
       const warn = document.getElementById("warn");
+      const data = await (await fetch("data/cells.json")).json();
+
+      // Terrain, best available first:
+      //   1. Cesium World Terrain (needs an Ion token; ellipsoidal heights,
+      //      which is what the exported data is in — no adjustment)
+      //   2. ESRI World Elevation, free, no key — but it serves orthometric
+      //      (MSL) heights that Cesium renders as-is, so the scene's ground
+      //      sits ~|geoid offset| above the ellipsoidal datum here. Shift the
+      //      volumes by the same amount so they stay glued to the ground.
+      //   3. Flat ellipsoid.
       const hasToken = !!(window.CESIUM_ION_TOKEN && window.CESIUM_ION_TOKEN.trim());
-      let terrainProvider = new Cesium.EllipsoidTerrainProvider();
-      let baseLayer = new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({
-        url: "https://tile.openstreetmap.org/",
-      }));
+      let terrainProvider = null;
+      let heightOffset = 0;
 
       if (hasToken) {
         Cesium.Ion.defaultAccessToken = window.CESIUM_ION_TOKEN.trim();
         try {
           terrainProvider = await Cesium.createWorldTerrainAsync();
-          baseLayer = Cesium.ImageryLayer.fromWorldImagery();
         } catch (e) {
-          warn.textContent = "Ion token rejected — falling back to flat ellipsoid. " + e;
+          warn.textContent = "Ion token rejected — trying free ESRI terrain instead. ";
         }
+      }
+      if (!terrainProvider) {
+        try {
+          terrainProvider = await Cesium.ArcGISTiledElevationTerrainProvider.fromUrl(
+            "https://elevation3d.arcgis.com/arcgis/rest/services/WorldElevation3D/Terrain3D/ImageServer"
+          );
+          heightOffset = -(data.geoidOffsetM ?? 0);   // orthometric scene: +30.7 m here
+          warn.textContent += "Using free ESRI World Elevation terrain " +
+            `(orthometric — volumes shifted ${heightOffset.toFixed(1)} m to match).`;
+        } catch (e) {
+          terrainProvider = new Cesium.EllipsoidTerrainProvider();
+          warn.textContent += "No terrain reachable: rendering on a flat ellipsoid, " +
+            "so the volumes hover at their true heights without the mountain under them.";
+        }
+      }
+
+      // Imagery: Ion world imagery with a token, otherwise free ESRI World
+      // Imagery (satellite), otherwise OpenStreetMap.
+      let baseLayer;
+      if (hasToken && heightOffset === 0) {
+        baseLayer = Cesium.ImageryLayer.fromWorldImagery();
       } else {
-        warn.textContent = "No Ion token in config.js: rendering on a flat ellipsoid, " +
-          "so the volumes hover at their true heights without the mountain under them.";
+        try {
+          baseLayer = new Cesium.ImageryLayer(
+            await Cesium.ArcGisMapServerImageryProvider.fromUrl(
+              "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer"
+            )
+          );
+        } catch (e) {
+          baseLayer = new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({
+            url: "https://tile.openstreetmap.org/",
+          }));
+        }
       }
 
       const viewer = new Cesium.Viewer("cesiumContainer", {
@@ -73,7 +110,6 @@
       });
       viewer.scene.globe.depthTestAgainstTerrain = true;
 
-      const data = await (await fetch("data/cells.json")).json();
       document.getElementById("meta").textContent =
         `${data.cellSizeM} m cells · heights in ${data.heightsAre} · generated ${data.generated}`;
 
@@ -88,8 +124,8 @@
           const entity = viewer.entities.add({
             polygon: {
               hierarchy: Cesium.Cartesian3.fromDegreesArray(positions),
-              height: cell.bottom,
-              extrudedHeight: cell.top,
+              height: cell.bottom + heightOffset,
+              extrudedHeight: cell.top + heightOffset,
               heightReference: Cesium.HeightReference.NONE,
               extrudedHeightReference: Cesium.HeightReference.NONE,
               material: baseColor,

@@ -101,8 +101,10 @@ scripts/fetch_terrain.py ──► PostGIS ◄── sql/*.sql       │
   resolution here. ~289k point samples loaded into `terrain_points`.
 - **Tessellation & overlap**: pure SQL, in `sql/`. All 3D math happens in
   EPSG:32616 (UTM 16N) so meters are meters.
-- **Viewer**: one static HTML page; add a free Cesium Ion token to
-  `viewer/config.js` to get real World Terrain + imagery underneath.
+- **Viewer**: one static HTML page. Works with zero signup: it defaults to
+  the free, key-less ESRI World Elevation terrain + ESRI World Imagery, so
+  the mountain renders out of the box. Optionally add a free Cesium Ion token
+  to `viewer/config.js` for Cesium World Terrain instead.
 
 ### Running it
 
@@ -231,18 +233,32 @@ Observations:
 
 `export_cells.py` writes every cell as a lon/lat ring plus ellipsoidal
 floor/ceiling heights, and the page renders each as a Cesium extruded polygon
-(`height` = floor, `extrudedHeight` = ceiling, absolute heights). With an Ion
-token in `config.js` the volumes drape over real World Terrain imagery of the
-mountain; without one they float at the same true heights over a bare
-ellipsoid. Airspace toggles, conflict highlighting, and per-cell inspection
-(click a cell for its ground/floor/ceiling and conflict partners) come from
-the same PostGIS export — the viewer does zero geometry math.
+(`height` = floor, `extrudedHeight` = ceiling, absolute heights). Terrain and
+imagery degrade gracefully:
 
-One caveat on visual registration: Cesium World Terrain and the AWS tileset
-derive from similar-but-not-identical DEM sources, so cell floors can sit a
-few meters off the rendered ground in places. For pixel-perfect registration,
-sample Cesium's own terrain (`sampleTerrainMostDetailed`) into
-`terrain_points` instead — the rest of the pipeline is source-agnostic.
+1. **Ion token present** — Cesium World Terrain + Bing imagery.
+2. **No token (default)** — ESRI World Elevation
+   (`ArcGISTiledElevationTerrainProvider`) + ESRI World Imagery, both free
+   and key-less. One wrinkle handled automatically: ESRI's Terrain3D service
+   returns *orthometric* heights that Cesium renders as-is, so the whole
+   scene's ground sits ~30.7 m above the ellipsoidal datum here. The exporter
+   embeds the geoid offset in `cells.json` and the viewer shifts the volumes
+   by the same amount so they stay glued to the ground — a live demonstration
+   of the height-datum section above.
+3. **Nothing reachable** — flat ellipsoid + OpenStreetMap; the volumes float
+   at their true heights (this is how the screenshots in this README were
+   captured).
+
+Airspace toggles, conflict highlighting, and per-cell inspection (click a
+cell for its ground/floor/ceiling and conflict partners) all come from the
+same PostGIS export — the viewer does zero geometry math.
+
+One caveat on visual registration: Cesium World Terrain, ESRI World
+Elevation, and the AWS tileset derive from similar-but-not-identical DEM
+sources, so cell floors can sit a few meters off the rendered ground in
+places. For pixel-perfect registration, sample your rendering terrain itself
+(e.g. `sampleTerrainMostDetailed`) into `terrain_points` — the rest of the
+pipeline is source-agnostic.
 
 ## Verdict
 

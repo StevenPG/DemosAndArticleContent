@@ -67,6 +67,10 @@ def main() -> None:
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "cellSizeM": cell_size,
         "heightsAre": "WGS84 ellipsoidal meters",
+        # EGM96 undulation used at load time (see geoid_offset_m() in SQL).
+        # The viewer needs it to re-shift heights for terrain providers that
+        # render orthometric heights (e.g. ESRI Terrain3D).
+        "geoidOffsetM": -30.7,
         "airspaces": list(airspaces.values()),
         "conflicts": [
             {"pair": list(pair), "cellPairs": s["cellPairs"], "volumeM3": round(s["volumeM3"], 1)}
