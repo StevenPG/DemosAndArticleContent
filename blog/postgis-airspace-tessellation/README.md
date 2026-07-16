@@ -108,11 +108,14 @@ scripts/fetch_terrain.py ──► PostGIS ◄── sql/*.sql       │
 
 ### Running it
 
+Requires Docker, [uv](https://docs.astral.sh/uv/), and the `psql` client.
+uv resolves and installs the Python dependencies automatically on first
+`uv run` — no venv or pip steps.
+
 ```bash
 docker compose up -d          # PostGIS 16 + SFCGAL on :5432
-pip install -r requirements.txt
 ./run.sh                      # schema → airspaces → terrain → tessellate → export
-python3 scripts/benchmark.py  # optional: the numbers below
+uv run scripts/benchmark.py   # optional: the numbers below
 
 cd viewer && python3 -m http.server 8000    # open http://localhost:8000
 ```

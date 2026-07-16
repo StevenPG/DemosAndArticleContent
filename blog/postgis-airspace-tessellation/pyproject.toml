@@ -1,0 +1,10 @@
+[project]
+name = "postgis-airspace-tessellation"
+version = "0.1.0"
+description = "Terrain-following AGL airspace volumes with PostGIS tessellation — demo scripts"
+requires-python = ">=3.10"
+dependencies = [
+    "requests>=2.31",
+    "pillow>=10.0",
+    "psycopg[binary]>=3.1",
+]

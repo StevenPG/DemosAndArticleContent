@@ -15,12 +15,12 @@ for f in sql/01_schema.sql sql/02_airspaces.sql sql/03_tessellate.sql sql/04_ove
 done
 
 echo "==> Fetching terrain (AWS Terrain Tiles)"
-python3 scripts/fetch_terrain.py
+uv run scripts/fetch_terrain.py
 
 echo "==> Tessellating + exporting viewer data (50 m cells)"
-python3 scripts/export_cells.py 50
+uv run scripts/export_cells.py 50
 
 echo "==> Done. Serve the viewer with:"
 echo "    cd viewer && python3 -m http.server 8000"
 echo "    then open http://localhost:8000"
-echo "Optional: python3 scripts/benchmark.py"
+echo "Optional: uv run scripts/benchmark.py"
