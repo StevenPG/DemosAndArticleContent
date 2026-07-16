@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>AGL Airspaces over Stone Mountain — PostGIS tessellation demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.130/Build/Cesium/Cesium.js"></script>
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.130/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <script src="config.js"></script>
+  <style>
+    html, body, #cesiumContainer { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; }
+    #panel {
+      position: absolute; top: 10px; left: 10px; z-index: 10;
+      background: rgba(20, 24, 32, 0.88); color: #eee; border-radius: 8px;
+      padding: 14px 16px; font: 13px/1.5 system-ui, sans-serif; max-width: 320px;
+    }
+    #panel h1 { font-size: 15px; margin: 0 0 6px; }
+    #panel .sub { color: #9ab; font-size: 11px; margin-bottom: 10px; }
+    #panel label { display: flex; align-items: center; gap: 8px; cursor: pointer; margin: 4px 0; }
+    #panel .swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; flex: none; }
+    #panel .range { color: #9ab; margin-left: auto; font-size: 11px; }
+    #panel hr { border: none; border-top: 1px solid #345; margin: 10px 0; }
+    #conflicts { font-size: 12px; }
+    #conflicts .row { display: flex; justify-content: space-between; gap: 10px; }
+    #conflicts .vol { color: #f88; }
+    #warn { color: #fc6; font-size: 11px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+  <div id="panel">
+    <h1>AGL airspaces over Stone&nbsp;Mountain</h1>
+    <div class="sub" id="meta">loading…</div>
+    <div id="toggles"></div>
+    <label><input type="checkbox" id="showConflicts" checked />
+      <span class="swatch" style="background:#e15554"></span>
+      highlight conflicting cells
+    </label>
+    <hr />
+    <div id="conflicts"></div>
+    <div id="warn"></div>
+  </div>
+
+  <script>
+    const CONFLICT_COLOR = "#e15554";
+
+    async function main() {
+      const warn = document.getElementById("warn");
+      const hasToken = !!(window.CESIUM_ION_TOKEN && window.CESIUM_ION_TOKEN.trim());
+      let terrainProvider = new Cesium.EllipsoidTerrainProvider();
+      let baseLayer = new Cesium.ImageryLayer(new Cesium.OpenStreetMapImageryProvider({
+        url: "https://tile.openstreetmap.org/",
+      }));
+
+      if (hasToken) {
+        Cesium.Ion.defaultAccessToken = window.CESIUM_ION_TOKEN.trim();
+        try {
+          terrainProvider = await Cesium.createWorldTerrainAsync();
+          baseLayer = Cesium.ImageryLayer.fromWorldImagery();
+        } catch (e) {
+          warn.textContent = "Ion token rejected — falling back to flat ellipsoid. " + e;
+        }
+      } else {
+        warn.textContent = "No Ion token in config.js: rendering on a flat ellipsoid, " +
+          "so the volumes hover at their true heights without the mountain under them.";
+      }
+
+      const viewer = new Cesium.Viewer("cesiumContainer", {
+        terrainProvider, baseLayer,
+        animation: false, timeline: false, geocoder: false, baseLayerPicker: false,
+        sceneModePicker: false, navigationHelpButton: false, homeButton: false,
+        requestRenderMode: true, maximumRenderTimeChange: Infinity,
+      });
+      viewer.scene.globe.depthTestAgainstTerrain = true;
+
+      const data = await (await fetch("data/cells.json")).json();
+      document.getElementById("meta").textContent =
+        `${data.cellSizeM} m cells · heights in ${data.heightsAre} · generated ${data.generated}`;
+
+      const byAirspace = {};   // id -> [{entity, hasConflict, baseColor}]
+      viewer.entities.suspendEvents();
+      for (const asp of data.airspaces) {
+        const baseColor = Cesium.Color.fromCssColorString(asp.color).withAlpha(0.45);
+        const outline = Cesium.Color.fromCssColorString(asp.color).withAlpha(0.9);
+        byAirspace[asp.id] = [];
+        for (const cell of asp.cells) {
+          const positions = cell.ring.flatMap(([lon, lat]) => [lon, lat]);
+          const entity = viewer.entities.add({
+            polygon: {
+              hierarchy: Cesium.Cartesian3.fromDegreesArray(positions),
+              height: cell.bottom,
+              extrudedHeight: cell.top,
+              heightReference: Cesium.HeightReference.NONE,
+              extrudedHeightReference: Cesium.HeightReference.NONE,
+              material: baseColor,
+              outline: true,
+              outlineColor: outline,
+            },
+            description: `
+              <table>
+                <tr><td>airspace</td><td>${asp.name} (${asp.lower}–${asp.upper} m ${asp.ref})</td></tr>
+                <tr><td>ground</td><td>${cell.ground} m (ellipsoidal)</td></tr>
+                <tr><td>floor / ceiling</td><td>${cell.bottom} – ${cell.top} m</td></tr>
+                <tr><td>conflicts with</td><td>${cell.conflicts.join(", ") || "—"}</td></tr>
+              </table>`,
+          });
+          byAirspace[asp.id].push({ entity, baseColor, hasConflict: cell.conflicts.length > 0 });
+        }
+      }
+      viewer.entities.resumeEvents();
+
+      // --- UI -------------------------------------------------------------
+      const toggles = document.getElementById("toggles");
+      const visible = {};
+      for (const asp of data.airspaces) {
+        visible[asp.id] = true;
+        const label = document.createElement("label");
+        label.innerHTML = `<input type="checkbox" checked data-id="${asp.id}" />
+          <span class="swatch" style="background:${asp.color}"></span>
+          ${asp.name}<span class="range">${asp.lower}–${asp.upper} m ${asp.ref}</span>`;
+        toggles.appendChild(label);
+      }
+
+      const conflictBox = document.getElementById("conflicts");
+      conflictBox.innerHTML = "<b>Detected conflicts (PostGIS)</b>" + (data.conflicts.map(c =>
+        `<div class="row"><span>${c.pair[0]} × ${c.pair[1]}</span>` +
+        `<span class="vol">${c.cellPairs} cells · ${(c.volumeM3 / 1e6).toFixed(1)} M m³</span></div>`
+      ).join("") || "<div>none</div>");
+
+      const showConflicts = document.getElementById("showConflicts");
+      function restyle() {
+        const highlight = showConflicts.checked;
+        const conflictMat = Cesium.Color.fromCssColorString(CONFLICT_COLOR).withAlpha(0.6);
+        for (const [id, cells] of Object.entries(byAirspace)) {
+          for (const c of cells) {
+            c.entity.show = visible[id];
+            c.entity.polygon.material = (highlight && c.hasConflict) ? conflictMat : c.baseColor;
+          }
+        }
+        viewer.scene.requestRender();
+      }
+      toggles.addEventListener("change", (e) => {
+        visible[e.target.dataset.id] = e.target.checked;
+        restyle();
+      });
+      showConflicts.addEventListener("change", restyle);
+      restyle();
+
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(-84.128, 33.777, 2600),
+        orientation: { heading: Cesium.Math.toRadians(-35), pitch: Cesium.Math.toRadians(-24) },
+        duration: 0,
+      });
+    }
+
+    main().catch((e) => {
+      document.getElementById("warn").textContent = "Failed to start viewer: " + e;
+      console.error(e);
+    });
+  </script>
+</body>
+</html>
