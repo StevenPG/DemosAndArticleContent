@@ -26,7 +26,14 @@
 --       plus arithmetic — no CSG anywhere.
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION find_conflicts_intersects()
+-- Recreate from scratch so signature changes don't strand old overloads.
+DROP VIEW IF EXISTS conflict_summary;
+DROP FUNCTION IF EXISTS find_conflicts_intersects();
+DROP FUNCTION IF EXISTS find_conflicts_csg(integer);
+DROP FUNCTION IF EXISTS find_conflicts_prism();
+DROP FUNCTION IF EXISTS find_conflicts_prism(text, text);
+
+CREATE FUNCTION find_conflicts_intersects()
 RETURNS TABLE (
     airspace_a text, airspace_b text,
     cell_a bigint,  cell_b bigint
@@ -62,7 +69,13 @@ AS $$
     WHERE volume_m3 > 0.001
 $$;
 
-CREATE OR REPLACE FUNCTION find_conflicts_prism()
+-- By default every pairwise combination of airspaces is checked. Pass two
+-- airspace ids to restrict detection to that single pair, e.g.
+--   SELECT * FROM find_conflicts_prism('BRAVO', 'CHARLIE');
+CREATE OR REPLACE FUNCTION find_conflicts_prism(
+    only_a text DEFAULT NULL,
+    only_b text DEFAULT NULL
+)
 RETURNS TABLE (
     airspace_a text, airspace_b text,
     cell_a bigint,  cell_b bigint,
@@ -78,6 +91,8 @@ AS $$
         FROM airspace_cells ca
         JOIN airspace_cells cb
           ON ca.airspace_id < cb.airspace_id
+         AND (only_a IS NULL OR ca.airspace_id = least(only_a, only_b))
+         AND (only_b IS NULL OR cb.airspace_id = greatest(only_a, only_b))
          AND ca.solid &&& cb.solid                                    -- indexed 3D bbox
          AND least(ca.top_z, cb.top_z) > greatest(ca.bottom_z, cb.bottom_z)
          AND ST_Relate(ca.cell_utm, cb.cell_utm, '2********')         -- interiors share area

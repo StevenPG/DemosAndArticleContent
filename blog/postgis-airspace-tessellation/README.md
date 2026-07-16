@@ -8,12 +8,19 @@ terrain-following volumes built entirely in SQL, 3D conflict detection three
 different ways, and a CesiumJS viewer that renders the result on real
 satellite terrain.
 
+> **Deep dive:** [HOW_IT_WORKS.md](HOW_IT_WORKS.md) explains the whole
+> approach end to end — including why the common "sample terrain once at the
+> polygon centroid" model produces false negatives on real conflicts and
+> volumes that extend underground, and how to migrate such a system to
+> tessellated terrain-following volumes.
+
 ![All four airspaces with conflict cells highlighted](images/overview-conflicts.png)
 
-*Four airspaces over Stone Mountain at 50 m tessellation. Red cells are
-conflicts detected by PostGIS. (Screenshots captured without a Cesium Ion
-token, so the mountain itself isn't rendered — the volumes still sit at their
-true heights, and you can see the dome's shape pressed into them.)*
+*Four airspaces over Stone Mountain at 50 m tessellation, in the viewer's
+smooth-volume mode. Red is the conflict detected by PostGIS between BRAVO and
+CHARLIE. (Screenshots captured without terrain reachable, so the mountain
+itself isn't rendered — the volumes still sit at their true heights, and you
+can see the dome's shape pressed into them.)*
 
 ## The problem
 
@@ -55,6 +62,12 @@ flush — both deforming over the mountain — and report **zero** overlap betwe
 them:
 
 ![ALPHA and BRAVO stacked, terrain-following, no overlap](images/stacked-alpha-bravo.png)
+
+*ALPHA and BRAVO only: flush stacked surfaces with zero shared volume (the
+red patch is BRAVO's conflict with the hidden CHARLIE, not with ALPHA). The
+"individual cells" render mode shows the underlying prisms instead:*
+
+![The same volumes as individual tessellation cells](images/cells-mode.png)
 
 DELTA is the bonus case that shows why real 3D matters: it's a *fixed*
 altitude band, so whether it conflicts with the AGL volumes depends entirely
@@ -202,6 +215,11 @@ FROM airspace_cells ca JOIN airspace_cells cb
 on 50 m cells), and the full sweep runs **~2,600× faster** than the CSG
 estimate at 25 m.
 
+By default every pairwise combination of airspaces is checked;
+`find_conflicts_prism('BRAVO', 'CHARLIE')` restricts detection to one pair
+(the committed viewer data is scoped this way — intruder × transit layer —
+via `uv run scripts/export_cells.py 50 BRAVO CHARLIE`).
+
 ## The numbers
 
 From `scripts/benchmark.py` on this repo's dataset (4 airspaces, ~2.9 km²
@@ -258,11 +276,22 @@ same PostGIS export — the viewer does zero geometry math.
 
 Rendering is built for scale: all airspaces start **unchecked**, an
 airspace's geometry is built only the first time you toggle it on, and each
-one renders as a few batched `Primitive`s with per-instance colors (cells
-shade darker toward the valley floor so the terrain-following shape reads
-without per-cell outlines). The naive alternative — one Cesium *entity* per
-cell, each with its own outline geometry — creates thousands of separate
-geometries and will grind or crash a browser at fine tessellations.
+one renders as a few batched `Primitive`s with per-instance colors. The
+naive alternative — one Cesium *entity* per cell, each with its own outline
+geometry — creates thousands of separate geometries and will grind or crash
+a browser at fine tessellations.
+
+Two render modes:
+
+- **Smooth volumes** (default) — the union look: one terrain-following
+  ceiling sheet and one floor sheet per airspace, with walls only on the
+  footprint perimeter. PostGIS exports which cell edges lie on the footprint
+  boundary (`ST_Boundary(cell) ∩ ST_Boundary(footprint)`), and the viewer
+  averages floor/ceiling heights at shared grid corners so adjacent cells
+  join into one continuous surface — no interior vertical faces at all.
+- **Individual cells** — every prism drawn as its own translucent box,
+  shaded darker toward the valley floor: what the solids in
+  `airspace_cells` actually look like.
 
 One caveat on visual registration: Cesium World Terrain, ESRI World
 Elevation, and the AWS tileset derive from similar-but-not-identical DEM
@@ -303,6 +332,7 @@ and exploit it.*
 ## Repo layout
 
 ```
+HOW_IT_WORKS.md           deep dive: the approach, the math, migration guide
 docker-compose.yml        PostGIS 16 + SFCGAL
 run.sh                    end-to-end pipeline
 sql/01_schema.sql         extensions, tables, geoid constant
