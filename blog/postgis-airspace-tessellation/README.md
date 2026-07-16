@@ -256,6 +256,14 @@ Airspace toggles, conflict highlighting, and per-cell inspection (click a
 cell for its ground/floor/ceiling and conflict partners) all come from the
 same PostGIS export — the viewer does zero geometry math.
 
+Rendering is built for scale: all airspaces start **unchecked**, an
+airspace's geometry is built only the first time you toggle it on, and each
+one renders as a few batched `Primitive`s with per-instance colors (cells
+shade darker toward the valley floor so the terrain-following shape reads
+without per-cell outlines). The naive alternative — one Cesium *entity* per
+cell, each with its own outline geometry — creates thousands of separate
+geometries and will grind or crash a browser at fine tessellations.
+
 One caveat on visual registration: Cesium World Terrain, ESRI World
 Elevation, and the AWS tileset derive from similar-but-not-identical DEM
 sources, so cell floors can sit a few meters off the rendered ground in
@@ -289,8 +297,8 @@ and exploit it.*
   model (e.g. PROJ + EGM2008 grids) beyond ~10 km.
 - `terrain_points` as a point table is simple and fast enough here; at scale
   you'd load the DEM with `postgis_raster` or pre-rasterize per-cell means.
-- Entities render fine at a few thousand cells; for tens of thousands switch
-  the viewer to Cesium `Primitive` batches.
+- The viewer's batched primitives handle tens of thousands of cells; past
+  that, aggregate adjacent same-height cells server-side before export.
 
 ## Repo layout
 

@@ -23,6 +23,8 @@
     #conflicts { font-size: 12px; }
     #conflicts .row { display: flex; justify-content: space-between; gap: 10px; }
     #conflicts .vol { color: #f88; }
+    #hint { color: #9ab; font-size: 11px; margin-top: 6px; }
+    #cellinfo { font-size: 11px; color: #cde; margin-top: 8px; white-space: pre-line; }
     #warn { color: #fc6; font-size: 11px; margin-top: 8px; }
   </style>
 </head>
@@ -36,8 +38,10 @@
       <span class="swatch" style="background:#e15554"></span>
       highlight conflicting cells
     </label>
+    <div id="hint">Check an airspace to load it.</div>
     <hr />
     <div id="conflicts"></div>
+    <div id="cellinfo"></div>
     <div id="warn"></div>
   </div>
 
@@ -106,6 +110,7 @@
         terrainProvider, baseLayer,
         animation: false, timeline: false, geocoder: false, baseLayerPicker: false,
         sceneModePicker: false, navigationHelpButton: false, homeButton: false,
+        infoBox: false, selectionIndicator: false,
         requestRenderMode: true, maximumRenderTimeChange: Infinity,
       });
       viewer.scene.globe.depthTestAgainstTerrain = true;
@@ -113,74 +118,116 @@
       document.getElementById("meta").textContent =
         `${data.cellSizeM} m cells · heights in ${data.heightsAre} · generated ${data.generated}`;
 
-      const byAirspace = {};   // id -> [{entity, hasConflict, baseColor}]
-      viewer.entities.suspendEvents();
-      for (const asp of data.airspaces) {
-        const baseColor = Cesium.Color.fromCssColorString(asp.color).withAlpha(0.45);
-        const outline = Cesium.Color.fromCssColorString(asp.color).withAlpha(0.9);
-        byAirspace[asp.id] = [];
-        for (const cell of asp.cells) {
-          const positions = cell.ring.flatMap(([lon, lat]) => [lon, lat]);
-          const entity = viewer.entities.add({
-            polygon: {
-              hierarchy: Cesium.Cartesian3.fromDegreesArray(positions),
-              height: cell.bottom + heightOffset,
-              extrudedHeight: cell.top + heightOffset,
-              heightReference: Cesium.HeightReference.NONE,
-              extrudedHeightReference: Cesium.HeightReference.NONE,
-              material: baseColor,
-              outline: true,
-              outlineColor: outline,
-            },
-            description: `
-              <table>
-                <tr><td>airspace</td><td>${asp.name} (${asp.lower}–${asp.upper} m ${asp.ref})</td></tr>
-                <tr><td>ground</td><td>${cell.ground} m (ellipsoidal)</td></tr>
-                <tr><td>floor / ceiling</td><td>${cell.bottom} – ${cell.top} m</td></tr>
-                <tr><td>conflicts with</td><td>${cell.conflicts.join(", ") || "—"}</td></tr>
-              </table>`,
-          });
-          byAirspace[asp.id].push({ entity, baseColor, hasConflict: cell.conflicts.length > 0 });
-        }
+      // ----------------------------------------------------------------------
+      // Rendering. One batched Primitive per (airspace, style) — thousands of
+      // cells collapse into a few draw calls, instead of one entity (and one
+      // outline geometry) per cell, which is what crushes browsers.
+      // Cells shade slightly darker toward the valley floor so the
+      // terrain-following shape stays readable without per-cell outlines.
+      // Airspace geometry is built lazily the first time it's toggled on.
+      // ----------------------------------------------------------------------
+      const cellInfo = {};      // pick id -> info for the inspector
+      const layers = {};        // airspace id -> {normal, conflictBase, conflictRed}
+
+      function cellColor(asp, cell, ground) {
+        const t = (cell.ground - ground.min) / Math.max(1, ground.max - ground.min);
+        return Cesium.Color.fromCssColorString(asp.color)
+          .darken(0.25 * (1 - t), new Cesium.Color()).withAlpha(0.5);
       }
-      viewer.entities.resumeEvents();
+
+      function buildPrimitive(asp, cells, colorOf) {
+        if (!cells.length) return null;
+        const instances = cells.map(({ cell, idx }) => new Cesium.GeometryInstance({
+          geometry: new Cesium.PolygonGeometry({
+            polygonHierarchy: new Cesium.PolygonHierarchy(
+              Cesium.Cartesian3.fromDegreesArray(cell.ring.flat())),
+            height: cell.bottom + heightOffset,
+            extrudedHeight: cell.top + heightOffset,
+            vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+          }),
+          attributes: {
+            color: Cesium.ColorGeometryInstanceAttribute.fromColor(colorOf(cell)),
+          },
+          id: `${asp.id}:${idx}`,
+        }));
+        return viewer.scene.primitives.add(new Cesium.Primitive({
+          geometryInstances: instances,
+          appearance: new Cesium.PerInstanceColorAppearance({ translucent: true, closed: true }),
+        }));
+      }
+
+      function buildLayer(asp) {
+        const ground = {
+          min: Math.min(...asp.cells.map(c => c.ground)),
+          max: Math.max(...asp.cells.map(c => c.ground)),
+        };
+        const tagged = asp.cells.map((cell, idx) => ({ cell, idx }));
+        for (const { cell, idx } of tagged) {
+          cellInfo[`${asp.id}:${idx}`] = { asp, cell };
+        }
+        const normalCells = tagged.filter(({ cell }) => !cell.conflicts.length);
+        const conflictCells = tagged.filter(({ cell }) => cell.conflicts.length);
+        const base = (cell) => cellColor(asp, cell, ground);
+        const red = () => Cesium.Color.fromCssColorString(CONFLICT_COLOR).withAlpha(0.6);
+        return {
+          normal: buildPrimitive(asp, normalCells, base),
+          conflictBase: buildPrimitive(asp, conflictCells, base),
+          conflictRed: buildPrimitive(asp, conflictCells, red),
+        };
+      }
 
       // --- UI -------------------------------------------------------------
       const toggles = document.getElementById("toggles");
       const visible = {};
       for (const asp of data.airspaces) {
-        visible[asp.id] = true;
+        visible[asp.id] = false;   // everything off by default: instant load
         const label = document.createElement("label");
-        label.innerHTML = `<input type="checkbox" checked data-id="${asp.id}" />
+        label.innerHTML = `<input type="checkbox" data-id="${asp.id}" />
           <span class="swatch" style="background:${asp.color}"></span>
           ${asp.name}<span class="range">${asp.lower}–${asp.upper} m ${asp.ref}</span>`;
         toggles.appendChild(label);
       }
 
-      const conflictBox = document.getElementById("conflicts");
-      conflictBox.innerHTML = "<b>Detected conflicts (PostGIS)</b>" + (data.conflicts.map(c =>
-        `<div class="row"><span>${c.pair[0]} × ${c.pair[1]}</span>` +
-        `<span class="vol">${c.cellPairs} cells · ${(c.volumeM3 / 1e6).toFixed(1)} M m³</span></div>`
-      ).join("") || "<div>none</div>");
+      document.getElementById("conflicts").innerHTML =
+        "<b>Detected conflicts (PostGIS)</b>" + (data.conflicts.map(c =>
+          `<div class="row"><span>${c.pair[0]} × ${c.pair[1]}</span>` +
+          `<span class="vol">${c.cellPairs} cells · ${(c.volumeM3 / 1e6).toFixed(1)} M m³</span></div>`
+        ).join("") || "<div>none</div>");
 
       const showConflicts = document.getElementById("showConflicts");
-      function restyle() {
+      function refresh() {
         const highlight = showConflicts.checked;
-        const conflictMat = Cesium.Color.fromCssColorString(CONFLICT_COLOR).withAlpha(0.6);
-        for (const [id, cells] of Object.entries(byAirspace)) {
-          for (const c of cells) {
-            c.entity.show = visible[id];
-            c.entity.polygon.material = (highlight && c.hasConflict) ? conflictMat : c.baseColor;
-          }
+        for (const asp of data.airspaces) {
+          const layer = layers[asp.id];
+          if (!layer) continue;
+          const on = visible[asp.id];
+          if (layer.normal) layer.normal.show = on;
+          if (layer.conflictBase) layer.conflictBase.show = on && !highlight;
+          if (layer.conflictRed) layer.conflictRed.show = on && highlight;
         }
         viewer.scene.requestRender();
       }
       toggles.addEventListener("change", (e) => {
-        visible[e.target.dataset.id] = e.target.checked;
-        restyle();
+        const id = e.target.dataset.id;
+        visible[id] = e.target.checked;
+        if (e.target.checked && !layers[id]) {
+          layers[id] = buildLayer(data.airspaces.find(a => a.id === id));
+        }
+        refresh();
       });
-      showConflicts.addEventListener("change", restyle);
-      restyle();
+      showConflicts.addEventListener("change", refresh);
+
+      // Click a cell for its numbers (primitive picking, no entities).
+      const info = document.getElementById("cellinfo");
+      new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas).setInputAction((click) => {
+        const picked = viewer.scene.pick(click.position);
+        const hit = picked && cellInfo[picked.id];
+        info.textContent = !hit ? "" :
+          `${hit.asp.name} (${hit.asp.lower}–${hit.asp.upper} m ${hit.asp.ref})\n` +
+          `ground ${hit.cell.ground} m · floor ${hit.cell.bottom} m · ceiling ${hit.cell.top} m\n` +
+          `conflicts with: ${hit.cell.conflicts.join(", ") || "—"}`;
+        viewer.scene.requestRender();
+      }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
       viewer.camera.flyTo({
         destination: Cesium.Cartesian3.fromDegrees(-84.128, 33.777, 2600),
