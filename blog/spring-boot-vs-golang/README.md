@@ -114,17 +114,17 @@ export TOKEN=$(curl -s http://localhost:8090/realms/demo/protocol/openid-connect
 Create an order (against Spring on 8080, or Go on 8081):
 
 ```bash
-curl -s -X POST http://localhost:8080/api/orders \
+ORDER_ID=$(curl -s -X POST http://localhost:8080/api/orders \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"customerEmail":"jane@example.com","item":"widget","quantity":2,"totalCents":1999}' | jq
+  -d '{"customerEmail":"jane@example.com","item":"widget","quantity":2,"totalCents":1999}' | jq -r .id)
 ```
 
 Fetch it back — within a second or two its `status` becomes `COMPLETED` with a
 `paymentId`, proving the Kafka round-trip and both OAuth2 downstream calls ran:
 
 ```bash
-curl -s http://localhost:8080/api/orders/<id> -H "Authorization: Bearer $TOKEN" | jq
+curl -s http://localhost:8080/api/orders/$ORDER_ID -H "Authorization: Bearer $TOKEN" | jq
 ```
 
 Try it **without** the token to see the `401`, or with a validation error

@@ -3,7 +3,6 @@
   "enabled": true,
   "accessTokenLifespan": 300,
   "sslRequired": "none",
-  "comment": "Imported at startup via --import-realm. Defines four OAuth2 client scopes and three confidential clients with service accounts. Because each custom scope is a DEFAULT client scope on its client, Keycloak lists it in the access token's 'scope' claim automatically - no protocol mapper needed. That claim is what both order services and the downstream stub check.",
   "clientScopes": [
     {
       "name": "orders:read",
