@@ -12,7 +12,7 @@
     #panel {
       position: absolute; top: 10px; left: 10px; z-index: 10;
       background: rgba(20, 24, 32, 0.88); color: #eee; border-radius: 8px;
-      padding: 14px 16px; font: 13px/1.5 system-ui, sans-serif; max-width: 320px;
+      padding: 14px 16px; font: 13px/1.5 system-ui, sans-serif; max-width: 340px;
     }
     #panel h1 { font-size: 15px; margin: 0 0 6px; }
     #panel .sub { color: #9ab; font-size: 11px; margin-bottom: 10px; }
@@ -20,12 +20,20 @@
     #panel .swatch { width: 14px; height: 14px; border-radius: 3px; display: inline-block; flex: none; }
     #panel .range { color: #9ab; margin-left: auto; font-size: 11px; }
     #panel hr { border: none; border-top: 1px solid #345; margin: 10px 0; }
-    #conflicts { font-size: 12px; }
-    #conflicts .row { display: flex; justify-content: space-between; gap: 10px; }
-    #conflicts .vol { color: #f88; }
     #hint { color: #9ab; font-size: 11px; margin-top: 6px; }
     #cellinfo { font-size: 11px; color: #cde; margin-top: 8px; white-space: pre-line; }
     #warn { color: #fc6; font-size: 11px; margin-top: 8px; }
+    #matrix table { border-collapse: collapse; margin: 6px 0 4px; font-size: 11px; }
+    #matrix th, #matrix td { padding: 3px 7px; text-align: center; border: 1px solid #345; }
+    #matrix th { color: #9ab; font-weight: 600; }
+    #matrix td.hit { color: #f88; cursor: pointer; }
+    #matrix td.hit:hover { background: rgba(225,85,84,0.25); }
+    #matrix td.sel { background: rgba(225,85,84,0.4); color: #fff; }
+    #matrix td.touch { color: #8c9; }
+    #matrix td.none { color: #567; }
+    #matrix .modebtn { display: inline-block; margin: 2px 6px 0 0; padding: 1px 8px;
+      border: 1px solid #345; border-radius: 4px; cursor: pointer; font-size: 11px; color: #9ab; }
+    #matrix .modebtn.sel { background: rgba(225,85,84,0.4); color: #fff; }
   </style>
 </head>
 <body>
@@ -34,19 +42,17 @@
     <h1>AGL airspaces over Stone&nbsp;Mountain</h1>
     <div class="sub" id="meta">loading…</div>
     <div id="toggles"></div>
-    <label><input type="checkbox" id="showConflicts" checked />
-      <span class="swatch" style="background:#e15554"></span>
-      highlight conflicting cells
-    </label>
     <div id="modes">
       <label><input type="radio" name="mode" value="surface" checked />
         smooth volumes (floor + ceiling)</label>
       <label><input type="radio" name="mode" value="cells" />
         individual cells (the actual solids)</label>
     </div>
-    <div id="hint">Check an airspace to load it.</div>
     <hr />
-    <div id="conflicts"></div>
+    <div id="matrix"></div>
+    <div id="hint">Check an airspace to load it. Click a red matrix entry to
+      highlight just that pair's conflict; <i>touch</i> means shared faces
+      but zero shared volume (the stacked pair).</div>
     <div id="cellinfo"></div>
     <div id="warn"></div>
   </div>
@@ -125,57 +131,30 @@
         `${data.cellSizeM} m cells · heights in ${data.heightsAre} · generated ${data.generated}`;
 
       // ----------------------------------------------------------------------
-      // Rendering. One batched Primitive per (airspace, style) — thousands of
-      // cells collapse into a few draw calls, instead of one entity (and one
-      // outline geometry) per cell, which is what crushes browsers.
-      // Airspace geometry is built lazily the first time it's toggled on.
+      // Rendering. A few batched Primitives per airspace — thousands of cells
+      // collapse into a handful of draw calls. Geometry is built lazily the
+      // first time an airspace is toggled on, and rebuilt when the conflict
+      // selection changes (red cells are baked per selection).
       //
       // Two modes:
-      //   surface — the union look: one terrain-following ceiling sheet, one
-      //             floor sheet, and walls only on the airspace perimeter
-      //             (PostGIS exports which cell edges lie on the footprint
-      //             boundary). No interior vertical faces at all.
+      //   surface — the union look: a terrain-following ceiling sheet and
+      //             floor sheet (heights averaged at shared grid corners so
+      //             adjacent cells join seamlessly), plus one continuous
+      //             perimeter wall stitched from the cells' own outline
+      //             edges — an edge is on the outline iff exactly one cell
+      //             ring contains it, so wall vertices match sheet vertices
+      //             by construction. No interior faces, no gaps.
       //   cells   — every prism drawn as its own translucent box, shaded
       //             darker toward the valley floor: what the solids in
       //             airspace_cells actually look like.
       // ----------------------------------------------------------------------
       const cellInfo = {};      // pick id -> info for the inspector
-      const layers = {};        // airspace id -> {surface: {...}, cells: {...}}
+      const layers = {};        // airspace id -> {sig, prims: [...]}
 
-      function cellColor(asp, cell, ground) {
-        const t = (cell.ground - ground.min) / Math.max(1, ground.max - ground.min);
-        return Cesium.Color.fromCssColorString(asp.color)
-          .darken(0.25 * (1 - t), new Cesium.Color()).withAlpha(0.5);
-      }
-
-      function addPrimitive(instances) {
-        if (!instances.length) return null;
-        return viewer.scene.primitives.add(new Cesium.Primitive({
-          geometryInstances: instances,
-          appearance: new Cesium.PerInstanceColorAppearance({ translucent: true, closed: false }),
-        }));
-      }
-
-      function boxInstance(asp, cell, idx, color) {
-        return new Cesium.GeometryInstance({
-          geometry: new Cesium.PolygonGeometry({
-            polygonHierarchy: new Cesium.PolygonHierarchy(
-              Cesium.Cartesian3.fromDegreesArray(cell.ring.flat())),
-            height: cell.bottom + heightOffset,
-            extrudedHeight: cell.top + heightOffset,
-            vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
-          }),
-          attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(color) },
-          id: `${asp.id}:${idx}`,
-        });
-      }
-
-      // Grid corners are shared between up to 4 cells; averaging the cells'
-      // floor/ceiling values at each corner turns the per-cell stair-steps
-      // into one continuous surface (adjacent cells get identical edge
-      // heights, so there are no gaps and no venetian-blind striping).
       const cornerKey = (p) => `${p[0]},${p[1]}`;
+
       function buildCornerMap(cells) {
+        // average floor/ceiling of every cell sharing each grid corner
         const m = new Map();
         for (const cell of cells) {
           for (const p of cell.ring.slice(0, -1)) {
@@ -188,82 +167,149 @@
         return m;
       }
 
-      function sheetInstances(asp, cell, idx, color, corners) {
-        // floor + ceiling only; no side walls between cells
-        const heightAt = (p, fld, fallback) => {
-          const e = corners.get(cornerKey(p));
-          return (e ? e[fld] / e.n : fallback) + heightOffset;
-        };
-        return [["b", cell.bottom], ["t", cell.top]].map(([fld, fallback]) =>
-          new Cesium.GeometryInstance({
-            geometry: new Cesium.PolygonGeometry({
-              polygonHierarchy: new Cesium.PolygonHierarchy(
-                Cesium.Cartesian3.fromDegreesArrayHeights(
-                  cell.ring.flatMap(p => [p[0], p[1], heightAt(p, fld, fallback)]))),
-              perPositionHeight: true,
-              vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
-            }),
-            attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(color) },
-            id: `${asp.id}:${idx}`,
-          }));
+      function boundaryLoops(cells) {
+        // Undirected edge census over all cell rings: an edge used by exactly
+        // one ring lies on the airspace outline. Then stitch those edges into
+        // closed loops by walking shared endpoints.
+        const seen = new Map();
+        for (const cell of cells) {
+          const ring = cell.ring;
+          for (let i = 0; i < ring.length - 1; i++) {
+            const a = cornerKey(ring[i]), b = cornerKey(ring[i + 1]);
+            const k = a < b ? `${a}|${b}` : `${b}|${a}`;
+            const e = seen.get(k);
+            if (e) e.n++; else seen.set(k, { n: 1, seg: [ring[i], ring[i + 1]] });
+          }
+        }
+        const pool = [...seen.values()].filter(e => e.n === 1).map(e => e.seg);
+        const loops = [];
+        while (pool.length) {
+          const path = pool.pop().slice();
+          let extended = true;
+          while (extended) {
+            extended = false;
+            const endK = cornerKey(path[path.length - 1]);
+            for (let i = 0; i < pool.length; i++) {
+              const [s0, s1] = pool[i];
+              if (cornerKey(s0) === endK) { path.push(s1); pool.splice(i, 1); extended = true; break; }
+              if (cornerKey(s1) === endK) { path.push(s0); pool.splice(i, 1); extended = true; break; }
+            }
+          }
+          loops.push(path);
+        }
+        return loops;
       }
 
-      function skirtInstances(asp, cell, idx, color, corners) {
-        // perimeter walls, only along footprint-boundary edges
-        const heightAt = (p, fld, fallback) => {
-          const e = corners.get(cornerKey(p));
-          return (e ? e[fld] / e.n : fallback) + heightOffset;
-        };
-        return (cell.edges ?? []).map(line => new Cesium.GeometryInstance({
-          geometry: new Cesium.WallGeometry({
-            positions: Cesium.Cartesian3.fromDegreesArray(line.flat()),
-            minimumHeights: line.map(p => heightAt(p, "b", cell.bottom)),
-            maximumHeights: line.map(p => heightAt(p, "t", cell.top)),
-            vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
-          }),
-          attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(color) },
-          id: `${asp.id}:${idx}`,
+      function addPrimitive(instances) {
+        if (!instances.length) return null;
+        return viewer.scene.primitives.add(new Cesium.Primitive({
+          geometryInstances: instances,
+          appearance: new Cesium.PerInstanceColorAppearance({ translucent: true, closed: false }),
         }));
       }
 
-      function buildLayer(asp, mode) {
+      function buildLayer(asp, mode, redSet) {
         const ground = {
           min: Math.min(...asp.cells.map(c => c.ground)),
           max: Math.max(...asp.cells.map(c => c.ground)),
         };
-        const tagged = asp.cells.map((cell, idx) => ({ cell, idx }));
-        for (const { cell, idx } of tagged) {
-          cellInfo[`${asp.id}:${idx}`] = { asp, cell };
-        }
-        const normalCells = tagged.filter(({ cell }) => !cell.conflicts.length);
-        const conflictCells = tagged.filter(({ cell }) => cell.conflicts.length);
+        asp.cells.forEach((cell, idx) => { cellInfo[`${asp.id}:${idx}`] = { asp, cell }; });
         const red = Cesium.Color.fromCssColorString(CONFLICT_COLOR).withAlpha(0.6);
+        const flat = Cesium.Color.fromCssColorString(asp.color).withAlpha(0.5);
+        const shaded = (cell) => {
+          const t = (cell.ground - ground.min) / Math.max(1, ground.max - ground.min);
+          return Cesium.Color.fromCssColorString(asp.color)
+            .darken(0.25 * (1 - t), new Cesium.Color()).withAlpha(0.5);
+        };
+        const instance = (geometry, color, idx) => new Cesium.GeometryInstance({
+          geometry,
+          attributes: { color: Cesium.ColorGeometryInstanceAttribute.fromColor(color) },
+          id: `${asp.id}:${idx}`,
+        });
 
         if (mode === "cells") {
-          const boxes = (list, colorOf) =>
-            list.map(({ cell, idx }) => boxInstance(asp, cell, idx, colorOf(cell)));
-          return {
-            normal: addPrimitive(boxes(normalCells, c => cellColor(asp, c, ground))),
-            conflictBase: addPrimitive(boxes(conflictCells, c => cellColor(asp, c, ground))),
-            conflictRed: addPrimitive(boxes(conflictCells, () => red)),
-          };
+          const boxes = asp.cells.map((cell, idx) => instance(
+            new Cesium.PolygonGeometry({
+              polygonHierarchy: new Cesium.PolygonHierarchy(
+                Cesium.Cartesian3.fromDegreesArray(cell.ring.flat())),
+              height: cell.bottom + heightOffset,
+              extrudedHeight: cell.top + heightOffset,
+              vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+            }),
+            redSet.has(idx) ? red : shaded(cell), idx));
+          return [addPrimitive(boxes)].filter(Boolean);
         }
-        // surface mode: flat color (the sheets shade themselves via lighting)
-        const base = Cesium.Color.fromCssColorString(asp.color).withAlpha(0.5);
+
+        // surface mode
         const corners = buildCornerMap(asp.cells);
-        const sheets = (list, color) =>
-          list.flatMap(({ cell, idx }) => sheetInstances(asp, cell, idx, color, corners));
-        const skirts = tagged.flatMap(({ cell, idx }) => skirtInstances(asp, cell, idx, base, corners));
-        return {
-          normal: addPrimitive([...sheets(normalCells, base), ...skirts]),
-          conflictBase: addPrimitive(sheets(conflictCells, base)),
-          conflictRed: addPrimitive(sheets(conflictCells, red)),
+        const heightAt = (p, fld) => {
+          const e = corners.get(cornerKey(p));
+          return e[fld] / e.n + heightOffset;
         };
+        const sheets = asp.cells.flatMap((cell, idx) => ["b", "t"].map(fld => instance(
+          new Cesium.PolygonGeometry({
+            polygonHierarchy: new Cesium.PolygonHierarchy(
+              Cesium.Cartesian3.fromDegreesArrayHeights(
+                cell.ring.flatMap(p => [p[0], p[1], heightAt(p, fld)]))),
+            perPositionHeight: true,
+            vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+          }),
+          redSet.has(idx) ? red : flat, idx)));
+        const walls = boundaryLoops(asp.cells).map(loop => instance(
+          new Cesium.WallGeometry({
+            positions: Cesium.Cartesian3.fromDegreesArray(loop.flat()),
+            minimumHeights: loop.map(p => heightAt(p, "b")),
+            maximumHeights: loop.map(p => heightAt(p, "t")),
+            vertexFormat: Cesium.PerInstanceColorAppearance.VERTEX_FORMAT,
+          }),
+          flat, "wall"));
+        return [addPrimitive(sheets), addPrimitive(walls)].filter(Boolean);
       }
 
-      // --- UI -------------------------------------------------------------
-      const toggles = document.getElementById("toggles");
+      // --- conflict selection & layer lifecycle -----------------------------
+      let selected = "ALL";     // "ALL" | null | [idA, idB]
+      const currentMode = () => document.querySelector('input[name="mode"]:checked').value;
+      const sig = () => `${currentMode()}|${selected === null ? "off"
+        : selected === "ALL" ? "ALL" : selected.join("+")}`;
+
+      function redSetFor(asp) {
+        if (selected === null) return new Set();
+        const match = selected === "ALL"
+          ? (c) => c.conflicts.length > 0
+          : (c) => {
+              const partner = asp.id === selected[0] ? selected[1]
+                            : asp.id === selected[1] ? selected[0] : null;
+              return partner !== null && c.conflicts.includes(partner);
+            };
+        return new Set(asp.cells.flatMap((c, i) => (match(c) ? [i] : [])));
+      }
+
+      function ensureLayer(id) {
+        const s = sig();
+        if (layers[id]?.sig === s) return;
+        if (layers[id]) for (const p of layers[id].prims) viewer.scene.primitives.remove(p);
+        const asp = data.airspaces.find(a => a.id === id);
+        layers[id] = { sig: s, prims: buildLayer(asp, currentMode(), redSetFor(asp)) };
+      }
+
       const visible = {};
+      function refresh() {
+        const s = sig();
+        for (const asp of data.airspaces) {
+          const L = layers[asp.id];
+          if (!L) continue;
+          const on = visible[asp.id] && L.sig === s;
+          for (const p of L.prims) p.show = on;
+        }
+        viewer.scene.requestRender();
+      }
+      function apply() {
+        for (const asp of data.airspaces) if (visible[asp.id]) ensureLayer(asp.id);
+        refresh();
+      }
+
+      // --- UI ---------------------------------------------------------------
+      const toggles = document.getElementById("toggles");
       for (const asp of data.airspaces) {
         visible[asp.id] = false;   // everything off by default: instant load
         const label = document.createElement("label");
@@ -272,51 +318,58 @@
           ${asp.name}<span class="range">${asp.lower}–${asp.upper} m ${asp.ref}</span>`;
         toggles.appendChild(label);
       }
-
-      document.getElementById("conflicts").innerHTML =
-        `<b>Detected conflicts (PostGIS, ${data.conflictScope ?? "all pairs"})</b>` +
-        (data.conflicts.map(c =>
-          `<div class="row"><span>${c.pair[0]} × ${c.pair[1]}</span>` +
-          `<span class="vol">${c.cellPairs} cells · ${(c.volumeM3 / 1e6).toFixed(1)} M m³</span></div>`
-        ).join("") || "<div>none</div>");
-
-      const showConflicts = document.getElementById("showConflicts");
-      const currentMode = () => document.querySelector('input[name="mode"]:checked').value;
-
-      function ensureLayer(id) {
-        const mode = currentMode();
-        layers[id] ??= { surface: null, cells: null };
-        layers[id][mode] ??= buildLayer(data.airspaces.find(a => a.id === id), mode);
-      }
-
-      function refresh() {
-        const highlight = showConflicts.checked;
-        const mode = currentMode();
-        for (const asp of data.airspaces) {
-          for (const m of ["surface", "cells"]) {
-            const layer = layers[asp.id]?.[m];
-            if (!layer) continue;
-            const on = visible[asp.id] && m === mode;
-            if (layer.normal) layer.normal.show = on;
-            if (layer.conflictBase) layer.conflictBase.show = on && !highlight;
-            if (layer.conflictRed) layer.conflictRed.show = on && highlight;
-          }
-        }
-        viewer.scene.requestRender();
-      }
       toggles.addEventListener("change", (e) => {
-        const id = e.target.dataset.id;
-        visible[id] = e.target.checked;
-        if (e.target.checked) ensureLayer(id);
-        refresh();
+        visible[e.target.dataset.id] = e.target.checked;
+        apply();
       });
-      showConflicts.addEventListener("change", refresh);
       for (const radio of document.querySelectorAll('input[name="mode"]')) {
-        radio.addEventListener("change", () => {
-          for (const asp of data.airspaces) if (visible[asp.id]) ensureLayer(asp.id);
-          refresh();
-        });
+        radio.addEventListener("change", apply);
       }
+
+      // conflict matrix: every pairwise combination, straight from PostGIS
+      const ids = data.airspaces.map(a => a.id);
+      const byPair = {};
+      for (const m of data.matrix) byPair[m.pair.join("+")] = m;
+      function renderMatrix() {
+        const cellFor = (a, b) => {
+          const m = byPair[[a, b].sort().join("+")];
+          const key = [a, b].sort().join("+");
+          const isSel = Array.isArray(selected) && selected.join("+") === key;
+          if (!m) return "<td class='none'>—</td>";
+          if (m.volumeM3 > 0) {
+            return `<td class="hit${isSel ? " sel" : ""}" data-pair="${key}"
+              title="${m.cellPairs} cell pairs · ${m.volumeM3.toLocaleString()} m³ shared · click to highlight">` +
+              `${(m.volumeM3 / 1e6).toFixed(1)}M</td>`;
+          }
+          if (m.touchingPairs > 0) {
+            return `<td class="touch" title="${m.touchingPairs} cell pairs share faces, zero shared volume">touch</td>`;
+          }
+          return "<td class='none'>—</td>";
+        };
+        let html = "<b>Conflict matrix</b> <span style='color:#9ab'>(shared volume, M m³)</span>" +
+          `<span class="modebtn${selected === "ALL" ? " sel" : ""}" data-sel="ALL">highlight all</span>` +
+          `<span class="modebtn${selected === null ? " sel" : ""}" data-sel="off">highlight off</span>` +
+          "<table><tr><th></th>" + ids.slice(1).map(i => `<th>${i[0]}</th>`).join("") + "</tr>";
+        for (let r = 0; r < ids.length - 1; r++) {
+          html += `<tr><th>${ids[r]}</th>`;
+          for (let c = 1; c < ids.length; c++) {
+            html += c <= r ? "<td class='none'></td>" : cellFor(ids[r], ids[c]);
+          }
+          html += "</tr>";
+        }
+        document.getElementById("matrix").innerHTML = html + "</table>";
+      }
+      document.getElementById("matrix").addEventListener("click", (e) => {
+        const pair = e.target.dataset?.pair;
+        const selBtn = e.target.dataset?.sel;
+        if (pair) selected = pair.split("+");
+        else if (selBtn === "ALL") selected = "ALL";
+        else if (selBtn === "off") selected = null;
+        else return;
+        renderMatrix();
+        apply();
+      });
+      renderMatrix();
 
       // Click a cell for its numbers (primitive picking, no entities).
       const info = document.getElementById("cellinfo");

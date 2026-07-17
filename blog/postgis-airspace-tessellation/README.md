@@ -63,9 +63,9 @@ them:
 
 ![ALPHA and BRAVO stacked, terrain-following, no overlap](images/stacked-alpha-bravo.png)
 
-*ALPHA and BRAVO only: flush stacked surfaces with zero shared volume (the
-red patch is BRAVO's conflict with the hidden CHARLIE, not with ALPHA). The
-"individual cells" render mode shows the underlying prisms instead:*
+*ALPHA and BRAVO only, conflict highlighting off: flush stacked surfaces
+with zero shared volume — the matrix reports their relationship as "touch".
+The "individual cells" render mode shows the underlying prisms instead:*
 
 ![The same volumes as individual tessellation cells](images/cells-mode.png)
 
@@ -215,10 +215,12 @@ FROM airspace_cells ca JOIN airspace_cells cb
 on 50 m cells), and the full sweep runs **~2,600× faster** than the CSG
 estimate at 25 m.
 
-By default every pairwise combination of airspaces is checked;
-`find_conflicts_prism('BRAVO', 'CHARLIE')` restricts detection to one pair
-(the committed viewer data is scoped this way — intruder × transit layer —
-via `uv run scripts/export_cells.py 50 BRAVO CHARLIE`).
+The exporter runs this for **every pairwise combination** of airspaces and
+ships the result as a conflict matrix: shared volume and conflicting cell
+pairs per pair, plus the count of *touching-only* pairs (cells that share
+faces but zero volume — which is the entire ALPHA × BRAVO row). In SQL,
+`find_conflicts_prism('BRAVO', 'CHARLIE')` restricts detection to a single
+pair when that's all you need.
 
 ## The numbers
 
@@ -284,14 +286,25 @@ a browser at fine tessellations.
 Two render modes:
 
 - **Smooth volumes** (default) — the union look: one terrain-following
-  ceiling sheet and one floor sheet per airspace, with walls only on the
-  footprint perimeter. PostGIS exports which cell edges lie on the footprint
-  boundary (`ST_Boundary(cell) ∩ ST_Boundary(footprint)`), and the viewer
-  averages floor/ceiling heights at shared grid corners so adjacent cells
-  join into one continuous surface — no interior vertical faces at all.
+  ceiling sheet and one floor sheet per airspace (heights averaged at shared
+  grid corners so adjacent cells join seamlessly), plus one continuous
+  perimeter wall. The wall is derived from the cells' own rings: an edge
+  belonging to exactly one cell ring lies on the airspace outline, and
+  stitching those edges yields closed loops whose vertices match the sheets
+  by construction — no interior faces, no seams. (An earlier version
+  computed outline edges in PostGIS with `ST_Boundary(cell) ∩
+  ST_Boundary(footprint)`; GEOS doesn't snap independent intersection
+  results to shared vertices, which left visible gaps between wall
+  segments — deriving the outline from the rings themselves is exact.)
 - **Individual cells** — every prism drawn as its own translucent box,
   shaded darker toward the valley floor: what the solids in
   `airspace_cells` actually look like.
+
+The **conflict matrix** in the panel shows every pairwise combination
+straight from PostGIS: shared volume in millions of m³, *touch* for pairs
+that share faces but no volume (the stacked ALPHA × BRAVO boundary), and —
+for actual conflicts — click an entry to highlight just that pair's
+conflicting cells, or use *highlight all* / *highlight off*.
 
 One caveat on visual registration: Cesium World Terrain, ESRI World
 Elevation, and the AWS tileset derive from similar-but-not-identical DEM
