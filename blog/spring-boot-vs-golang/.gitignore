@@ -1,0 +1,16 @@
+# Java / Gradle
+spring-app/build/
+spring-app/.gradle/
+.gradle/
+build/
+
+# Go (compiled binaries default to the directory name)
+go-app/go-order-service
+go-app/go-app
+downstream-stub/stub
+downstream-stub/downstream-stub
+
+# IDE
+.idea/
+*.iml
+.vscode/
