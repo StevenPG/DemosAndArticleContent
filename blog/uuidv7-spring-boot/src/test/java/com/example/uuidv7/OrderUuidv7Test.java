@@ -36,6 +36,10 @@ class OrderUuidv7Test {
     void generatesVersion7UuidAtPersistTime() {
         Order saved = orders.save(new Order("steve@example.com"));
 
+        System.out.printf("%n=== UUIDv7 generation ===%n");
+        System.out.printf("id      : %s%n", saved.getId());
+        System.out.printf("version : %d%n", saved.getId().version());
+
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getId().version()).isEqualTo(7);
     }
@@ -44,6 +48,10 @@ class OrderUuidv7Test {
     void idsAreMonotonicallyIncreasingAcrossInserts() {
         Order first = orders.save(new Order("a@example.com"));
         Order second = orders.save(new Order("b@example.com"));
+
+        System.out.printf("%n=== UUIDv7 monotonic ordering ===%n");
+        System.out.printf("first  : %s%n", first.getId());
+        System.out.printf("second : %s%n", second.getId());
 
         // UUIDv7 sorts by creation time — the whole point of the article.
         assertThat(second.getId().toString()).isGreaterThan(first.getId().toString());
