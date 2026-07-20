@@ -12,7 +12,8 @@ Ollama server; the vector store is Spring AI's in-memory `SimpleVectorStore`.
    pulls `qwen3:8b` and `nomic-embed-text` automatically on first startup
    (`pull-model-strategy: when_missing`).
 2. Put some markdown files in `./corpus/` (e.g. a checkout of the blog's
-   `src/content/blog/` directory).
+   `src/content/blog/` directory). The repo also ships with a few dummy posts
+   about cats in `./corpus/` so you can try the demo out of the box.
 3. `./gradlew bootRun`
 4. Ask it something:
 
@@ -20,6 +21,14 @@ Ollama server; the vector store is Spring AI's in-memory `SimpleVectorStore`.
 curl -s localhost:8080/chat \
   -H 'Content-Type: application/json' \
   -d '{"question": "Why is UUID4 a bad primary key?"}'
+```
+
+Or, using the included cat posts:
+
+```bash
+curl -s localhost:8080/chat \
+  -H 'Content-Type: application/json' \
+  -d '{"question": "Why do cats knock things off tables?"}'
 ```
 
 ## Notes
