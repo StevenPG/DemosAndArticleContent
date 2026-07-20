@@ -26,7 +26,7 @@ public class ContainersConfig {
     @Bean
     @ServiceConnection
     KafkaContainer kafka() {
-        return new KafkaContainer("apache/kafka-native:3.9.0")
+        return new KafkaContainer("apache/kafka:4.1.0")
                 .withReuse(true);
     }
 }
