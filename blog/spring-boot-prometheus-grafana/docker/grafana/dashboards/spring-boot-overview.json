@@ -10,7 +10,7 @@
       {
         "name": "application",
         "type": "query",
-        "datasource": { "type": "prometheus", "uid": "-- Grafana --" },
+        "datasource": { "type": "prometheus", "uid": "default" },
         "query": "label_values(http_server_requests_seconds_count, application)",
         "refresh": 2,
         "includeAll": false,
