@@ -4,11 +4,11 @@ Companion project for the article [Do You Really Need Elasticsearch? Postgres Fu
 
 The same search implemented three ways against one Postgres table:
 
-| Endpoint | Strategy | Index |
-|---|---|---|
-| `/search/ilike?q=` | `ILIKE '%q%'` baseline | none (seq scan) |
-| `/search/fts?q=` | `tsvector` + `websearch_to_tsquery` + `ts_rank` | GIN on generated column |
-| `/search/fuzzy?q=` | `pg_trgm` similarity (typo-tolerant) | GIN `gin_trgm_ops` |
+| Endpoint           | Strategy                                        | Index                   |
+|--------------------|-------------------------------------------------|-------------------------|
+| `/search/ilike?q=` | `ILIKE '%q%'` baseline                          | none (seq scan)         |
+| `/search/fts?q=`   | `tsvector` + `websearch_to_tsquery` + `ts_rank` | GIN on generated column |
+| `/search/fuzzy?q=` | `pg_trgm` similarity (typo-tolerant)            | GIN `gin_trgm_ops`      |
 
 Flyway seeds 50,000 articles so the latency numbers mean something.
 
