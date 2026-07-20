@@ -23,8 +23,8 @@ the differences are the tools' — not the SQL's:
 Each demo verifies its migrations against PostgreSQL 18 via Testcontainers:
 
 ```bash
-(cd flyway-demo && ./gradlew test)
-(cd liquibase-demo && ./gradlew test)
+(cd flyway-demo && ./gradlew clean test)
+(cd liquibase-demo && ./gradlew clean test)
 ```
 
 The rollback and drift-detection walkthroughs (where the tools genuinely
