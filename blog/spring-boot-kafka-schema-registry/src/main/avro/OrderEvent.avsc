@@ -1,0 +1,28 @@
+{
+  "type": "record",
+  "name": "OrderEvent",
+  "namespace": "com.example.schemaregistry.avro",
+  "doc": "Emitted when an order changes state. Schema version 1.",
+  "fields": [
+    { "name": "orderId", "type": "string", "doc": "Unique order identifier." },
+    { "name": "customerId", "type": "string", "doc": "Customer who placed the order." },
+    { "name": "amount", "type": "double", "doc": "Order total in the given currency." },
+    { "name": "currency", "type": "string", "default": "USD", "doc": "ISO-4217 currency code." },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "OrderStatus",
+        "symbols": ["PLACED", "PAID", "SHIPPED", "CANCELLED"],
+        "default": "PLACED"
+      },
+      "default": "PLACED",
+      "doc": "Current order status."
+    },
+    {
+      "name": "createdAt",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "Event creation time (epoch millis)."
+    }
+  ]
+}
