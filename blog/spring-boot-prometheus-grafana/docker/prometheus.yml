@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: spring-boot
+    metrics_path: /actuator/prometheus
+    static_configs:
+      # host.docker.internal resolves to the host machine where bootRun runs
+      - targets: ["host.docker.internal:8080"]

@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: postgres-full-text-search
+  datasource:
+    url: jdbc:postgresql://localhost:5432/search_demo
+    username: postgres
+    password: postgres
+  jpa:
+    hibernate:
+      ddl-auto: none

@@ -1,0 +1,16 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPathPattern": "/v1/track/(.+)"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "jsonBody": {
+      "trackingNumber": "TRACK-999",
+      "status": "IN_TRANSIT"
+    }
+  }
+}

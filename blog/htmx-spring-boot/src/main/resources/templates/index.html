@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>HTMX Notes</title>
+    <script src="/webjars/htmx.org/2.0.4/dist/htmx.min.js"></script>
+    <style>
+        :root { color-scheme: light dark; }
+        body { font-family: system-ui, sans-serif; max-width: 720px; margin: 2rem auto; padding: 0 1rem; }
+        .card { border: 1px solid color-mix(in srgb, currentColor 25%, transparent); border-radius: 8px; padding: 1rem; margin: .75rem 0; }
+        .card h3 { margin: 0 0 .5rem; }
+        .card .meta { font-size: .8rem; opacity: .7; }
+        input, textarea { width: 100%; box-sizing: border-box; padding: .5rem; margin: .25rem 0; font: inherit; }
+        button { padding: .4rem .8rem; cursor: pointer; }
+        .actions { display: flex; gap: .5rem; margin-top: .5rem; }
+        .htmx-request .htmx-indicator { display: inline; }
+        .htmx-indicator { display: none; }
+    </style>
+</head>
+<body>
+<h1>HTMX Notes</h1>
+<p>A CachePad-style notepad with zero frontend framework. View source — this is the whole app.</p>
+
+<!-- Active search: fires 300ms after typing stops, replaces only the list -->
+<input type="search" name="q" placeholder="Search notes..."
+       hx-get="/notes"
+       hx-trigger="input changed delay:300ms, keyup[key=='Enter']"
+       hx-target="#note-list"
+       hx-swap="outerHTML"/>
+
+<!-- New note form: posts, server returns the refreshed list -->
+<form hx-post="/notes" hx-target="#note-list" hx-swap="outerHTML"
+      hx-on::after-request="this.reset()">
+    <input name="title" placeholder="Title" required/>
+    <textarea name="body" rows="3" placeholder="Write a note..." required></textarea>
+    <button type="submit">Add note <span class="htmx-indicator">…</span></button>
+</form>
+
+<div th:replace="~{fragments :: note-list}"></div>
+
+</body>
+</html>

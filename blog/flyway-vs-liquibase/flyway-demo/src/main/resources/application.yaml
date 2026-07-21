@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: flyway-demo
+  datasource:
+    url: jdbc:postgresql://localhost:5432/migration_demo
+    username: postgres
+    password: postgres

@@ -1,0 +1,10 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: search-demo
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: search_demo
+    ports:
+      - "5432:5432"
