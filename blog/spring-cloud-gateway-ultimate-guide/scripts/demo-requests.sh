@@ -55,7 +55,16 @@ suite() {
     | grep -iE 'x-gateway|x-correlation|x-ratelimit' | sed 's/^/   /'
 
   hr; echo "9) OBSERVABILITY — live routes from the actuator gateway endpoint"
-  curl -s "$G/actuator/gateway/routes" | jqf '.[].route_id' 2>/dev/null || curl -s "$G/actuator/gateway/routes" | jqf
+  local GW_STATUS
+  GW_STATUS=$(curl -s -o /dev/null -w '%{http_code}' "$G/actuator/gateway/routes")
+  if [[ "$GW_STATUS" == "200" ]]; then
+    curl -s "$G/actuator/gateway/routes" | jqf '.[].route_id'
+  else
+    echo "   (/actuator/gateway/routes -> $GW_STATUS: Spring Cloud Gateway Server WebMVC"
+    echo "    doesn't expose the gateway actuator endpoints yet, unlike the reactive flavor.)"
+    echo "   Falling back to /actuator/mappings for the fallback/dev routes it does register:"
+    curl -s "$G/actuator/mappings" | jqf '.contexts[].mappings.dispatcherServlets.dispatcherServlet[]?.details.requestMappingConditions.patterns[]?' 2>/dev/null | sort -u | sed 's/^/   /'
+  fi
 }
 
 if [[ $# -ge 1 ]]; then

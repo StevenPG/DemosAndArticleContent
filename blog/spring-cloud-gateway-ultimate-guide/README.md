@@ -62,6 +62,15 @@ Requirements: **Java 21+** and **Docker** (for Redis). Gradle is provided by the
 ./scripts/stop-demo.sh       # tears it all down
 ```
 
+> **Note on Java versions:** the project's Java *toolchain* (what compiles/runs the
+> app) is 21, but the Gradle *wrapper itself* (8.14) can't run on JDK 24+ as its host
+> JVM — it fails compiling `build.gradle.kts` with a cryptic `IllegalArgumentException`
+> whose message is just the JDK's major version number. `run-demo.sh` auto-detects
+> this and switches to an installed 17-23 JDK for you. If you invoke `./gradlew`
+> directly and your default `java` is 24+, do the same yourself first, e.g.
+> `export JAVA_HOME=$(/usr/libexec/java_home -v 21)` (macOS) or `sdk use java 21.0.3-tem`
+> (SDKMAN).
+
 Or drive it by hand (reactive gateway shown; use `:8090` for the servlet one):
 
 ```bash
@@ -284,6 +293,10 @@ Three layers, from most to least "batteries included":
    curl -s localhost:8080/actuator/gateway/routes | jq '.[].route_id'
    # "orders-java" "orders-flaky" "orders" "inventory"
    ```
+   Note: `/actuator/gateway/*` is **reactive-only** — as of Spring Cloud Gateway
+   5.0.2, the servlet/functional flavor (`gateway-webmvc`, port 8090) doesn't
+   register those endpoints, so the same call there 404s. `/actuator/mappings`,
+   `/actuator/metrics`, and `/actuator/circuitbreakers` all work on both.
 2. **Correlation id** — the custom `AddCorrelationId` filter (see §2) gives you
    always-on, exporter-free request correlation across the gateway and every backend
    it calls.

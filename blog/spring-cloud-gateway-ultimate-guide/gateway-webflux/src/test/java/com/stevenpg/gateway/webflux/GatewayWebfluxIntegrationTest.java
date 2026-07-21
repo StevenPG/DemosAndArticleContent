@@ -2,7 +2,6 @@ package com.stevenpg.gateway.webflux;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
@@ -50,14 +49,11 @@ class GatewayWebfluxIntegrationTest {
     @LocalServerPort
     int port;
 
-    @Autowired
-    WebTestClient.Builder builder;
-
     WebTestClient client;
 
     @BeforeEach
     void setUp() {
-        client = builder.baseUrl("http://localhost:" + port).build();
+        client = WebTestClient.bindToServer().baseUrl("http://localhost:" + port).build();
     }
 
     @Test
