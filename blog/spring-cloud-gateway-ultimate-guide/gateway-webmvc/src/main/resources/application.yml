@@ -1,0 +1,92 @@
+# =============================================================================
+# gateway-webmvc — servlet Spring Cloud Gateway configuration
+#
+# Most routing lives in RoutesConfig.java (the functional API), which is the
+# idiomatic servlet-gateway style. To show the servlet gateway ALSO supports
+# declarative routes, ONE route is defined here under
+# `spring.cloud.gateway.server.webmvc.routes` — the mirror image of the reactive
+# module, where YAML was primary and one route was written in Java.
+#
+# Ports: 8090 this gateway | 8081 orders | 8082/8083 inventory | 6379 Redis
+# =============================================================================
+server:
+  port: 8090
+
+spring:
+  application:
+    name: gateway-webmvc
+
+  # Blocking Redis client config (also read by RateLimitConfig for the RedisClient).
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  cloud:
+    # Same static discovery list as the reactive gateway — the lb("backend-inventory")
+    # filter in RoutesConfig round-robins across these.
+    discovery:
+      client:
+        simple:
+          instances:
+            backend-inventory:
+              - uri: http://localhost:8082
+              - uri: http://localhost:8083
+
+    gateway:
+      server:
+        webmvc:
+          # A DECLARATIVE route (the functional routes are in RoutesConfig.java).
+          # Exposes orders under /yaml/orders/** and rewrites back to /orders/**.
+          routes:
+            - id: orders-yaml
+              uri: http://localhost:8081
+              predicates:
+                - Path=/yaml/orders/**
+              filters:
+                - RewritePath=/yaml/orders/(?<segment>.*), /orders/${segment}
+                - AddResponseHeader=X-Routed-By, yaml-config
+
+# Resilience4j — servlet (blocking) circuit breaker for the `ordersCb` instance.
+# It behaves just like the reactive one: the time limiter below (2s) makes
+# `/orders/slow` (a 3s sleep) fall through to the fallback, AND once >=50% of a
+# 10-call window fails the breaker opens and every call short-circuits to
+# /fallback/orders until it half-opens again.
+resilience4j:
+  circuitbreaker:
+    instances:
+      ordersCb:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        register-health-indicator: true
+  timelimiter:
+    instances:
+      ordersCb:
+        timeout-duration: 2s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, gateway, circuitbreakers, mappings
+  endpoint:
+    gateway:
+      access: unrestricted
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.stevenpg.gateway: DEBUG
+
+demo:
+  jwt:
+    secret: "demo-shared-secret-change-me-please-32bytes-minimum!!"

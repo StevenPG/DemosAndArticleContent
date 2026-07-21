@@ -1,0 +1,192 @@
+# =============================================================================
+# gateway-webflux — reactive Spring Cloud Gateway configuration
+#
+# This single file wires up MOST of the demo declaratively. The reactive gateway
+# is configured under `spring.cloud.gateway.server.webflux`. Each route below is
+# annotated with the ONE feature it is meant to showcase.
+#
+# Ports in this demo:
+#   8080  this gateway (reactive)
+#   8090  the servlet gateway (gateway-webmvc)
+#   8081  backend-orders
+#   8082  backend-inventory  (instance A)
+#   8083  backend-inventory  (instance B)
+#   6379  Redis (rate-limiter storage) — see docker-compose.yml
+# =============================================================================
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-webflux
+
+  # Reactive Redis connection used by the RequestRateLimiter filter.
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  # --- Edge security -------------------------------------------------------
+  # The gateway is an OAuth2 resource server: it validates the Bearer JWT on
+  # protected routes. Because we use a symmetric (HS256) key, the decoder is built
+  # in code (see SecurityConfig) from `demo.jwt.secret` below — Spring can't build
+  # a symmetric decoder from properties alone. In production you'd delete that bean
+  # and set `spring.security.oauth2.resourceserver.jwt.jwk-set-uri` to your IdP.
+
+  cloud:
+    # --- Static service discovery for load balancing ---------------------
+    # No Eureka/Consul needed: SimpleDiscoveryClient serves this hard-coded list
+    # of instances. The `lb://backend-inventory` route round-robins across them.
+    discovery:
+      client:
+        simple:
+          instances:
+            backend-inventory:
+              - uri: http://localhost:8082
+              - uri: http://localhost:8083
+
+    gateway:
+      server:
+        webflux:
+          # Default filters apply to EVERY route. Great for cross-cutting headers.
+          default-filters:
+            - AddResponseHeader=X-Gateway-Flavor, webflux
+            - DedupeResponseHeader=Vary Access-Control-Allow-Origin, RETAIN_UNIQUE
+
+          routes:
+            # ---------------------------------------------------------------
+            # 1) RETRY. `/orders/flaky` fails 2 of every 3 calls with 503. The
+            #    Retry filter transparently re-issues the request so the caller
+            #    almost always sees 200. Higher precedence (order 0) than the
+            #    general orders route below so it wins for this exact path.
+            # ---------------------------------------------------------------
+            - id: orders-flaky
+              uri: ${BACKEND_ORDERS_URI:http://localhost:8081}
+              order: 0
+              predicates:
+                - Path=/orders/flaky
+                - Method=GET
+              filters:
+                - name: Retry
+                  args:
+                    retries: 3
+                    series: SERVER_ERROR          # retry on 5xx
+                    methods: GET
+                    backoff:
+                      firstBackoff: 50ms
+                      maxBackoff: 500ms
+                      factor: 2
+                      basedOnPreviousValue: false
+
+            # ---------------------------------------------------------------
+            # 2) The main ORDERS route. Showcases, on one route:
+            #      - a CircuitBreaker with a 1s time limiter (see resilience4j
+            #        config below): `/orders/slow` sleeps 3s -> breaker trips ->
+            #        the gateway forwards to the /fallback/orders handler.
+            #      - a Redis RequestRateLimiter (token bucket) keyed by the
+            #        authenticated user (falls back to client IP).
+            #      - header filters (add on the way in, strip a hop-by-hop header).
+            #      - a CUSTOM filter (AddCorrelationId) written in this project.
+            #    This route is SECURED — see SecurityConfig (authenticated()).
+            # ---------------------------------------------------------------
+            - id: orders
+              uri: ${BACKEND_ORDERS_URI:http://localhost:8081}
+              order: 1
+              predicates:
+                - Path=/orders/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: ordersCb
+                    fallbackUri: forward:/fallback/orders
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 5      # tokens/sec
+                    redis-rate-limiter.burstCapacity: 10      # bucket size
+                    redis-rate-limiter.requestedTokens: 1
+                    key-resolver: "#{@userKeyResolver}"
+                - AddRequestHeader=X-Gateway, webflux
+                - AddRequestHeader=X-Request-Start, gateway
+                - RemoveRequestHeader=Cookie                 # don't leak cookies downstream
+                - AddCorrelationId                           # <-- custom filter factory
+
+            # ---------------------------------------------------------------
+            # 3) INVENTORY route. Showcases LOAD BALANCING: the `lb://` scheme
+            #    resolves `backend-inventory` through the static discovery list
+            #    above and round-robins across ports 8082/8083. Public (no auth).
+            #    Also demonstrates a Method predicate and a RewritePath is NOT
+            #    needed because the backend path matches 1:1.
+            # ---------------------------------------------------------------
+            - id: inventory
+              uri: lb://backend-inventory
+              order: 2
+              predicates:
+                - Path=/inventory/**
+                - Method=GET
+              filters:
+                - AddResponseHeader=X-Load-Balanced, "true"
+
+# =============================================================================
+# Resilience4j — the circuit breaker + time limiter behind the CircuitBreaker
+# filter named `ordersCb`. The 1s time limiter is what makes `/orders/slow`
+# (a 3s sleep) fall through to the fallback.
+# =============================================================================
+resilience4j:
+  circuitbreaker:
+    instances:
+      ordersCb:
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50          # open once >=50% of calls fail
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        register-health-indicator: true
+  timelimiter:
+    instances:
+      ordersCb:
+        timeout-duration: 1s                # <-- trips on /orders/slow (3s)
+        cancel-running-future: true
+
+# =============================================================================
+# Observability. Three layers, from most to least "batteries included":
+#
+#  1. Actuator endpoints — /actuator/gateway/routes lists every live route,
+#     /actuator/metrics exposes Micrometer meters (http.server.requests, etc.),
+#     /actuator/circuitbreakers shows Resilience4j state. Always on.
+#
+#  2. Correlation id — the custom AddCorrelationId filter stamps every request
+#     and its response with an id that is ALSO forwarded to the backend. This is
+#     the exporter-free, always-works way to tie one request's logs together
+#     across the gateway and every service it touched.
+#
+#  3. Distributed tracing — Micrometer Tracing + Brave is on the classpath and
+#     sampling is set to 100%, so each request produces a span you can export to
+#     Zipkin or an OTLP collector. Point it at a collector to see full traces;
+#     the correlation id above covers you until you do.
+# =============================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, gateway, circuitbreakers, mappings
+  endpoint:
+    gateway:
+      access: unrestricted
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.stevenpg.gateway: DEBUG
+
+# A demo-only symmetric secret shared by the JWT decoder (validation) and the
+# dev token minter (/dev/token). NEVER ship a secret in config like this — a
+# real deployment validates against an external IdP's public keys.
+demo:
+  jwt:
+    secret: "demo-shared-secret-change-me-please-32bytes-minimum!!"

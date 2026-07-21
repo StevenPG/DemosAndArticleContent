@@ -1,0 +1,17 @@
+# Default port for the FIRST inventory instance. Start a second instance with a
+# different port to demonstrate load balancing, e.g.:
+#   SERVER_PORT=8083 ./gradlew :backend-inventory:bootRun
+# or with the built jar:
+#   java -jar backend-inventory.jar --server.port=8083
+server:
+  port: 8082
+
+spring:
+  application:
+    name: backend-inventory
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

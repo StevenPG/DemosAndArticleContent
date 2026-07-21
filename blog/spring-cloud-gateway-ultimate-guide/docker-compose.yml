@@ -1,0 +1,16 @@
+# Redis backs BOTH gateways' rate limiters:
+#   - gateway-webflux  -> Spring Cloud Gateway's RequestRateLimiter (Lua token bucket)
+#   - gateway-webmvc   -> Bucket4j buckets stored in Redis (bucket4j-redis)
+# Nothing else needs external infra; the backends and gateways are plain JVMs.
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: scg-demo-redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
