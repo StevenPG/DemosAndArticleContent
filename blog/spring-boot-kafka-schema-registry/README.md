@@ -11,15 +11,15 @@ The narrative walkthrough lives in [BLOG.md](./BLOG.md). This README is the
 
 ## What's in here
 
-| Piece | What it shows |
-|---|---|
-| `src/main/avro/OrderEvent.avsc` | The Avro schema. Build-time codegen turns it into a Java class. |
-| `OrderProducer` / `OrderEventListener` | Avro serialize/deserialize wired through Spring's Kafka starter. |
-| `OrderController` | `POST /orders` to publish, `GET /orders/received` to see what was consumed. |
-| `OrderFlowIntegrationTest` | Full round trip against **real** Kafka + Schema Registry (Testcontainers). |
-| `SchemaEvolutionTest` | The important one: a compatible change is accepted, a breaking one is rejected with `409`. |
-| `docker-compose.yml` | Kafka (KRaft) + Schema Registry + Kafka UI for hands-on play. |
-| `evolution/` + `scripts/` | Standalone schemas and curl helpers for driving the registry REST API. |
+| Piece                                  | What it shows                                                                              |
+|----------------------------------------|--------------------------------------------------------------------------------------------|
+| `src/main/avro/OrderEvent.avsc`        | The Avro schema. Build-time codegen turns it into a Java class.                            |
+| `OrderProducer` / `OrderEventListener` | Avro serialize/deserialize wired through Spring's Kafka starter.                           |
+| `OrderController`                      | `POST /orders` to publish, `GET /orders/received` to see what was consumed.                |
+| `OrderFlowIntegrationTest`             | Full round trip against **real** Kafka + Schema Registry (Testcontainers).                 |
+| `SchemaEvolutionTest`                  | The important one: a compatible change is accepted, a breaking one is rejected with `409`. |
+| `docker-compose.yml`                   | Kafka (KRaft) + Schema Registry + Kafka UI for hands-on play.                              |
+| `evolution/` + `scripts/`              | Standalone schemas and curl helpers for driving the registry REST API.                     |
 
 ## Requirements
 
@@ -60,7 +60,7 @@ curl -s http://localhost:8080/orders/received | jq .
 
 Handy URLs while the stack is up:
 
-- Kafka UI — <http://localhost:8080> (browse the `orders` topic and the registered schemas)
+- Kafka UI — <http://localhost:8092> (browse the `orders` topic and the registered schemas)
 - Schema Registry REST — <http://localhost:8081>
 
 Inspect the registry directly:
@@ -80,13 +80,13 @@ change safely.
 compatibility, a consumer on the *new* schema must be able to read data written
 with the *old* schema. In practice that means:
 
-| Change | Allowed under BACKWARD? |
-|---|---|
-| Add a field **with a default** (or nullable) | ✅ Yes |
-| Remove a field | ✅ Yes (reader ignores it) |
-| Add a field **without a default** | ❌ No |
-| Change a field's type | ❌ No |
-| Rename a field (no alias) | ❌ No |
+| Change                                       | Allowed under BACKWARD?   |
+|----------------------------------------------|---------------------------|
+| Add a field **with a default** (or nullable) | ✅ Yes                     |
+| Remove a field                               | ✅ Yes (reader ignores it) |
+| Add a field **without a default**            | ❌ No                      |
+| Change a field's type                        | ❌ No                      |
+| Rename a field (no alias)                    | ❌ No                      |
 
 **2. Check before you merge.** Point the compatibility check at the running
 registry — this is a dry run, nothing is registered:
