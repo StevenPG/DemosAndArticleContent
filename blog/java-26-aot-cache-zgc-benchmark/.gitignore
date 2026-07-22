@@ -1,0 +1,5 @@
+# Build output and generated AOT artifacts
+bench-app/build/
+bench-app/.gradle/
+app.aot
+app.aotconf

@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: bench-app
+  datasource:
+    url: jdbc:h2:mem:bench;DB_CLOSE_DELAY=-1
+  jpa:
+    hibernate:
+      ddl-auto: create
+
+management:
+  endpoint:
+    health:
+      probes:
+        # Expose /actuator/health/readiness - the measurement scripts poll it.
+        enabled: true

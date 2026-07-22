@@ -1,0 +1,7 @@
+# Caddy serves HTTP/1.1, HTTP/2 (TCP) and HTTP/3 (QUIC/UDP) on the same port
+# by default - no protocol configuration needed. The client picks the protocol.
+localhost:4443 {
+	root * ./www
+	file_server
+	respond /api/ping `{"pong":true}` 200
+}
