@@ -1,0 +1,29 @@
+{
+  "type": "record",
+  "name": "OrderEvent",
+  "namespace": "com.example.schemaregistry.avro",
+  "doc": "Schema version 2 — adds an optional loyaltyTier. BACKWARD compatible.",
+  "fields": [
+    { "name": "orderId", "type": "string" },
+    { "name": "customerId", "type": "string" },
+    { "name": "amount", "type": "double" },
+    { "name": "currency", "type": "string", "default": "USD" },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "OrderStatus",
+        "symbols": ["PLACED", "PAID", "SHIPPED", "CANCELLED"],
+        "default": "PLACED"
+      },
+      "default": "PLACED"
+    },
+    { "name": "createdAt", "type": { "type": "long", "logicalType": "timestamp-millis" } },
+    {
+      "name": "loyaltyTier",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Optional loyalty tier. Nullable with a default, so old data still reads."
+    }
+  ]
+}

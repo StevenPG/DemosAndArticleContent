@@ -1,0 +1,33 @@
+spring:
+  application:
+    name: spring-boot-kafka-schema-registry
+  kafka:
+    bootstrap-servers: localhost:9092
+    # Confluent serializers read this to find the Schema Registry.
+    properties:
+      schema.registry.url: http://localhost:8081
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      properties:
+        # Register unknown schemas automatically. Great for local dev; in
+        # production teams often set this to false and register via CI instead
+        # (see the "change process" section of the README).
+        auto.register.schemas: true
+        # Fail fast if the writer schema is not compatible with the subject.
+        use.latest.version: false
+    consumer:
+      group-id: order-consumer
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      properties:
+        # Deserialize into our generated SpecificRecord (OrderEvent) instead of GenericRecord.
+        specific.avro.reader: true
+
+app:
+  topic: orders
+
+logging:
+  level:
+    com.example.schemaregistry: INFO
