@@ -47,7 +47,18 @@ import static org.awaitility.Awaitility.await;
 class StreamPipelineTest {
 
     @Container
-    static final KafkaContainer KAFKA = new KafkaContainer("apache/kafka:3.9.0");
+    static final KafkaContainer KAFKA = new KafkaContainer("apache/kafka:3.9.0")
+            // Testcontainers binds every listener to 0.0.0.0 and then advertises only
+            // PLAINTEXT and BROKER. Kafka 3.9 derives the CONTROLLER listener's
+            // advertised address from `listeners` when `advertised.listeners` omits it,
+            // so it derives 0.0.0.0 and refuses to boot:
+            //   "advertised.listeners cannot use the nonroutable meta-address 0.0.0.0"
+            // Binding CONTROLLER to localhost gives it a routable address to derive.
+            // Only the in-container quorum talks to it (controller.quorum.voters is
+            // 1@localhost:9094), so localhost is the correct scope - nothing outside
+            // the container needs to reach the controller port.
+            .withEnv("KAFKA_LISTENERS",
+                    "PLAINTEXT://0.0.0.0:9092,BROKER://0.0.0.0:9093,CONTROLLER://localhost:9094");
 
     static boolean dockerAvailable() {
         return DockerClientFactory.instance().isDockerAvailable();

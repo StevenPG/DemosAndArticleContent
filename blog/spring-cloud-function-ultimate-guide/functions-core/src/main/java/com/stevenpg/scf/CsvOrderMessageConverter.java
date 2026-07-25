@@ -27,6 +27,27 @@ public class CsvOrderMessageConverter extends AbstractMessageConverter {
 
     public CsvOrderMessageConverter() {
         super(new MimeType("text", "csv"));
+        // The web adapter copies the HTTP "Content-Type" header verbatim into the
+        // message headers, NOT under MessageHeaders.CONTENT_TYPE ("contentType").
+        // Without checking both keys, resolve() would always return null for
+        // HTTP-originated messages, and with the default (lenient) content-type
+        // matching that makes this converter falsely claim to support every
+        // request, not just text/csv ones - it just gets away with it for plain
+        // Order-typed functions because a failed CSV parse there is swallowed and
+        // retried with the next converter. Functions with a raw Message<Order>
+        // parameter take a different code path with no such fallback, so a JSON
+        // request wrongly routed here surfaces as an uncaught 500 instead.
+        setContentTypeResolver(headers -> {
+            Object contentType = headers.get(MessageHeaders.CONTENT_TYPE);
+            if (contentType == null) {
+                contentType = headers.get("Content-Type");
+            }
+            if (contentType == null) {
+                return null;
+            }
+            return contentType instanceof MimeType mimeType ? mimeType : MimeType.valueOf(contentType.toString());
+        });
+        setStrictContentTypeMatch(true);
     }
 
     @Override
