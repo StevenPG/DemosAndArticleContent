@@ -1,0 +1,11 @@
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.demo/
+.idea/
+*.iml
+out/
+bin/
+*.log
+dump.rdb
+*.rdb

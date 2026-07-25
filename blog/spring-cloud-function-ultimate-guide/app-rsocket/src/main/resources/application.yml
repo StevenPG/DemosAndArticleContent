@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: app-rsocket
+  rsocket:
+    server:
+      port: 7000        # RSocket over TCP on localhost:7000
+      transport: tcp

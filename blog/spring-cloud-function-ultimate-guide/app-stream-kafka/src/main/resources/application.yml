@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: app-stream-kafka
+  kafka:
+    # The Testcontainers test overrides this; the demo scripts use docker-compose.
+    bootstrap-servers: localhost:9092
+  cloud:
+    function:
+      # Only this function is bound to Kafka. All the other functions-core beans
+      # remain in the catalog but are not attached to any topic.
+      definition: orderPipeline
+    stream:
+      bindings:
+        orderPipeline-in-0:
+          destination: orders
+          group: scf-guide           # a consumer group => durable, DLQ-capable
+          consumer:
+            max-attempts: 1          # fail fast: no in-memory retries before DLQ
+        orderPipeline-out-0:
+          destination: decisions
+      kafka:
+        binder:
+          brokers: ${spring.kafka.bootstrap-servers}
+        bindings:
+          orderPipeline-in-0:
+            consumer:
+              enable-dlq: true        # send poison messages to a dead-letter topic
+              dlq-name: orders-dlq
+              auto-commit-on-error: true
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0               # trace every message for the demo
+  endpoints:
+    web:
+      exposure:
+        include: health, info, bindings, functions
+  endpoint:
+    health:
+      show-details: always

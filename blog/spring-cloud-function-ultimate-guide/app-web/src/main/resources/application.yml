@@ -1,0 +1,36 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: app-web
+  cloud:
+    function:
+      # With spring-cloud-function-web, every function bean is already exposed at
+      # POST /<name>. You do NOT need to list them here. `definition` only matters
+      # when you want ONE default endpoint mounted at "/" — uncomment to make the
+      # composed pipeline the root:
+      #
+      # definition: enrichOrder|validateOrder
+      #
+      # Composition over HTTP is also available ad hoc via a comma in the path,
+      # e.g. POST /enrichOrder,validateOrder — no config required.
+      web:
+        path: ""   # functions are served from the root context (POST /enrichOrder)
+
+# Routing over HTTP:
+#   POST /functionRouter with header `order-channel: express`  -> fastApprove
+#   POST /functionRouter with any other/no order-channel        -> enrichOrder|validateOrder
+# The decision is made by the MessageRoutingCallback bean (orderRouter) in
+# functions-core. Alternatively set a SpEL routing-expression here to route
+# without any code, e.g.:
+#   routing-expression: "headers['order-channel'] == 'express' ? 'fastApprove' : 'enrichOrder|validateOrder'"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, functions, mappings
+  endpoint:
+    health:
+      show-details: always
