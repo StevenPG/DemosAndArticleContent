@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: spring-jpa-specifications-2026
+  datasource:
+    url: jdbc:postgresql://localhost:5432/flights
+    username: flights
+    password: flights
+  jpa:
+    open-in-view: false
+    hibernate:
+      # The guide's demo builds its schema from the entities so the mapping can never drift
+      # from the DDL. Real services should use a migration tool instead.
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    # Every SQL statement quoted in the blog post came out of these two loggers.
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
