@@ -1,6 +1,27 @@
 # Caddy serves HTTP/1.1, HTTP/2 (TCP) and HTTP/3 (QUIC/UDP) on the same port
 # by default - no protocol configuration needed. The client picks the protocol.
+#
+# `default_sni` + `tls internal` are not decoration. The JDK 26 HttpClient sends no SNI
+# extension on the QUIC path when the authority is `localhost` - it does send one over TCP.
+# Caddy's debug log shows `server_name: "localhost"` for the HTTP/2 handshake and
+# `server_name: ""` for the HTTP/3 one. With no SNI, Caddy falls back to the connection's
+# local IP as the certificate identifier, finds no certificate for 127.0.0.1, and kills the
+# QUIC handshake:
+#
+#   javax.net.ssl.SSLHandshakeException: QUIC connection establishment failed
+#   Caused by: java.io.IOException: Connection closed by server peer: CRYPTO_ERROR|internal_error
+#
+# HTTP/2 keeps working the whole time, which makes this read as "HTTP/3 is broken" rather than
+# "the certificate lookup had nothing to go on". Naming a default SNI gives the certless
+# ClientHello something to match. The `tls internal` line is what makes Caddy emit a TLS
+# connection policy at all - without it the global option has nowhere to attach and is
+# silently dropped from the adapted config.
+{
+	default_sni localhost
+}
+
 localhost:4443 {
+	tls internal
 	root * ./www
 	file_server
 	respond /api/ping `{"pong":true}` 200

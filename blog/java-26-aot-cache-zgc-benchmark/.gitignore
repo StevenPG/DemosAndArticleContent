@@ -2,4 +2,5 @@
 bench-app/build/
 bench-app/.gradle/
 app.aot
+app-zgc.aot
 app.aotconf

@@ -49,10 +49,18 @@ for i in $(seq 1 $RUNS); do
   kill $pid && wait $pid 2>/dev/null || true
 
   if [[ $i -eq 1 ]]; then
+    # Assert engagement POSITIVELY. Matching on failure strings does not work: a truncated
+    # or otherwise unusable cache makes JDK 26 print
+    #   [warning][aot] The AOT cache has been truncated.
+    #   [error  ][aot] Loading static archive failed.
+    #   [error  ][aot] Unable to map shared spaces
+    # and then start normally, with no line saying "unable to use" or "disabled". A grep for
+    # those phrases stays silent and you publish uncached numbers as cached ones. A mapped
+    # cache always logs "Mapped static region #0", so require that and reject any [error][aot].
     if [[ "$FLAGS" == *AOTCache=* ]] && \
-       grep -qi "Unable to use AOT cache\|AOT cache disabled" "$aot_log"; then
-      echo "FATAL: AOT cache was requested but the JVM ignored it:"
-      grep -i "aot" "$aot_log" | head -5
+       { ! grep -q "Mapped static  *region" "$aot_log" || grep -q "\[error *\]\[aot\]" "$aot_log"; }; then
+      echo "FATAL: AOT cache was requested but the JVM did not map it:"
+      grep -i "aot" "$aot_log" | head -8
       exit 1
     fi
     echo "run $i: ${ready_ms}ms (discarded - cache priming + verification)"

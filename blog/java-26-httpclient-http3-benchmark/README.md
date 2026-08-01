@@ -48,15 +48,49 @@ Output is p50/p95/p99 in milliseconds plus total wall time.
 
 ### TLS trust for localhost
 
-Caddy mints a certificate from its own local CA. Two options:
+Caddy mints a certificate from its own local CA. `caddy trust` (which `caddy run` also
+attempts on startup) installs that CA into the system store and into the JDK it can find —
+which is the JDK on `PATH`/`JAVA_HOME` at the time, not necessarily the JDK 26 you run the
+benchmark with. What worked here, on a machine whose JDK 26 was a standalone tarball:
 
-1. **Recommended:** trust Caddy's root once — `caddy trust` (installs the local CA
-   into the system/Java trust store on most platforms), or import
-   `~/.local/share/caddy/pki/authorities/local/root.crt` into a throwaway truststore
-   and pass `-Djavax.net.ssl.trustStore=...`.
-2. Quick and dirty (benchmarking only, never production):
-   `java -Djdk.internal.httpclient.disableHostnameVerification=true ...`
-   — note this does NOT disable chain validation, so option 1 is usually still needed.
+```bash
+# Copy the JDK's own cacerts and add Caddy's root to the copy, so everything else
+# still validates. Linux path shown; on macOS the root lives under
+# ~/Library/Application Support/Caddy/pki/authorities/local/root.crt
+cp "$JAVA_HOME/lib/security/cacerts" /tmp/bench-truststore.jks
+keytool -importcert -noprompt -alias caddy-local \
+    -file ~/.local/share/caddy/pki/authorities/local/root.crt \
+    -keystore /tmp/bench-truststore.jks -storepass changeit
+
+export JAVA_TOOL_OPTIONS="-Djavax.net.ssl.trustStore=/tmp/bench-truststore.jks \
+    -Djavax.net.ssl.trustStorePassword=changeit"
+./scripts/run-bench.sh
+```
+
+`JAVA_TOOL_OPTIONS` is used rather than `-D` flags so `run-bench.sh` picks it up without
+editing the `java src/H2vsH3Bench.java ...` lines.
+
+Do not reach for `-Djdk.internal.httpclient.disableHostnameVerification=true` here: it does
+not disable chain validation, so it fixes nothing on its own.
+
+### Why the Caddyfile names a default SNI
+
+The JDK 26 HttpClient sends no SNI extension on the QUIC path for the authority `localhost`,
+though it does send one over TCP. Caddy's debug log shows `server_name: "localhost"` for the
+HTTP/2 handshake and `server_name: ""` for the HTTP/3 one. Without SNI, Caddy falls back to
+the connection's local IP as the certificate identifier, has no certificate for `127.0.0.1`,
+and closes the QUIC handshake:
+
+```
+javax.net.ssl.SSLHandshakeException: QUIC connection establishment failed
+Caused by: java.io.IOException: Connection closed by server peer: CRYPTO_ERROR|internal_error
+```
+
+HTTP/2 keeps working throughout, so this reads as "HTTP/3 is broken" rather than a
+certificate-selection problem. The `default_sni localhost` global option plus `tls internal`
+in the site block fixes it — the `tls` line is what makes Caddy emit a TLS connection policy
+for the global option to attach to. A dotted hostname (`bench.test` in `/etc/hosts`, say)
+also works, because the JDK does send SNI for those.
 
 ## Injecting latency + loss
 
