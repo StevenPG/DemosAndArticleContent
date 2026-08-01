@@ -220,7 +220,22 @@ migration hazard: existing `catch (JsonProcessingException e)` blocks keep compi
 against Jackson 2 semantics and quietly stop catching anything once the hierarchy becomes
 unchecked.
 
-## 5. Verification summary
+## 5. One defect found
+
+`stop-both.sh` printed "Stopped jackson2-example (pid ...)" while both apps kept serving.
+`run-both.sh` started each app as
+
+```bash
+(cd "$ROOT_DIR/jackson2-example" && nohup java -jar ... > log 2>&1 & echo $! > pidfile)
+```
+
+where the `&` binds to the whole `cd && nohup java` list, so `$!` is the subshell's pid and
+the JVM is its child. Killing the recorded pid left the JVM holding port 8082, and a second
+`run-both.sh` would have failed with "port already in use". The scripts now background the
+subshell and `exec` into `java`, which keeps one pid from the pid file down to the JVM.
+Re-verified: `stop-both.sh` frees both ports, and both apps disappear from the process table.
+
+## 6. Verification summary
 
 | Check | Result |
 | --- | --- |
@@ -230,5 +245,5 @@ unchecked.
 | `jackson3-example` tests (5) | pass |
 | `run-both.sh` starts both apps | pass |
 | `compare-requests.sh` all 5 scenarios | pass, output identical across versions |
-| `stop-both.sh` tears both down | pass |
+| `stop-both.sh` tears both down | pass, after the pid fix in section 5 |
 | Annotations artifact unchanged across versions | confirmed from both fat jars |
