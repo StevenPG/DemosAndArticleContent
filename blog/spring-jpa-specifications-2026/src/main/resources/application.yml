@@ -14,6 +14,18 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  data:
+    web:
+      pageable:
+        # Serialize Page responses through Spring Data's PagedModel DTO:
+        #   {"content": [...], "page": {"size":..., "number":..., "totalElements":...}}
+        # The default (DIRECT) writes PageImpl's own field layout, which puts totalElements at
+        # the top level and logs "Serializing PageImpl instances as-is is not supported,
+        # meaning that there is no guarantee about the stability of the resulting JSON
+        # structure" on the first paged response. scripts/demo-requests.sh reads
+        # .page.totalElements, so this is also what makes the match counts show up there
+        # instead of nulls.
+        serialization-mode: via-dto
 
 logging:
   level:

@@ -69,10 +69,10 @@ Requires a working Docker daemon — the suite runs against a real PostgreSQL 18
 Testcontainers, because half of what the guide covers (`jsonb`, `date_part`, `ilike`, the exact
 count-query failure) does not exist on an in-memory database.
 
-> **Provenance:** the whole project — including every test — is compile-verified against the
-> versions in the table above. The test suite itself was authored without a Docker daemon
-> available, so it has not been executed end to end. The assertion values are derived from
-> `SampleData`, which is deterministic and was evaluated directly.
+> **Provenance:** the whole project has been run end to end against the versions in the table
+> above — 44 tests green against a real PostgreSQL 18 container, plus `bootRun` and
+> `scripts/demo-requests.sh`. See [reference-output.md](reference-output.md) for the captured
+> output, the generated SQL, and the list of defects that run turned up.
 
 ## Notes worth stealing
 

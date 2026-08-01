@@ -100,6 +100,13 @@ class BulkUpdateDeleteTests extends AbstractPostgresTest {
     @Test
     @DisplayName("UpdateSpecification composes exactly like Specification does")
     void updateSpecificationComposition() {
+        PredicateSpecification<Flight> delayedOutOfSeattle = FlightSpecifications.flyingFrom("SEA")
+                .and(FlightSpecifications.hasStatus(FlightStatus.DELAYED));
+        // SampleData already delays some flights out of SEA. The update moves the SCHEDULED
+        // ones on top of them, so the count afterwards is the sum - comparing it against the
+        // affected-row count alone would only pass on a dataset where nothing was delayed yet.
+        long alreadyDelayed = flights.count(delayedOutOfSeattle);
+
         UpdateSpecification<Flight> spec = UpdateSpecification
                 .<Flight>update((root, update, cb) -> update.set("status", FlightStatus.DELAYED))
                 .where(FlightSpecifications.flyingFrom("SEA")
@@ -109,7 +116,6 @@ class BulkUpdateDeleteTests extends AbstractPostgresTest {
 
         assertThat(updated).isPositive();
         flushAndClear();
-        assertThat(flights.count(FlightSpecifications.flyingFrom("SEA")
-                .and(FlightSpecifications.hasStatus(FlightStatus.DELAYED)))).isEqualTo(updated);
+        assertThat(flights.count(delayedOutOfSeattle)).isEqualTo(alreadyDelayed + updated);
     }
 }

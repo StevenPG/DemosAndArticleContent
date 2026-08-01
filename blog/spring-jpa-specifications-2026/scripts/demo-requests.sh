@@ -37,11 +37,18 @@ show "Three: ... on a SkyTeam or Star Alliance carrier" \
 show "Four: ... that actually has wifi AND seat power" \
   "$BASE/api/flights/search?origin=ATL&maxPrice=300&airlineCodes=DL&airlineCodes=UA&requiredAmenities=WIFI&requiredAmenities=POWER&size=1"
 
+# POWER rather than WIFI on purpose. SampleData adds WIFI when i % 3 != 0 and the BUSINESS
+# cabin when i % 3 == 0, so no flight in the dataset has both and this panel would always
+# report zero matches. POWER lands on every BUSINESS flight, so the narrowing stays visible.
 show "Five: ... passenger flights with a business cabin and seats left" \
-  "$BASE/api/flights/search?origin=ATL&maxPrice=300&requiredAmenities=WIFI&cabinClass=BUSINESS&minSeatsAvailable=10&size=1"
+  "$BASE/api/flights/search?origin=ATL&maxPrice=300&requiredAmenities=POWER&cabinClass=BUSINESS&minSeatsAvailable=10&size=1"
 
+# No origin filter here. SampleData sets wifiVendor from i % 4 and origin from i % 8, so the
+# vendor is constant within any one airport - "origin=ATL&wifiVendor=Starlink" matches all 15
+# ATL flights and "origin=ORD&wifiVendor=Starlink" matches none, which makes the jsonb
+# predicate look like it does nothing. Across the whole dataset it selects 30 of 120.
 show "Reaching into the jsonb column: Starlink wifi only" \
-  "$BASE/api/flights/search?origin=ATL&wifiVendor=Starlink&size=1"
+  "$BASE/api/flights/search?wifiVendor=Starlink&size=1"
 
 show "Morning departures, via PostgreSQL's date_part()" \
   "$BASE/api/flights/search?earliestDepartureHourUtc=6&latestDepartureHourUtc=11&size=1"
