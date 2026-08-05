@@ -21,7 +21,6 @@ import javax.sql.DataSource;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -80,10 +79,16 @@ class PartitionSwapServiceIntegrationTest {
         // What the ingest service leaves behind: an index-free clone with 60 rows.
         jdbcClient.sql("CREATE TABLE %s (LIKE sensor_readings INCLUDING DEFAULTS INCLUDING STORAGE)"
                 .formatted(WINDOW.tableName())).update();
+        // uuidv7() rather than gen_random_uuid(): seeding with random v4 keys
+        // would give the primary-key build a different (and unrepresentative)
+        // page-locality profile from the time-ordered keys the producer emits.
+        // Postgres 18+.
         for (int i = 0; i < 60; i++) {
-            jdbcClient.sql("INSERT INTO %s (id, device_id, metric, reading, recorded_at, ingested_at) VALUES (?, ?, ?, ?, ?, ?)"
-                            .formatted(WINDOW.tableName()))
-                    .params(UUID.randomUUID(), "device-%03d".formatted(i % 8), "temperature_c", (double) i,
+            jdbcClient.sql("""
+                            INSERT INTO %s (id, device_id, metric, reading, recorded_at, ingested_at)
+                            VALUES (uuidv7(), ?, ?, ?, ?, ?)
+                            """.formatted(WINDOW.tableName()))
+                    .params("device-%03d".formatted(i % 8), "temperature_c", (double) i,
                             WINDOW.start().atOffset(ZoneOffset.UTC), WINDOW.start().plusSeconds(i).atOffset(ZoneOffset.UTC))
                     .update();
         }

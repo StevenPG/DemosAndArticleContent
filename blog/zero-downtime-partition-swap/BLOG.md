@@ -27,9 +27,9 @@ Boot 4: a Kafka consumer that `COPY`s events into per-minute staging tables,
 and a separate maintenance service that indexes each completed minute and
 attaches it, zero-downtime, once a minute.
 
-Every number in this post comes from actually running it at 2,000 events/sec,
-which produces ~120,000-row partitions — enough that the costs are real rather
-than rounding error.
+Every number in this post comes from actually running it at 2,000 events/sec
+against **PostgreSQL 18**, which produces ~120,000-row partitions — enough that
+the costs are real rather than rounding error.
 
 The complete runnable project is in this folder ([README](./README.md) for
 the commands). Here's why it's built the way it is.
@@ -356,13 +356,22 @@ spring:
 With `synchronous_commit = off`, COPY returns without waiting for the WAL
 fsync. Measured A/B on the same hardware at 4,000 events/sec:
 
-| | COPY p50 | COPY p99 |
+| PostgreSQL 18.4 | COPY p50 | COPY p99 |
 |---|---|---|
-| `synchronous_commit = on` | 5.73 ms | ~109 ms |
-| `synchronous_commit = off` | 4.44 ms | ~18 ms |
+| `synchronous_commit = on` | 6.26–6.78 ms | 22–46 ms |
+| `synchronous_commit = off` | 5.49 ms | 21–27 ms |
 
-A ~6× improvement at p99, which is headroom you get to spend on burst
-absorption.
+Worth being precise about how much this is worth, because it moved between
+versions. On PostgreSQL 16.13 the same A/B was dramatic — p50 5.73 → 4.44 ms
+and p99 ~109 → ~18 ms, roughly 6× at the tail. On 18.4 the win is real but far
+smaller: about 15% at p50 and a tighter, less spiky tail. PostgreSQL 18's
+asynchronous I/O (`io_method`, defaulting to `worker`) reshapes the commit path
+enough that the stock configuration is already much better behaved.
+
+The lesson generalises past this one setting: **re-measure your tuning after a
+major version upgrade.** A knob that bought 6× on one release can quietly
+become a 15% knob on the next, and the reasoning that justified the trade-off
+deserves rechecking along with the number.
 
 Two things make this defensible rather than reckless. First, **it is not
 `fsync = off`** — the database remains crash-safe and will never corrupt;
@@ -589,17 +598,22 @@ Running at 2,000 events/sec, which fills each per-minute partition with about
 120,000 rows:
 
 ```
-ingest: 20000 rows in 50 batches (2000 rows/s, 400 rows/batch) | copy p50 4.05 ms, p99 9.95 ms
+ingest: 20000 rows in 100 batches (2000 rows/s, 200 rows/batch) | copy p50 3.92 ms, p99 15.71 ms
 
-[sensor_readings_p20260805_0323] promoted to live partition: ~120000 rows |
-    pk 86 ms, indexes 183 ms, bounds-check 12 ms, analyze 67 ms,
-    attach 2 ms, drop-check 1 ms, total 357 ms
+[sensor_readings_p20260805_0422] promoted to live partition: ~120000 rows |
+    pk 139 ms, indexes 266 ms, bounds-check 13 ms, analyze 85 ms,
+    attach 2 ms, drop-check 1 ms, total 516 ms
 ```
 
 The line to internalize is the last one. Promoting 120,000 rows into the live
-table costs **357 ms of work, of which the parent table is involved for
+table costs **516 ms of work, of which the parent table is involved for
 2 ms** — in a lock mode that doesn't conflict with readers anyway. The other
-355 ms happens on a table no reader can see.
+514 ms happens on a table no reader can see.
+
+The ratio is the point, and it holds as the partition grows. At 3M rows in a
+standalone test, the same attach took **5.6 ms** while the bounds validation it
+skipped cost 1.2 s — so a 25× larger partition moved the work done off the live
+table up by roughly 25×, and the work done on it barely at all.
 
 Scale the partition to 12 million rows and the pk / indexes / bounds-check
 numbers grow with it. They're all in the detached phase. The attach stays a
@@ -618,13 +632,15 @@ worry, and the fix — sub-partitioning each minute by writer shard so every
 thread gets its own heap — is a real design.
 
 I benchmarked it before recommending it, and the result went the other way. On
-PostgreSQL 16, 8 concurrent COPY writers, 1.6M rows: one shared table took
-7,131 ms and eight separate tables took **7,848 ms** — sharding was 10%
-*slower*. Sampled wait events show why: `LWLock:WALWrite`,
-`LWLock:BufferContent`, and `IO:DataFileWrite` dominate, and **`LWLock:extend`
-never appears at all**. Postgres has mitigated single-block extension since
-9.6 and reworked the path substantially in 16; spreading writes across eight
-files just made the I/O less sequential.
+PostgreSQL 18.4, 8 concurrent COPY writers, 1.6M rows: one shared table took
+9,797 ms and eight separate tables took **10,511 ms** — sharding was 7%
+*slower*. Sampled wait events show why: `LWLock:WALWrite` and
+`IO:DataFileWrite` dominate, and **`LWLock:extend` never appears at all**. The
+only extension-related event seen anywhere was a single `IO:DataFileExtend`,
+and it appeared in the *sharded* run. PostgreSQL 16.13 agreed with the same
+sign (7,131 ms versus 7,848 ms). Postgres has mitigated single-block extension
+since 9.6, reworked the path in 16, and added async I/O in 18; spreading writes
+across eight files just made the I/O less sequential.
 
 So: measure before you build. Sample `pg_stat_activity` for `LWLock:extend`
 under peak load, and only reach for sharded staging if it's actually near the
@@ -639,6 +655,16 @@ but before offsets do will redeliver and duplicate. If duplicates matter,
 write the batch's `(topic, partition, max-offset)` in the same transaction as
 the COPY and restore offsets from that table on rebalance. That makes the
 pipeline effectively exactly-once without Kafka transactions.
+
+**Postgres-generated UUIDv7.** PostgreSQL 18 added `uuidv7()` (alongside
+`uuidv4()`, `uuid_extract_version()` and `uuid_extract_timestamp()`). For a
+table whose rows are born in the database, that is now the right way to get a
+time-ordered key. This design deliberately doesn't use it: the id identifies
+the event across Kafka, so it has to exist in the producer long before any row
+reaches Postgres, and COPY always supplies the column so a `DEFAULT` would
+never fire. It is the correct tool pointed at a different problem — but it is
+exactly what to reach for when seeding test or benchmark data, where random v4
+keys would give index builds an unrepresentative locality profile.
 
 **`FORMAT binary`** once you've measured text parsing as a real cost, and
 **unlogged staging tables** (`CREATE UNLOGGED TABLE`) to halve WAL on the load
@@ -674,6 +700,8 @@ the swap.
    A weak lock that queues behind a strong one is a strong lock.
 6. **Relax durability exactly where you can rebuild it.** Kafka-replayable
    writes are the textbook case for `synchronous_commit = off`; DDL is not.
+   Then re-measure it after every major version upgrade — this knob was worth
+   6× at p99 on Postgres 16 and about 15% at p50 on Postgres 18.
 7. **Classify failures, don't just retry them.** Retry the database being
    down forever; dead-letter un-processable data immediately. Defaulting an
    unknown error to "transient" turns a mystery into a stalled partition

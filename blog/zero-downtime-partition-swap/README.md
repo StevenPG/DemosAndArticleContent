@@ -13,8 +13,8 @@ the primary key and indexes, validates a bounds `CHECK` constraint, runs
 to the partitioned read table with a metadata-only `ATTACH PARTITION`. Readers
 querying the parent table never block and never see an unindexed row.
 
-At 2,000 events/sec (~120,000 rows per partition), promotion costs ~357 ms of
-work, of which the live parent table is involved for **2 ms**.
+At 2,000 events/sec (~120,000 rows per partition) on PostgreSQL 18, promotion
+costs ~516 ms of work, of which the live parent table is involved for **2 ms**.
 
 ```
                     ┌────────────── ingest-service (8080) ─────────────────┐
@@ -47,6 +47,9 @@ work, of which the live parent table is involved for **2 ms**.
 
 ## Run it
 
+Requires PostgreSQL 18 (the demo uses its built-in `uuidv7()` in tests and
+benchmarks) — `docker compose` provides it.
+
 ```bash
 docker compose up -d                       # Postgres 18 + Kafka (KRaft) + Kafka UI
 ./gradlew :ingest-service:bootRun          # terminal 1
@@ -57,11 +60,11 @@ Within a minute or two you'll see the lifecycle in the logs:
 
 ```
 ingest-service       : staging table ready: sensor_readings_p20260805_0323 [...]
-ingest-service       : ingest: 20000 rows in 50 batches (2000 rows/s, 400 rows/batch)
-                       | copy p50 4.05 ms, p99 9.95 ms
-maintenance-service  : [sensor_readings_p20260805_0323] promoted to live partition: ~120000 rows |
-                       pk 86 ms, indexes 183 ms, bounds-check 12 ms, analyze 67 ms,
-                       attach 2 ms, drop-check 1 ms, total 357 ms
+ingest-service       : ingest: 20000 rows in 100 batches (2000 rows/s, 200 rows/batch)
+                       | copy p50 3.92 ms, p99 15.71 ms
+maintenance-service  : [sensor_readings_p20260805_0422] promoted to live partition: ~120000 rows |
+                       pk 139 ms, indexes 266 ms, bounds-check 13 ms, analyze 85 ms,
+                       attach 2 ms, drop-check 1 ms, total 516 ms
 ```
 
 ## Watch the swap happen
@@ -146,7 +149,7 @@ Knobs worth knowing (all in `ingest-service/src/main/resources/application.yaml`
 | `spring.datasource.hikari.maximum-pool-size` | Must be ≥ listener concurrency or writers serialize on connection checkout. |
 | `max.poll.records` / `fetch.max.wait.ms` | Shape how many rows each COPY carries. Denser batches are better for COPY. |
 | `max.poll.interval.ms` | Must exceed the worst-case COPY, or heavy batches trigger rebalance loops. |
-| `connection-init-sql: SET synchronous_commit = off` | ~6× better COPY p99. Safe here because Kafka replays anything lost. |
+| `connection-init-sql: SET synchronous_commit = off` | ~15% better COPY p50 on PG18 (~6× at p99 on PG16 — re-measure after upgrades). Safe here because Kafka replays anything lost. |
 
 The `docker-compose.yml` Postgres service also carries a bulk-ingest profile
 (`max_wal_size`, `checkpoint_timeout`, `wal_compression`, `maintenance_work_mem`)
@@ -178,4 +181,5 @@ growth and reuse), and the failure-handling policy — SQLState classification
 in both directions, the poison-record path, and the retry-versus-dead-letter
 configuration. The integration tests (Testcontainers, skipped automatically
 without Docker) drive the real COPY path and the full promote → attach →
-retention lifecycle against Postgres 18.
+retention lifecycle against Postgres 18, seeded with PG18's built-in
+`uuidv7()` so the key distribution matches what the producer emits.

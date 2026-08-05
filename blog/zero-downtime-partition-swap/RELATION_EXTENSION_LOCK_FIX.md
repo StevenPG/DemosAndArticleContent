@@ -9,11 +9,14 @@ mechanism, then measurement, then fix — because **the measurements in here
 say most readers do not need the fix**, and that conclusion is worth more
 than the implementation.
 
-Everything below was run against PostgreSQL 16.13 on a 4-vCPU container with
-default server settings (not the tuned `docker-compose.yml` profile), so treat
-absolute numbers as directional. The *relative* results and the SQL mechanics
-were all verified, and where a result contradicted my expectations I've said
-so rather than quietly dropping it.
+Everything below was run against **PostgreSQL 18.4** on a 4-vCPU container
+with default server settings (not the tuned `docker-compose.yml` profile), so
+treat absolute numbers as directional. Test data is seeded with PG18's
+built-in `uuidv7()` so the key distribution matches what the producer emits —
+seeding with random v4 keys would give index builds an unrepresentative
+page-locality profile. The *relative* results and the SQL mechanics were all
+verified, and where a result contradicted my expectations I've said so rather
+than quietly dropping it.
 
 ---
 
@@ -46,6 +49,9 @@ mitigated for a long time:
 - **16** substantially reworked the bufmgr extension path (Andres Freund's
   relation-extension work), extending in bulk with less lock time held and
   fewer buffer-mapping round trips.
+- **18** added asynchronous I/O (`io_method`, defaulting to `worker`), which
+  changes the shape of the write path again — extension I/O can now be issued
+  without blocking the backend the way it used to.
 
 The practical consequence is that on a modern Postgres the extension lock is
 much harder to hit than its reputation suggests. Which brings us to the part
@@ -94,33 +100,40 @@ files), differing only in the target: one shared table versus eight separate
 tables — the best case sharding could possibly achieve, since separate tables
 have entirely separate extension locks.
 
-| 8 concurrent writers, 1.6M rows | Wall time |
+| 8 concurrent writers, 1.6M rows (PostgreSQL 18.4) | Wall time |
 |---|---|
-| → one shared table | **7,131 ms** |
-| → eight separate tables | **7,848 ms** |
+| → one shared table | **9,797 ms** |
+| → eight separate tables | **10,511 ms** |
 
-Sharding was **10% slower**, not faster. The sampled wait events explain why:
+Sharding was **7% slower**, not faster. The sampled wait events explain why:
 
 ```
 one shared table                 eight separate tables
 ────────────────────             ─────────────────────
- 20  LWLock:WALWrite              54  IO:DataFileWrite
- 12  LWLock:BufferContent         11  LWLock:WALWrite
- 11  IO:DataFileWrite              5  LWLock:WALInsert
-  2  Client:ClientRead             1  IO:WALSync
+ 32  LWLock:WALWrite              68  LWLock:WALWrite
+ 20  IO:DataFileWrite             58  IO:DataFileWrite
+ 13  LWLock:BufferContent         22  LWLock:WALInsert
+  8  LWLock:WALInsert              9  IO:WalWrite
+  5  LWLock:WALBufMapping          2  IO:WalSync
 ```
 
-**`LWLock:extend` does not appear in either run.** The bottleneck is WAL and
-data-file I/O. Sharding across eight files made the I/O pattern *less*
-sequential, which is where the 10% went.
+**`LWLock:extend` does not appear in either run.** The only extension-related
+event observed anywhere was a single `IO:DataFileExtend` — the *I/O* of
+growing a file, not lock contention — and it showed up in the **sharded** run,
+which is the opposite of the hypothesis. The bottleneck is WAL and data-file
+I/O throughout. Spreading writes across eight files made the pattern less
+sequential, which is where the 7% went.
 
-A smaller run agreed: 3 writers × 200k rows into one table took 843 ms; into
-three separate tables, 856 ms.
+The same experiment on PostgreSQL 16.13 gave the same verdict with the same
+sign: 7,131 ms shared versus 7,848 ms sharded (10% slower), and no
+`LWLock:extend`. A smaller PG16 run agreed too: 3 writers × 200k rows into one
+table took 843 ms, into three separate tables 856 ms.
 
 ### What this means
 
-On PostgreSQL 16, at 8 concurrent COPY writers, on storage where I/O is the
-ceiling, **relation extension contention did not materialise at all**. That is
+On PostgreSQL 18 (and 16), at 8 concurrent COPY writers, on storage where I/O
+is the ceiling, **relation extension contention did not materialise at all**.
+That is
 the honest result, it is the reason this design is documented rather than
 implemented in the demo, and it should update your priors: this problem is
 real, but it lives further out than folklore suggests.
@@ -128,7 +141,8 @@ real, but it lives further out than folklore suggests.
 The conditions under which it *does* show up, in rough order of importance:
 
 1. **PostgreSQL 15 or older**, before the bufmgr extension rework — this is
-   the big one.
+   the big one, and it is the only condition I would treat as strong evidence
+   on its own.
 2. **Writer counts well beyond core count** — dozens of concurrent COPY
    streams into one relation.
 3. **Storage fast enough that I/O is not the ceiling** (NVMe, or a large
@@ -151,7 +165,7 @@ and it generalises to any `ATTACH PARTITION` benchmarking.
 My first attempt to measure whether the bounds `CHECK` still lets `ATTACH`
 skip its validation scan under sub-partitioning produced this:
 
-| 3M rows, sub-partitioned, **no indexes built** | Time |
+| 3M rows, sub-partitioned, **no indexes built** (PG16) | Time |
 |---|---|
 | `ATTACH` without bounds CHECK | 13,871 ms |
 | `ATTACH` with pre-validated CHECK | 11,384 ms |
@@ -165,16 +179,18 @@ it.
 Re-run with the index set built on both tables beforehand, isolating the one
 variable:
 
-| 3M rows, sub-partitioned, **indexes pre-built** | Time |
+| 3M rows, sub-partitioned, **indexes pre-built** (PG18.4) | Time |
 |---|---|
-| `ADD CONSTRAINT … CHECK` (on the detached table) | 1,320 ms |
-| `ATTACH` **without** bounds CHECK | 1,334 ms |
-| `ATTACH` **with** pre-validated CHECK | **1.5 ms** |
+| `ADD CONSTRAINT … CHECK` (on the detached table) | 2,696 ms |
+| `ATTACH` **without** bounds CHECK | 1,221 ms |
+| `ATTACH` **with** pre-validated CHECK | **5.6 ms** |
 
-Now it's unambiguous, and it confirms the design works through two levels:
-the validation scan costs ~1.3 s either way, and the CHECK moves it off the
+Now it's unambiguous, and it confirms the design works through two levels: the
+bounds have to be proved either way, and the CHECK moves that work off the
 attach and onto the detached table where it blocks nobody. The attach itself
-becomes a 1.5 ms catalog operation.
+collapses to a 5.6 ms catalog operation — a ~220× reduction in time spent
+touching the live parent. (PG16.4 gave the same shape: 1,320 ms / 1,334 ms /
+1.5 ms.)
 
 The lesson for anyone benchmarking this: **an attach has two independent
 table-scale costs** — index building and bounds validation — and if you leave
@@ -422,7 +438,7 @@ Implement sub-partitioned staging only if you can answer yes to most of these:
 - [ ] `LWLock:extend` appears in sampled `pg_stat_activity` wait events under
       peak load, in the top few entries.
 - [ ] You are on PostgreSQL 15 or older, or have many more concurrent writers
-      than cores.
+      than cores. (Measured as not needed on both 16 and 18.)
 - [ ] You have already tuned WAL, checkpoints, and `synchronous_commit`, and
       confirmed I/O is not the ceiling.
 - [ ] A prototype with N separate tables demonstrably beats one shared table
@@ -440,14 +456,21 @@ second" will never need it.
 ## Appendix: reproducing these measurements
 
 ```bash
-# 1. Generate three 200k-row files
+# 1. Generate N 200k-row files with time-ordered UUIDv7 keys, matching what
+#    the producer emits (v4 keys would skew any index-build measurement).
 python3 - <<'EOF'
-import uuid
-for s in range(3):
-    with open(f'/tmp/shard{s}.tsv','w') as f:
+import os, time, uuid
+def uuid7(ms):
+    b = bytearray(ms.to_bytes(6,'big') + os.urandom(10))
+    b[6] = (b[6] & 0x0F) | 0x70   # version 7
+    b[8] = (b[8] & 0x3F) | 0x80   # RFC 9562 variant
+    return str(uuid.UUID(bytes=bytes(b)))
+base = int(time.time()*1000)
+for s in range(8):
+    with open(f'/tmp/s{s}.tsv','w') as f:
         for i in range(200000):
-            f.write(f"{uuid.uuid4()}\tdevice-{i%64:03d}\ttemperature_c\t{20+i%50}.5"
-                    f"\t2026-08-05T14:32:00Z\t2026-08-05T14:32:{i%60:02d}Z\t{s}\n")
+            f.write(f"{uuid7(base + i//100)}\tdevice-{i%64:03d}\ttemperature_c\t{20+i%50}.5"
+                    f"\t2026-08-05T14:32:00Z\t2026-08-05T14:32:{i%60:02d}Z\t{s%3}\n")
 EOF
 
 # 2. Contended: N writers, one table.  Sharded: N writers, N tables.
@@ -455,6 +478,7 @@ EOF
 ```
 
 The attach experiments in §3 use two structurally identical 3M-row
-sub-partitioned tables built with `INSERT INTO … SELECT generate_series(…)`,
-with the index set built on both and the bounds `CHECK` added to only one.
-Control for indexes or the result is meaningless.
+sub-partitioned tables built with
+`INSERT INTO … SELECT uuidv7(), … generate_series(…)` (PG18's built-in v7
+generator), with the index set built on both and the bounds `CHECK` added to
+only one. Control for indexes or the result is meaningless.
