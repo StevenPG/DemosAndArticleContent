@@ -21,11 +21,42 @@
 # Requires: Postgres 18 and Kafka reachable (docker compose up -d), plus curl.
 set -uo pipefail
 
+case "${1:-}" in
+  -h|--help)
+    sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
+    exit 0 ;;
+esac
 MESSAGES="${1:-300000}"
+case "$MESSAGES" in
+  ''|*[!0-9]*) echo "usage: $0 [MESSAGE_COUNT]   (got: '$MESSAGES')"; exit 2 ;;
+esac
 RESULTS="${RESULTS:-benchmark-results.txt}"
 PGHOST="${PGHOST:-localhost}" PGUSER="${PGUSER:-demo}" PGDATABASE="${PGDATABASE:-partition_swap}"
 export PGPASSWORD="${PGPASSWORD:-demo}"
 TIMEOUT_S="${TIMEOUT_S:-1800}"
+# A fresh topic per run. Preloading into a shared topic makes repeat runs
+# cumulative: the second run's consumers find the first run's messages still
+# there and drain more than MESSAGES, quietly invalidating the comparison.
+# Both apps auto-create their topic, so this needs no Kafka CLI tooling.
+BENCH_TOPIC="${BENCH_TOPIC:-sensor-readings-bench-$(date +%s)}"
+
+# --- preflight -------------------------------------------------------------
+# Fail up front with a readable message rather than mid-run with a confusing
+# one. psql in particular is easy to be missing when the stack came from
+# docker compose.
+missing=0
+for tool in psql curl awk; do
+  command -v "$tool" >/dev/null 2>&1 || { echo "MISSING: $tool is required"; missing=1; }
+done
+[ -x ./gradlew ] || { echo "MISSING: run this from the project root (./gradlew not found)"; missing=1; }
+if ! PGPASSWORD="${PGPASSWORD:-demo}" psql -h "${PGHOST:-localhost}" -U "${PGUSER:-demo}" \
+     -d "${PGDATABASE:-partition_swap}" -tAqc 'SELECT 1' >/dev/null 2>&1; then
+  echo "MISSING: cannot reach Postgres at ${PGHOST:-localhost}:5432 as ${PGUSER:-demo}"
+  echo "         start it with: docker compose up -d"
+  echo "         no local psql? use: docker exec -it partition-swap-postgres psql -U demo partition_swap"
+  missing=1
+fi
+[ "$missing" -eq 0 ] || { echo; echo "Preflight failed; nothing was run."; exit 1; }
 
 record()  { printf '%s\n' "$*" | tee -a "$RESULTS"; }
 banner()  { printf '\n=== %s ===\n' "$*" | tee -a "$RESULTS"; }
@@ -89,10 +120,12 @@ run_case() {
 record "benchmark $(date -u +%FT%TZ)"
 record "postgres  $(psql -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -tAqc 'SHOW server_version')"
 record "messages  $MESSAGES"
+record "topic     $BENCH_TOPIC"
 stop_all
 
 banner "preload: $MESSAGES messages (all consumers stopped)"
 ./gradlew -q :ingest-service:bootRun --args="\
+--demo.topic=$BENCH_TOPIC \
 --demo.consumer.enabled=false \
 --demo.producer.messages-per-second=20000 \
 --demo.producer.total-messages=$MESSAGES" > /tmp/preload.log 2>&1 &
@@ -104,18 +137,18 @@ DROP_STAGING="DO \$\$ DECLARE t text; BEGIN FOR t IN SELECT c.relname FROM pg_cl
 
 run_case "COPY into staging partitions" \
   "ingest-service" \
-  "--demo.producer.enabled=false --spring.kafka.consumer.group-id=bench-copy" \
+  "--demo.topic=$BENCH_TOPIC --demo.producer.enabled=false --spring.kafka.consumer.group-id=bench-copy" \
   8080 "ingest_rows_written_total" "ingest_drain_seconds" "$DROP_STAGING"
 
 run_case "Spring Data JPA saveAll - NAIVE" \
   "jpa-baseline-service" \
-  "--spring.profiles.active=naive --spring.kafka.consumer.group-id=bench-jpa-naive" \
+  "--baseline.topic=$BENCH_TOPIC --spring.profiles.active=naive --spring.kafka.consumer.group-id=bench-jpa-naive" \
   8082 "baseline_rows_written_total" "baseline_drain_seconds" \
   "TRUNCATE sensor_readings_jpa"
 
 run_case "Spring Data JPA saveAll - TUNED" \
   "jpa-baseline-service" \
-  "--spring.profiles.active=tuned --spring.kafka.consumer.group-id=bench-jpa-tuned" \
+  "--baseline.topic=$BENCH_TOPIC --spring.profiles.active=tuned --spring.kafka.consumer.group-id=bench-jpa-tuned" \
   8082 "baseline_rows_written_total" "baseline_drain_seconds" \
   "TRUNCATE sensor_readings_jpa"
 

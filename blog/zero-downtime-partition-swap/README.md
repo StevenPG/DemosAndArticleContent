@@ -174,21 +174,78 @@ kafka-console-consumer.sh --bootstrap-server localhost:9092 \
 
 ## Compare against plain Spring Data JPA
 
+`jpa-baseline-service` writes the same Kafka events to a single flat, fully
+indexed table with `repository.saveAll()`. `benchmark.sh` runs it head-to-head
+against the COPY path.
+
+**Prerequisites:** the stack running (`docker compose up -d`), plus `psql`,
+`curl` and `awk` on your PATH. The script preflight-checks all of these and
+refuses to start if anything is missing, so you get a clear message rather
+than a confusing mid-run failure. Stop any `bootRun` processes first — the
+benchmark manages the apps itself.
+
 ```bash
-./benchmark.sh 300000        # preloads the topic, drains it three ways
+./benchmark.sh              # default 300,000 messages
+./benchmark.sh 1000000      # or pick your own volume
 ```
 
-| Implementation | Throughput | Relative |
+Takes roughly **4–6 minutes** at the default volume: most of it is the naive
+JPA run, which is genuinely that slow. Progress is printed as it goes and the
+same output is written to `benchmark-results.txt`; each run's application log
+is left in `/tmp/bench-*.log`.
+
+What it does, in order: preloads the topic with a fixed message set while
+every consumer is stopped (so no run is timed against a live producer), then
+runs each implementation from offset 0 under its own consumer group, resetting
+that implementation's target table first. Throughput comes from each app's own
+in-process `*_drain_seconds` gauge, because an HTTP poll loop cannot time a
+two-second drain.
+
+Expected output:
+
+```
+=== COPY into staging partitions ===
+rows drained : 300000 of 300000
+drain window : 2655 ms (in-app, first write to last)
+throughput   : 112994 rows/s
+```
+
+Each run uses a freshly named topic, so repeat runs stay independent rather
+than draining each other's leftover messages.
+
+| Implementation | Throughput (median of 3 runs) | Relative |
 |---|---|---|
-| COPY into staging partitions | **128,205 rows/s** | 1.0× |
-| `saveAll()`, tuned | 48,709 rows/s | 2.6× slower |
-| `saveAll()`, stock defaults | 2,629 rows/s | 48.8× slower |
+| COPY into staging partitions | **112,994 rows/s** | 1.0× |
+| `saveAll()`, tuned | 46,649 rows/s | 2.4× slower |
+| `saveAll()`, stock defaults | 2,859 rows/s | 39.5× slower |
+
+The COPY figure varies by about a third run-to-run (95k–128k) because the run
+finishes in under three seconds; the JPA figures are stable to a few percent.
+Read it as "roughly 100k rows/s on this hardware".
 
 Retention: 9.6 ms to detach and drop a partition, versus a 192 ms `DELETE`
 that reclaims no space and needs a blocking `VACUUM FULL`. Reads: 2.4× fewer
 buffers on time-range scans, and no advantage at all on indexed point lookups.
-Full method, caveats, and the "when the baseline is the right choice" section
-are in [COMPARISON.md](./COMPARISON.md).
+Full method, the exact SQL for the deletes and reads comparisons, caveats, and
+a "when the baseline is the right choice" section are in
+[COMPARISON.md](./COMPARISON.md).
+
+### Running the baseline on its own
+
+To watch it rather than benchmark it — port 8082, same meters as the COPY path:
+
+```bash
+./gradlew :jpa-baseline-service:bootRun --args='--spring.profiles.active=naive'
+./gradlew :jpa-baseline-service:bootRun --args='--spring.profiles.active=tuned'
+
+curl -s localhost:8082/actuator/prometheus | grep '^baseline_'
+```
+
+Both profiles run identical Java; they differ only in configuration
+(`hibernate.jdbc.batch_size`, listener concurrency, `synchronous_commit`, and
+whether Spring Data calls `persist()` or `merge()`). Run one with
+`--demo.producer.messages-per-second=N` on the ingest service alongside it to
+feed the topic.
 
 ## Tests
 

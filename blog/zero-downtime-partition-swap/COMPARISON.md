@@ -5,10 +5,10 @@ index-free staging tables beats the ordinary ORM write path. This document
 measures that claim against a real implementation of the ordinary path, in the
 same repository, against the same database, consuming the same Kafka messages.
 
-**Headline:** COPY drained 300,000 messages at **128,205 rows/s**. The same
-messages through Spring Data JPA `saveAll()` took **2,629 rows/s** with stock
-configuration and **48,709 rows/s** once properly tuned — a **48.8×** and
-**2.6×** gap respectively.
+**Headline:** COPY drained 300,000 messages at a median **112,994 rows/s**.
+The same messages through Spring Data JPA `saveAll()` managed **2,859 rows/s**
+with stock configuration and **46,649 rows/s** once properly tuned — a
+**39.5×** and **2.4×** gap respectively, across three runs.
 
 The tuned figure matters more than the naive one. A benchmark that only beats
 an unconfigured ORM proves nothing; this one beats a competently configured
@@ -72,7 +72,7 @@ in the code looks wrong. `saveAll(tenThousandRows)` silently becomes ten
 thousand SELECTs and ten thousand INSERTs.
 
 Implementing `Persistable` and returning `true` from `isNew()` removes the
-SELECT. That single change is a large part of the 18.5× gap between the two
+SELECT. That single change is a large part of the ~16× gap between the two
 profiles.
 
 ---
@@ -84,36 +84,45 @@ container. Timing is the app's own first-write-to-last-write window, recorded
 in-process — an HTTP poll loop cannot time a drain that finishes in two
 seconds.
 
-| Implementation | Drain time | Throughput | Relative |
-|---|---|---|---|
-| **COPY into staging partitions** | **2,340 ms** | **128,205 rows/s** | **1.0×** |
-| JPA `saveAll()` — tuned | 6,159 ms | 48,709 rows/s | 2.6× slower |
-| JPA `saveAll()` — naive | 114,109 ms | 2,629 rows/s | **48.8× slower** |
+| Implementation | Drain time | Throughput (median of 3) | Range | Relative |
+|---|---|---|---|---|
+| **COPY into staging partitions** | 2,655 ms | **112,994 rows/s** | 95,238 – 128,205 | **1.0×** |
+| JPA `saveAll()` — tuned | 7,107 ms | 46,649 rows/s | 42,211 – 48,709 | 2.4× slower |
+| JPA `saveAll()` — naive | 104,917 ms | 2,859 rows/s | 2,629 – 2,879 | **39.5× slower** |
+
+Three runs of 300,000 messages each, on an otherwise idle box. Note the
+asymmetry in the ranges: the COPY figure varies by about a third run-to-run
+while the JPA figures are stable to a few percent. That is expected and worth
+understanding — COPY finishes in under three seconds, so page-cache state and
+checkpoint timing are a large fraction of its measurement, whereas the JPA
+runs are long enough to average that noise out and are bottlenecked on their
+own per-row work rather than on the machine. Treat the COPY number as "roughly
+100k rows/s on this hardware", not as three significant figures.
 
 Per-batch latency at comparable batch sizes (~8,200–8,900 rows):
 
 | Implementation | p50 | p99 |
 |---|---|---|
-| COPY | 71 ms | 193 ms |
-| JPA tuned | 704 ms | 905 ms |
-| JPA naive | 3,758 ms | 4,429 ms |
+| COPY | 88 ms | 209 ms |
+| JPA tuned | 805 ms | 872 ms |
+| JPA naive | 3,423 ms | 3,691 ms |
 
 Reproduce with `./benchmark.sh 300000`.
 
 ### Reading the numbers honestly
 
-- **Tuned JPA is respectable.** 48,709 rows/s is far more than most services
+- **Tuned JPA is respectable.** ~46,000 rows/s is far more than most services
   need. If your ingestion is in the low thousands per second, this benchmark
   is not an argument to rewrite anything.
-- **The 2.6× is the real number** for the write mechanism. It comes from
+- **The 2.4× is the real number** for the write mechanism. It comes from
   protocol overhead (per-row parameter binding versus one streamed payload)
   and from maintaining three indexes per row on a live table versus building
   them once per partition off to the side.
-- **The 48.8× is a configuration story, not a technology story.** It is what
+- **The 39.5× is a configuration story, not a technology story.** It is what
   the default settings cost, and it is worth knowing precisely because those
   defaults are what most teams are running.
 - **This corrects an earlier claim.** The article previously asserted JPA was
-  "the wrong tool by two orders of magnitude." Measured, it is 1.7 orders
+  "the wrong tool by two orders of magnitude." Measured, it is 1.6 orders
   naive and 0.4 orders tuned. The claim has been corrected to match the data.
 
 ---
@@ -195,26 +204,113 @@ continuously without lock spikes, or when reads are overwhelmingly
 recent-window queries.
 
 And if you keep the JPA path: **at minimum set `hibernate.jdbc.batch_size` and
-fix the persist-versus-merge behaviour.** That is 18.5× on this hardware, for
-two lines of configuration and one interface implementation.
+fix the persist-versus-merge behaviour.** That is roughly 16× on this hardware,
+for two lines of configuration and one interface implementation.
 
 ---
 
-## Appendix: method
+## Appendix: reproducing this
+
+### Write throughput (§3)
 
 ```bash
 docker compose up -d
-./benchmark.sh 300000        # writes benchmark-results.txt
+./benchmark.sh 300000        # ~4-6 min; writes benchmark-results.txt
 ```
 
-The harness preloads the topic with a fixed message set while every consumer
-is stopped, so no run is timed against a live producer whose rate could drift,
-then runs each implementation from offset 0 under its own consumer group with
-its target table reset first. Throughput comes from each app's own
-`*_drain_seconds` gauge and row counter.
+Requires `psql`, `curl` and `awk`; the script preflight-checks them. Stop any
+running `bootRun` processes first — it manages the apps itself. It preloads the
+topic with a fixed message set while every consumer is stopped, then runs each
+implementation from offset 0 under its own consumer group, resetting that
+implementation's target table first. Throughput comes from each app's own
+in-process `*_drain_seconds` gauge, because an HTTP poll loop cannot time a
+two-second drain. Each run uses a freshly named topic, so repeat runs do not
+accumulate each other's messages.
 
-Caveats: a 4-vCPU container with default Postgres server settings — not the
-tuned `docker-compose.yml` profile. Absolute numbers are directional; the
-relative comparison is what the harness is built to make trustworthy. The
-deletes and reads sections were run as SQL against the same database and are
-reproducible from the statements shown.
+### Deletes (§4)
+
+After a benchmark run, both tables hold the same rows. Start
+`maintenance-service` briefly so the COPY path's staging tables get promoted
+into real partitions, then:
+
+```sql
+-- Flat table: delete everything but the last instant.
+\timing on
+DELETE FROM sensor_readings_jpa
+WHERE ingested_at < (SELECT max(ingested_at) FROM sensor_readings_jpa);
+
+-- Space is NOT reclaimed; the rows are only marked dead.
+SELECT pg_size_pretty(pg_total_relation_size('sensor_readings_jpa')) AS size_after_delete,
+       (SELECT count(*) FROM sensor_readings_jpa) AS live_rows;
+
+-- Reclaiming it takes ACCESS EXCLUSIVE and rewrites the table.
+VACUUM FULL sensor_readings_jpa;
+SELECT pg_size_pretty(pg_total_relation_size('sensor_readings_jpa')) AS size_after_vacuum_full;
+
+-- Partitioned: same volume of data, dropped as a unit.
+-- (substitute the partition name from the query below)
+SELECT c.relname FROM pg_inherits i JOIN pg_class c ON c.oid = i.inhrelid
+WHERE i.inhparent = 'sensor_readings'::regclass;
+
+ALTER TABLE sensor_readings DETACH PARTITION sensor_readings_pYYYYMMDD_HHMM CONCURRENTLY;
+DROP TABLE sensor_readings_pYYYYMMDD_HHMM;
+```
+
+### Reads (§5)
+
+Loads 2M rows across ten one-minute windows into both layouts, with identical
+indexes on each:
+
+```sql
+TRUNCATE sensor_readings_jpa;
+INSERT INTO sensor_readings_jpa
+SELECT uuidv7(), 'device-'||lpad((g%64)::text,3,'0'), 'temperature_c', (g%50)+0.5,
+       '2026-08-05 12:00:00+00'::timestamptz + ((g%600)||' s')::interval,
+       '2026-08-05 12:00:00+00'::timestamptz + ((g%600)||' s')::interval
+FROM generate_series(1,2000000) g;
+
+DO $$
+DECLARE m int; t text; s timestamptz;
+BEGIN
+  FOR m IN 0..9 LOOP
+    s := '2026-08-05 12:00:00+00'::timestamptz + (m||' min')::interval;
+    t := 'sensor_readings_p' || to_char(s AT TIME ZONE 'UTC','YYYYMMDD_HH24MI');
+    EXECUTE format('CREATE TABLE %I (LIKE sensor_readings INCLUDING DEFAULTS INCLUDING STORAGE)', t);
+    EXECUTE format($f$INSERT INTO %I SELECT uuidv7(), 'device-'||lpad((g%%64)::text,3,'0'),
+        'temperature_c', (g%%50)+0.5, %L::timestamptz + ((g%%60)||' s')::interval,
+        %L::timestamptz + ((g%%60)||' s')::interval FROM generate_series(1,200000) g$f$, t, s, s);
+    EXECUTE format('ALTER TABLE %I ADD CONSTRAINT %I PRIMARY KEY (id, ingested_at)', t, t||'_pkey');
+    EXECUTE format('CREATE INDEX %I ON %I (ingested_at)', t||'_ing', t);
+    EXECUTE format('CREATE INDEX %I ON %I (device_id, metric, ingested_at)', t||'_dm', t);
+    EXECUTE format('ALTER TABLE sensor_readings ATTACH PARTITION %I FOR VALUES FROM (%L) TO (%L)',
+                   t, s, s + interval '1 min');
+  END LOOP;
+END $$;
+ANALYZE sensor_readings; ANALYZE sensor_readings_jpa;
+
+-- Q1: time-range aggregate. Compare "Buffers: shared hit" between the two.
+EXPLAIN (ANALYZE, BUFFERS, COSTS OFF, TIMING OFF)
+SELECT metric, count(*), avg(reading) FROM sensor_readings
+WHERE ingested_at >= '2026-08-05 12:09:00+00' GROUP BY metric;
+
+EXPLAIN (ANALYZE, BUFFERS, COSTS OFF, TIMING OFF)
+SELECT metric, count(*), avg(reading) FROM sensor_readings_jpa
+WHERE ingested_at >= '2026-08-05 12:09:00+00' GROUP BY metric;
+
+-- Q2: indexed point lookup. Expect no meaningful difference.
+EXPLAIN (ANALYZE, BUFFERS, COSTS OFF, TIMING OFF)
+SELECT * FROM sensor_readings WHERE device_id='device-007' AND metric='temperature_c'
+AND ingested_at >= '2026-08-05 12:09:00+00' ORDER BY ingested_at DESC LIMIT 20;
+
+EXPLAIN (ANALYZE, BUFFERS, COSTS OFF, TIMING OFF)
+SELECT * FROM sensor_readings_jpa WHERE device_id='device-007' AND metric='temperature_c'
+AND ingested_at >= '2026-08-05 12:09:00+00' ORDER BY ingested_at DESC LIMIT 20;
+```
+
+### Caveats
+
+A 4-vCPU container running PostgreSQL 18.4 with **default server settings** —
+not the tuned profile in `docker-compose.yml`, so absolute numbers will differ
+on your hardware. The relative comparison is what the harness is built to make
+trustworthy: identical input, identical Kafka configuration, identical
+indexes, and the tie-breaks going to the baseline.

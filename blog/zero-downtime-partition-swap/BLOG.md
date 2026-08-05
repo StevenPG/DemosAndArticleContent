@@ -82,15 +82,15 @@ they haven't measured, this repo contains a second service that does it the
 ordinary way so the claim can be checked. Draining the same 300,000 messages
 from the same topic on the same database:
 
-| Implementation | Throughput | Relative |
+| Implementation | Throughput (median of 3) | Relative |
 |---|---|---|
-| COPY into staging partitions | **128,205 rows/s** | 1.0× |
-| `saveAll()`, tuned (batching, 6 threads, `synchronous_commit=off`) | 48,709 rows/s | 2.6× slower |
-| `saveAll()`, stock Spring Data defaults | 2,629 rows/s | 48.8× slower |
+| COPY into staging partitions | **112,994 rows/s** | 1.0× |
+| `saveAll()`, tuned (batching, 6 threads, `synchronous_commit=off`) | 46,649 rows/s | 2.4× slower |
+| `saveAll()`, stock Spring Data defaults | 2,859 rows/s | 39.5× slower |
 
-The tuned row is the honest one: a competently configured ORM is only 2.6×
-behind, and 48,709 rows/s is more than most services will ever need. The
-48.8× is a story about **defaults**, not about JPA — chiefly Hibernate's
+The tuned row is the honest one: a competently configured ORM is only 2.4×
+behind, and ~46,000 rows/s is more than most services will ever need. The
+39.5× is a story about **defaults**, not about JPA — chiefly Hibernate's
 `batch_size` of 0 and the per-row SELECT that Spring Data issues for entities
 with application-assigned ids. Full method and the deletes/reads comparison
 are in [COMPARISON.md](./COMPARISON.md).
@@ -676,7 +676,7 @@ pipeline effectively exactly-once without Kafka transactions.
 **Is any of this worth it for your load?** There is a companion baseline
 service in this repo that writes the same events to a single flat table with
 `saveAll()`, and [COMPARISON.md](./COMPARISON.md) measures all three axes.
-Short version: on writes the tuned ORM is 2.6× behind, which many systems can
+Short version: on writes the tuned ORM is 2.4× behind, which many systems can
 afford; on **retention** the gap is structural (9.6 ms to drop a partition
 versus a 192 ms DELETE that reclaims nothing and needs a blocking
 `VACUUM FULL`); and on **reads** partitioning helps time-range scans (2.4×
