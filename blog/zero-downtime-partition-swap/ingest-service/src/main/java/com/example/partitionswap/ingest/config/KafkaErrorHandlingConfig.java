@@ -74,6 +74,23 @@ public class KafkaErrorHandlingConfig {
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(config));
     }
 
+    /**
+     * Deliberately has <b>no</b> {@code maxElapsedTime}: transient failures
+     * retry indefinitely rather than discarding good data. An elapsed-time
+     * limit here would quietly turn a long database outage into data loss, by
+     * handing perfectly valid batches to the dead-letter recoverer. The
+     * interval caps at 30s so a recovering system is retried promptly instead
+     * of after a compounded hours-long delay.
+     *
+     * <p>Package-private and named so the policy can be asserted in a test;
+     * {@code DefaultErrorHandler} exposes no getter for its backoff.
+     */
+    static ExponentialBackOff retryBackOff() {
+        ExponentialBackOff backOff = new ExponentialBackOff(1_000L, 2.0);
+        backOff.setMaxInterval(30_000L);
+        return backOff;
+    }
+
     @Bean
     public DefaultErrorHandler kafkaErrorHandler(ProducerFactory<?, ?> producerFactory) {
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(
@@ -87,13 +104,7 @@ public class KafkaErrorHandlingConfig {
                     return new TopicPartition(record.topic() + DLT_SUFFIX, 0);
                 });
 
-        // No maxElapsedTime: transient failures retry indefinitely rather than
-        // discarding good data. The interval caps at 30s so an outage does not
-        // turn into an hours-long blind spot after the delay compounds.
-        ExponentialBackOff backOff = new ExponentialBackOff(1_000L, 2.0);
-        backOff.setMaxInterval(30_000L);
-
-        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
+        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, retryBackOff());
         // Skip the retries entirely for failures that cannot succeed on a
         // retry. Without this the unlimited backoff above swallows them too:
         // the record is retried forever and never reaches the recoverer, so

@@ -98,7 +98,9 @@ public class CopyBatchWriter {
      * partition is visible, alertable, and resumes on its own; a batch
      * dead-lettered because Postgres was mid-failover is silent data loss.
      */
-    private RuntimeException classify(SQLException e, String tableName) {
+    // Package-private so the classification policy can be unit tested directly;
+    // it is the difference between a stalled partition and lost rows.
+    static RuntimeException classify(SQLException e, String tableName) {
         String sqlState = e.getSQLState();
         String stateClass = sqlState == null || sqlState.length() < 2 ? "" : sqlState.substring(0, 2);
         String message = "COPY into " + tableName + " failed (SQLState " + sqlState + ")";
