@@ -12,6 +12,11 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param attachAttempts      how many times to retry an attach that lost the
  *                            lock-timeout race before leaving the table for
  *                            the next scheduler tick
+ * @param stalenessThresholdSeconds how far behind promotion may fall before
+ *                            the health endpoint reports DOWN. Must exceed
+ *                            one minute (the window) plus the grace period
+ *                            plus a scheduler tick, or healthy systems will
+ *                            flap
  * @param retention           automatic detach+drop of old partitions
  */
 @ConfigurationProperties(prefix = "maintenance")
@@ -19,6 +24,7 @@ public record MaintenanceProperties(
         int graceSeconds,
         int attachLockTimeoutMs,
         int attachAttempts,
+        int stalenessThresholdSeconds,
         Retention retention) {
 
     public record Retention(boolean enabled, int maxAgeMinutes) {

@@ -24,6 +24,9 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
 
 maintenance:
   # :00 the minute ends -> grace covers in-flight COPYs -> :10 the scheduler
@@ -34,6 +37,12 @@ maintenance:
   # a parked ACCESS-level waiter would block every query that queues behind it.
   attach-lock-timeout-ms: 2000
   attach-attempts: 5
+  # /actuator/health goes DOWN when the oldest unattached minute is older than
+  # this. A backlog is normal (the current minute is always unattached, and
+  # the previous one until grace + tick elapse); only a backlog beyond that
+  # budget means readers are silently missing data. Keep comfortably above
+  # 60s window + grace + tick or healthy systems will flap.
+  staleness-threshold-seconds: 180
   retention-cron: "40 * * * * *"
   retention:
     enabled: true

@@ -42,7 +42,7 @@ class PartitionSwapServiceIntegrationTest {
     static final PartitionWindow WINDOW = Partitions.windowFor(Instant.parse("2026-08-05T14:32:00Z"));
     static final Clock CLOCK = Clock.fixed(Instant.parse("2026-08-05T14:35:00Z"), ZoneOffset.UTC);
     static final MaintenanceProperties PROPS =
-            new MaintenanceProperties(5, 2000, 3, new MaintenanceProperties.Retention(true, 1));
+            new MaintenanceProperties(5, 2000, 3, 180, new MaintenanceProperties.Retention(true, 1));
 
     static DataSource dataSource;
     static JdbcClient jdbcClient;
