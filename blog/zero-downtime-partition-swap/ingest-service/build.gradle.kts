@@ -22,6 +22,9 @@ dependencies {
     // Web + actuator so the write path is observable (health, metrics) while it runs headless.
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // COPY throughput and latency percentiles are the real health signal for an
+    // ingester; scrape them at /actuator/prometheus.
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
     // Boot 4 ships Kafka as its own starter. JSON on the wire uses spring-kafka 4's
     // Jackson 3 based JacksonJsonSerializer/JacksonJsonDeserializer (configured in

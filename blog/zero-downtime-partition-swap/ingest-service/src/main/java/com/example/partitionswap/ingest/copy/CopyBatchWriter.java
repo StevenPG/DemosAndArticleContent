@@ -45,10 +45,14 @@ public class CopyBatchWriter {
 
     private final DataSource dataSource;
     private final StagingTableManager stagingTableManager;
+    private final IngestMetrics metrics;
 
-    public CopyBatchWriter(DataSource dataSource, StagingTableManager stagingTableManager) {
+    public CopyBatchWriter(DataSource dataSource,
+                           StagingTableManager stagingTableManager,
+                           IngestMetrics metrics) {
         this.dataSource = dataSource;
         this.stagingTableManager = stagingTableManager;
+        this.metrics = metrics;
     }
 
     /**
@@ -68,11 +72,15 @@ public class CopyBatchWriter {
         try (Connection connection = dataSource.getConnection()) {
             CopyManager copyManager = connection.unwrap(PGConnection.class).getCopyAPI();
             long rows = streamBatch(copyManager, copySql, events, ingestedAt);
-            long micros = (System.nanoTime() - startNanos) / 1_000;
-            log.info("COPY {} rows -> {} in {} µs ({} rows/s)",
-                    rows, window.tableName(), micros, micros == 0 ? "∞" : rows * 1_000_000 / micros);
+            long durationNanos = System.nanoTime() - startNanos;
+            metrics.recordCopy(rows, durationNanos);
+            // DEBUG, not INFO: at real ingestion rates a line per batch turns
+            // the log appender into a contention point shared by every listener
+            // thread. IngestMetrics emits one aggregated line per window instead.
+            log.debug("COPY {} rows -> {} in {} µs", rows, window.tableName(), durationNanos / 1_000);
             return rows;
         } catch (SQLException e) {
+            metrics.recordFailure();
             // Propagate so the Kafka container does NOT commit offsets; the
             // batch is redelivered and re-COPYed after the error backoff.
             throw new IllegalStateException("COPY into " + window.tableName() + " failed", e);

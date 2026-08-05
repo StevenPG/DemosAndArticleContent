@@ -69,10 +69,13 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
 
 demo:
   topic: sensor-readings
+  # How often the aggregated throughput line is logged (per-batch logging is
+  # DEBUG; see IngestMetrics).
+  metrics-report-interval-ms: 10000
   producer:
     enabled: true
     messages-per-second: 1
@@ -81,5 +84,8 @@ demo:
 logging:
   level:
     com.example.partitionswap: INFO
+    # Flip to DEBUG to get the per-batch "COPY n rows" line back. Fine for the
+    # demo; leave it off under real load.
+    # com.example.partitionswap.ingest.copy: DEBUG
     # Quiet the per-poll chatter; the interesting lines are ours.
     org.apache.kafka: WARN

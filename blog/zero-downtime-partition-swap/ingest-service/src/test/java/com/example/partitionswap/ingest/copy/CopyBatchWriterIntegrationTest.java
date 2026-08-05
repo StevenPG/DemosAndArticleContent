@@ -2,6 +2,7 @@ package com.example.partitionswap.ingest.copy;
 
 import com.example.partitionswap.common.Partitions;
 import com.example.partitionswap.common.SensorReadingEvent;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,10 @@ class CopyBatchWriterIntegrationTest {
     @Test
     void copiesBatchIntoCurrentMinuteStagingTable() {
         JdbcClient jdbcClient = JdbcClient.create(dataSource);
-        CopyBatchWriter writer = new CopyBatchWriter(dataSource, new StagingTableManager(jdbcClient));
+        CopyBatchWriter writer = new CopyBatchWriter(
+                dataSource,
+                new StagingTableManager(jdbcClient),
+                new IngestMetrics(new SimpleMeterRegistry()));
 
         List<SensorReadingEvent> batch = IntStream.range(0, 60)
                 .mapToObj(i -> new SensorReadingEvent(
