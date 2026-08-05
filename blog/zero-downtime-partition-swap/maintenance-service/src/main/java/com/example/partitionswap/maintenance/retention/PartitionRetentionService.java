@@ -3,6 +3,7 @@ package com.example.partitionswap.maintenance.retention;
 import com.example.partitionswap.common.Partitions;
 import com.example.partitionswap.maintenance.config.MaintenanceProperties;
 import com.example.partitionswap.maintenance.swap.PartitionCatalog;
+import com.example.partitionswap.maintenance.swap.SwapMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -30,15 +31,18 @@ public class PartitionRetentionService {
     private final PartitionCatalog catalog;
     private final MaintenanceProperties props;
     private final Clock clock;
+    private final SwapMetrics metrics;
 
     public PartitionRetentionService(JdbcClient jdbcClient,
                                      PartitionCatalog catalog,
                                      MaintenanceProperties props,
-                                     Clock clock) {
+                                     Clock clock,
+                                     SwapMetrics metrics) {
         this.jdbcClient = jdbcClient;
         this.catalog = catalog;
         this.props = props;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     @Scheduled(cron = "${maintenance.retention-cron:40 * * * * *}")
@@ -58,6 +62,7 @@ public class PartitionRetentionService {
                     jdbcClient.sql("ALTER TABLE %s DETACH PARTITION %s CONCURRENTLY"
                             .formatted(Partitions.PARENT_TABLE, window.tableName())).update();
                     jdbcClient.sql("DROP TABLE " + window.tableName()).update();
+                    metrics.recordPartitionDropped();
                     log.info("[{}] expired: detached concurrently and dropped", window.tableName());
                 });
     }

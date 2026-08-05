@@ -22,6 +22,8 @@ dependencies {
     // Read API + partition observability endpoints.
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // Swap phase timings and backlog gauges; scrape at /actuator/prometheus.
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
     // Spring Data JPA for the read side; the swap itself is explicit SQL over
     // a raw connection because SET lock_timeout and advisory locks are

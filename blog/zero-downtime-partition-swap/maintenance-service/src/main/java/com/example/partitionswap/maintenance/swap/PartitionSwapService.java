@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -57,15 +58,18 @@ public class PartitionSwapService {
     private final PartitionCatalog catalog;
     private final MaintenanceProperties props;
     private final Clock clock;
+    private final SwapMetrics metrics;
 
     public PartitionSwapService(DataSource dataSource,
                                 PartitionCatalog catalog,
                                 MaintenanceProperties props,
-                                Clock clock) {
+                                Clock clock,
+                                SwapMetrics metrics) {
         this.dataSource = dataSource;
         this.catalog = catalog;
         this.props = props;
         this.clock = clock;
+        this.metrics = metrics;
     }
 
     /**
@@ -80,8 +84,21 @@ public class PartitionSwapService {
                     Partitions.PARENT_TABLE);
             return 0;
         }
-        Instant completeBefore = clock.instant().minusSeconds(props.graceSeconds());
-        List<PartitionWindow> eligible = catalog.detachedStagingTables().stream()
+        Instant now = clock.instant();
+        Instant completeBefore = now.minusSeconds(props.graceSeconds());
+        List<PartitionWindow> detached = catalog.detachedStagingTables();
+
+        // Publish backlog state from the tick rather than on metric scrape, so
+        // scraping can never turn into database load. The oldest window's age
+        // is the number that matters: it is how far behind the read table is.
+        long oldestAgeSeconds = detached.stream()
+                .mapToLong(w -> Duration.between(w.end(), now).getSeconds())
+                .filter(age -> age > 0)
+                .max()
+                .orElse(0);
+        metrics.recordBacklog(detached.size(), oldestAgeSeconds);
+
+        List<PartitionWindow> eligible = detached.stream()
                 .filter(w -> !w.end().isAfter(completeBefore))
                 .toList();
         int promoted = 0;
@@ -99,46 +116,54 @@ public class PartitionSwapService {
         try (Connection connection = dataSource.getConnection()) {
             if (!tryAdvisoryLock(connection, table)) {
                 log.info("[{}] another maintenance instance holds the lock; skipping", table);
+                metrics.recordAdvisoryLockSkip();
                 return false;
             }
             try {
                 // Phase 1 — constraints & indexes, on the DETACHED table.
                 // Must structurally match the parent's primary key and
                 // partitioned indexes so the attach links rather than builds.
-                long pkMs = timed(() -> addPrimaryKeyIfAbsent(connection, table));
-                long idxMs = timed(() -> execute(connection, """
-                        CREATE INDEX IF NOT EXISTS %s_ingested_at_idx ON %s (ingested_at)
-                        """.formatted(table, table)));
-                idxMs += timed(() -> execute(connection, """
-                        CREATE INDEX IF NOT EXISTS %s_device_metric_idx ON %s (device_id, metric, ingested_at)
-                        """.formatted(table, table)));
+                long pkNanos = timedPhase("primary_key", () -> addPrimaryKeyIfAbsent(connection, table));
+                long idxNanos = timedPhase("indexes", () -> {
+                    execute(connection, """
+                            CREATE INDEX IF NOT EXISTS %s_ingested_at_idx ON %s (ingested_at)
+                            """.formatted(table, table));
+                    execute(connection, """
+                            CREATE INDEX IF NOT EXISTS %s_device_metric_idx ON %s (device_id, metric, ingested_at)
+                            """.formatted(table, table));
+                });
 
                 // Phase 2 — prove the bounds while still detached. This CHECK
                 // is what lets ATTACH PARTITION skip its validation scan.
-                long checkMs = timed(() -> addBoundsCheckIfAbsent(connection, window));
+                long checkNanos = timedPhase("bounds_check", () -> addBoundsCheckIfAbsent(connection, window));
 
                 // Phase 3 — fresh statistics so the planner is right about the
                 // partition from its very first second of visibility.
-                long analyzeMs = timed(() -> execute(connection, "ANALYZE " + table));
+                long analyzeNanos = timedPhase("analyze", () -> execute(connection, "ANALYZE " + table));
 
                 // Phase 4 — the swap. Metadata-only, but still needs a lock on
-                // the parent, so never let it queue indefinitely.
-                long attachMs = timed(() -> attachWithRetry(connection, window));
+                // the parent, so never let it queue indefinitely. This is the
+                // ONLY phase that touches the live parent table, which is why
+                // it gets its own meter: partition.swap.phase{phase="attach"}
+                // is the number that has to stay small forever.
+                long attachNanos = timedPhase("attach", () -> attachWithRetry(connection, window));
 
                 // The bounds CHECK is now redundant (the partition bounds
                 // enforce the same predicate); dropping it keeps the catalog
                 // clean. Instant, but it does lock the partition, so it stays
                 // under the same lock_timeout discipline as the attach.
-                long dropMs = timed(() -> execute(connection, """
+                long dropNanos = timedPhase("drop_check", () -> execute(connection, """
                         ALTER TABLE %s DROP CONSTRAINT IF EXISTS %s_bounds
                         """.formatted(table, table)));
                 execute(connection, "RESET lock_timeout");
 
                 long rows = approxRows(connection, table);
-                long totalMs = (System.nanoTime() - totalStart) / 1_000_000;
+                long totalNanos = System.nanoTime() - totalStart;
+                metrics.recordPromotion(rows, totalNanos, clock.instant());
                 log.info("[{}] promoted to live partition: ~{} rows | pk {} ms, indexes {} ms, "
                                 + "bounds-check {} ms, analyze {} ms, attach {} ms, drop-check {} ms, total {} ms",
-                        table, rows, pkMs, idxMs, checkMs, analyzeMs, attachMs, dropMs, totalMs);
+                        table, rows, ms(pkNanos), ms(idxNanos), ms(checkNanos), ms(analyzeNanos),
+                        ms(attachNanos), ms(dropNanos), ms(totalNanos));
                 return true;
             } finally {
                 releaseAdvisoryLock(connection, table);
@@ -146,6 +171,7 @@ public class PartitionSwapService {
         } catch (SQLException e) {
             // Leave the staging table as-is; every phase is idempotent, so the
             // next tick resumes exactly where this one failed.
+            metrics.recordFailure();
             log.error("[{}] promotion failed; will retry next tick", table, e);
             return false;
         }
@@ -213,6 +239,7 @@ public class PartitionSwapService {
                     throw e;
                 }
                 lastLockTimeout = e;
+                metrics.recordLockTimeout();
                 log.warn("[{}] attach hit lock_timeout ({} ms) on attempt {}/{}; backing off",
                         window.tableName(), props.attachLockTimeoutMs(), attempt, props.attachAttempts());
                 sleepQuietly(200L * attempt);
@@ -265,10 +292,17 @@ public class PartitionSwapService {
         }
     }
 
-    private long timed(SqlRunnable phase) throws SQLException {
+    /** Times a phase, records it under its tag, and returns the elapsed nanos. */
+    private long timedPhase(String phase, SqlRunnable body) throws SQLException {
         long start = System.nanoTime();
-        phase.run();
-        return (System.nanoTime() - start) / 1_000_000;
+        body.run();
+        long elapsed = System.nanoTime() - start;
+        metrics.recordPhase(phase, elapsed);
+        return elapsed;
+    }
+
+    private static long ms(long nanos) {
+        return nanos / 1_000_000;
     }
 
     private static void sleepQuietly(long millis) {

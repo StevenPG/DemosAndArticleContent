@@ -4,6 +4,7 @@ import com.example.partitionswap.common.PartitionWindow;
 import com.example.partitionswap.common.Partitions;
 import com.example.partitionswap.maintenance.config.MaintenanceProperties;
 import com.example.partitionswap.maintenance.retention.PartitionRetentionService;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -57,7 +58,8 @@ class PartitionSwapServiceIntegrationTest {
         dataSource = ds;
         jdbcClient = JdbcClient.create(ds);
         catalog = new PartitionCatalog(jdbcClient);
-        swapService = new PartitionSwapService(dataSource, catalog, PROPS, CLOCK);
+        swapService = new PartitionSwapService(dataSource, catalog, PROPS, CLOCK,
+                new SwapMetrics(new SimpleMeterRegistry()));
 
         // Same schema the ingest service's Flyway migration creates.
         jdbcClient.sql("""
@@ -131,7 +133,8 @@ class PartitionSwapServiceIntegrationTest {
     @Order(3)
     void retentionDetachesConcurrentlyAndDrops() {
         PartitionRetentionService retention =
-                new PartitionRetentionService(jdbcClient, catalog, PROPS, CLOCK);
+                new PartitionRetentionService(jdbcClient, catalog, PROPS, CLOCK,
+                        new SwapMetrics(new SimpleMeterRegistry()));
 
         retention.dropExpiredPartitions();
 

@@ -23,7 +23,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
 
 maintenance:
   # :00 the minute ends -> grace covers in-flight COPYs -> :10 the scheduler
