@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: ingest-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/partition_swap
+    username: demo
+    password: demo
+    hikari:
+      # The write path uses one connection per in-flight COPY (one per Kafka
+      # listener thread) plus occasional DDL; a small fixed pool is plenty.
+      maximum-pool-size: 6
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      # Hand the whole poll() result to the listener as one List -> one COPY.
+      type: batch
+    consumer:
+      group-id: ingest-service
+      auto-offset-reset: earliest
+      # Offsets are committed by the listener container only after the COPY
+      # succeeds -> at-least-once into the staging table.
+      enable-auto-commit: false
+      # spring-kafka 4's Jackson 3 based JSON deserializer, pinned to the event
+      # type so no type headers are needed on the wire.
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      # At demo rates each poll returns a handful of records. Under real load
+      # max.poll.records caps the COPY batch size, and fetch.max.wait trades a
+      # few ms of latency for denser batches.
+      properties:
+        spring.json.value.default.type: com.example.partitionswap.common.SensorReadingEvent
+        spring.json.use.type.headers: false
+        max.poll.records: 10000
+        fetch.min.bytes: 1
+        fetch.max.wait.ms: 500
+    producer:
+      # Demo load generator settings, tuned the way a real high-volume
+      # producer would be: allow batching a few ms, compress batches, and
+      # keep acks=all (with idempotence, the Kafka default) for durability.
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      compression-type: lz4
+      properties:
+        spring.json.add.type.headers: false
+        linger.ms: 20
+        batch.size: 65536
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+demo:
+  topic: sensor-readings
+  producer:
+    enabled: true
+    messages-per-second: 1
+    device-count: 8
+
+logging:
+  level:
+    com.example.partitionswap: INFO
+    # Quiet the per-poll chatter; the interesting lines are ours.
+    org.apache.kafka: WARN
