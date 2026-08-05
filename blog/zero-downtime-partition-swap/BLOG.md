@@ -610,29 +610,29 @@ line.
 
 Things this project doesn't do, and where the next walls are:
 
-**Relation extension lock contention.** This is the one that bites right after
-you fix listener concurrency. Multiple concurrent COPYs into the *same* table
-contend on the relation extension lock — the lock Postgres takes to add a new
-page to a heap. Postgres 16 improved this with bulk extension, and at a few
-thousand rows/sec you won't see it, but at hundreds of thousands it becomes
-the ceiling. The fix is to give each writer its own physical table, which
-means sub-partitioning the minute:
+**Relation extension lock contention — probably not, and I have the numbers.**
+Six threads COPY into the same staging table, and the folklore says they will
+queue on the relation extension lock (the lock Postgres takes to add a page to
+a heap). Bulk loading is nothing but page extension, so this is a legitimate
+worry, and the fix — sub-partitioning each minute by writer shard so every
+thread gets its own heap — is a real design.
 
-```sql
-CREATE TABLE sensor_readings_p20260805_1432 (LIKE sensor_readings ...)
-    PARTITION BY LIST (writer_shard);
-CREATE TABLE sensor_readings_p20260805_1432_s0
-    PARTITION OF sensor_readings_p20260805_1432 FOR VALUES IN (0);
--- … one per writer thread
-```
+I benchmarked it before recommending it, and the result went the other way. On
+PostgreSQL 16, 8 concurrent COPY writers, 1.6M rows: one shared table took
+7,131 ms and eight separate tables took **7,848 ms** — sharding was 10%
+*slower*. Sampled wait events show why: `LWLock:WALWrite`,
+`LWLock:BufferContent`, and `IO:DataFileWrite` dominate, and **`LWLock:extend`
+never appears at all**. Postgres has mitigated single-block extension since
+9.6 and reworked the path substantially in 16; spreading writes across eight
+files just made the I/O less sequential.
 
-Each writer COPYs into its own shard with zero extension-lock contention, and
-the whole minute still attaches to the parent as one unit. The cost is real:
-you need a synthetic `writer_shard` column, it must join every unique
-constraint (making the PK three columns), and a physical-layout artifact is
-now visible in your data model. That's why it isn't in the demo — the
-complexity would obscure the lesson for a bottleneck most readers won't hit —
-but it's the correct answer when you do.
+So: measure before you build. Sample `pg_stat_activity` for `LWLock:extend`
+under peak load, and only reach for sharded staging if it's actually near the
+top. The full design, the verified SQL, the Java changes, the costs, and the
+measurement harness are written up in
+[RELATION_EXTENSION_LOCK_FIX.md](./RELATION_EXTENSION_LOCK_FIX.md) — including
+a benchmarking trap that gave me a confidently wrong answer on the first
+attempt.
 
 **Exactly-once.** This design is at-least-once: a crash after the COPY commits
 but before offsets do will redeliver and duplicate. If duplicates matter,
