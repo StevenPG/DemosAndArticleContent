@@ -4,14 +4,13 @@ import com.example.partitionswap.common.PartitionWindow;
 import com.example.partitionswap.common.Partitions;
 import com.example.partitionswap.common.SensorReadingEvent;
 import org.postgresql.PGConnection;
+import org.postgresql.copy.CopyIn;
 import org.postgresql.copy.CopyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.io.StringReader;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Instant;
@@ -28,11 +27,21 @@ import java.util.List;
  * A single COPY is also atomic: it inserts all rows or none, so a mid-batch
  * crash never leaves a partial batch behind (Kafka redelivers the whole batch,
  * giving clean at-least-once semantics).
+ *
+ * <p>Rows are streamed to the server in fixed-size chunks through pgjdbc's
+ * low-level {@link CopyIn} handle rather than handed over as one finished
+ * payload, so memory stays flat regardless of batch size. Each listener thread
+ * owns a reusable encoder buffer, so a steady-state batch allocates essentially
+ * nothing beyond the events themselves.
  */
 @Component
 public class CopyBatchWriter {
 
     private static final Logger log = LoggerFactory.getLogger(CopyBatchWriter.class);
+
+    /** One reusable ~72 KB buffer per listener thread, allocated on first use. */
+    private static final ThreadLocal<CopyTextEncoder> ENCODER =
+            ThreadLocal.withInitial(CopyTextEncoder::new);
 
     private final DataSource dataSource;
     private final StagingTableManager stagingTableManager;
@@ -52,22 +61,61 @@ public class CopyBatchWriter {
         PartitionWindow window = Partitions.windowFor(ingestedAt);
         stagingTableManager.ensureExists(window);
 
-        String payload = CopyTextEncoder.encode(events, ingestedAt);
         String copySql = "COPY %s (%s) FROM STDIN WITH (FORMAT text)"
                 .formatted(window.tableName(), CopyTextEncoder.COLUMNS);
 
         long startNanos = System.nanoTime();
         try (Connection connection = dataSource.getConnection()) {
             CopyManager copyManager = connection.unwrap(PGConnection.class).getCopyAPI();
-            long rows = copyManager.copyIn(copySql, new StringReader(payload));
+            long rows = streamBatch(copyManager, copySql, events, ingestedAt);
             long micros = (System.nanoTime() - startNanos) / 1_000;
             log.info("COPY {} rows -> {} in {} µs ({} rows/s)",
                     rows, window.tableName(), micros, micros == 0 ? "∞" : rows * 1_000_000 / micros);
             return rows;
-        } catch (SQLException | IOException e) {
+        } catch (SQLException e) {
             // Propagate so the Kafka container does NOT commit offsets; the
             // batch is redelivered and re-COPYed after the error backoff.
             throw new IllegalStateException("COPY into " + window.tableName() + " failed", e);
+        }
+    }
+
+    private long streamBatch(CopyManager copyManager,
+                             String copySql,
+                             List<SensorReadingEvent> events,
+                             Instant ingestedAt) throws SQLException {
+        byte[] ingestedAtBytes = CopyTextEncoder.encodeTimestamp(ingestedAt);
+        CopyTextEncoder encoder = ENCODER.get();
+        encoder.reset();
+
+        CopyIn copyIn = copyManager.copyIn(copySql);
+        try {
+            for (SensorReadingEvent event : events) {
+                encoder.appendRow(event, ingestedAtBytes);
+                if (encoder.length() >= CopyTextEncoder.FLUSH_THRESHOLD) {
+                    copyIn.writeToCopy(encoder.buffer(), 0, encoder.length());
+                    encoder.reset();
+                }
+            }
+            if (encoder.length() > 0) {
+                copyIn.writeToCopy(encoder.buffer(), 0, encoder.length());
+            }
+            return copyIn.endCopy();
+        } catch (SQLException | RuntimeException e) {
+            // Without an explicit cancel, an abandoned COPY leaves the
+            // connection stuck in COPY mode and the pool hands that broken
+            // connection to the next batch.
+            if (copyIn.isActive()) {
+                try {
+                    copyIn.cancelCopy();
+                } catch (SQLException cancelFailure) {
+                    e.addSuppressed(cancelFailure);
+                }
+            }
+            throw e;
+        } finally {
+            // Never let one oversized batch pin a grown buffer for the life
+            // of the thread.
+            encoder.reset();
         }
     }
 }
