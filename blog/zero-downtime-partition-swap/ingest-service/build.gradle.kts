@@ -42,6 +42,10 @@ dependencies {
     // Not runtimeOnly: the COPY writer compiles against org.postgresql.copy.CopyManager.
     implementation("org.postgresql:postgresql")
 
+    // Time-ordered UUIDv7 keys. Java 25's UUID.randomUUID() is v4 — uniformly
+    // random, and therefore the worst possible shape for a B-tree key.
+    implementation("com.fasterxml.uuid:java-uuid-generator:5.1.0")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:testcontainers-junit-jupiter")

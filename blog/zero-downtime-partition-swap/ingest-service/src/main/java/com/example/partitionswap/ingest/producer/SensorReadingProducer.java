@@ -2,6 +2,8 @@ package com.example.partitionswap.ingest.producer;
 
 import com.example.partitionswap.common.SensorReadingEvent;
 import com.example.partitionswap.ingest.config.DemoProperties;
+import com.fasterxml.uuid.Generators;
+import com.fasterxml.uuid.impl.TimeBasedEpochGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -10,7 +12,6 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -27,6 +28,22 @@ public class SensorReadingProducer {
 
     private static final Logger log = LoggerFactory.getLogger(SensorReadingProducer.class);
     private static final String[] METRICS = {"temperature_c", "humidity_pct", "vibration_hz"};
+
+    /**
+     * UUIDv7: 48 bits of Unix millisecond timestamp followed by randomness, so
+     * generated ids sort in creation order. That matters here even though the
+     * primary key is bulk-built rather than incrementally maintained — the
+     * build sorts either way, but v7 keys arrive nearly sorted, and the
+     * resulting index is physically correlated with the heap, which keeps
+     * range scans and index-only scans on the hot recent data sequential.
+     * Under the incremental-insert pattern this design avoids, the difference
+     * is far more dramatic: v4 keys scatter writes across every leaf page of
+     * the index, destroying cache locality and inflating WAL through
+     * full-page writes.
+     *
+     * <p>Thread-safe, and the JDK has no built-in v7 generator as of Java 25.
+     */
+    private static final TimeBasedEpochGenerator UUID_V7 = Generators.timeBasedEpochGenerator();
 
     private final KafkaTemplate<String, SensorReadingEvent> kafkaTemplate;
     private final DemoProperties props;
@@ -45,7 +62,7 @@ public class SensorReadingProducer {
             String deviceId = "device-%03d".formatted(random.nextInt(props.producer().deviceCount()));
             String metric = METRICS[random.nextInt(METRICS.length)];
             SensorReadingEvent event = new SensorReadingEvent(
-                    UUID.randomUUID(),
+                    UUID_V7.generate(),
                     deviceId,
                     metric,
                     Math.round(random.nextGaussian(50, 15) * 100.0) / 100.0,
