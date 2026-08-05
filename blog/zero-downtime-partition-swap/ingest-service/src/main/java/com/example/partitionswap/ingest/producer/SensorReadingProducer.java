@@ -48,6 +48,8 @@ public class SensorReadingProducer {
     private final KafkaTemplate<String, SensorReadingEvent> kafkaTemplate;
     private final DemoProperties props;
     private final AtomicLong sent = new AtomicLong();
+    private final java.util.concurrent.atomic.AtomicBoolean finished =
+            new java.util.concurrent.atomic.AtomicBoolean();
 
     public SensorReadingProducer(KafkaTemplate<String, SensorReadingEvent> kafkaTemplate, DemoProperties props) {
         this.kafkaTemplate = kafkaTemplate;
@@ -57,7 +59,18 @@ public class SensorReadingProducer {
     @Scheduled(fixedRate = 1000)
     public void emit() {
         ThreadLocalRandom random = ThreadLocalRandom.current();
+        long cap = props.producer().totalMessages();
         int perSecond = props.producer().messagesPerSecond();
+        if (cap > 0) {
+            long remaining = cap - sent.get();
+            if (remaining <= 0) {
+                if (finished.compareAndSet(false, true)) {
+                    log.info("preload complete: {} events emitted", sent.get());
+                }
+                return;
+            }
+            perSecond = (int) Math.min(perSecond, remaining);
+        }
         for (int i = 0; i < perSecond; i++) {
             String deviceId = "device-%03d".formatted(random.nextInt(props.producer().deviceCount()));
             String metric = METRICS[random.nextInt(METRICS.length)];
@@ -69,6 +82,7 @@ public class SensorReadingProducer {
                     Instant.now());
             kafkaTemplate.send(props.topic(), event.deviceId(), event);
         }
+        kafkaTemplate.flush();
         long total = sent.addAndGet(perSecond);
         if (total % 30 < perSecond) {
             log.info("produced {} events so far ({} /s)", total, perSecond);

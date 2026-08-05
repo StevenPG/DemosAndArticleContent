@@ -1,0 +1,144 @@
+spring:
+  application:
+    name: jpa-baseline-service
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/partition_swap
+    username: demo
+    password: demo
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+  flyway:
+    # This module owns only the flat baseline table. Its own history table and
+    # migration location keep it from colliding with the ingest service's
+    # partitioned schema in the same database.
+    locations: classpath:db/migration-jpa
+    table: flyway_schema_history_jpa
+    # Required precisely because the schema is shared: the ingest service's
+    # migration has already created objects in `public`, so this module's
+    # Flyway finds a non-empty schema with no history table of its own and
+    # refuses to start. Baselining says "the objects already here are not
+    # mine, start tracking from now" — correct here because the two migration
+    # sets are disjoint by design.
+    baseline-on-migrate: true
+    # ...and this is required with it. baseline-on-migrate defaults
+    # baseline-version to 1, which marks V1 as already applied and silently
+    # skips it — the app then starts cleanly and fails on first write with
+    # "relation does not exist". Baselining at 0 leaves V1 pending.
+    baseline-version: 0
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      # Batch listener in BOTH profiles, so the Kafka side of the comparison is
+      # identical to the COPY path and the only variable is what happens to the
+      # batch once the application has it.
+      type: batch
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      properties:
+        spring.json.value.default.type: com.example.partitionswap.common.SensorReadingEvent
+        spring.json.use.type.headers: false
+        max.poll.records: 10000
+        fetch.min.bytes: 1
+        fetch.max.wait.ms: 500
+        max.poll.interval.ms: 600000
+
+server:
+  port: 8082
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+baseline:
+  topic: sensor-readings
+  metrics-report-interval-ms: 10000
+
+logging:
+  level:
+    com.example.partitionswap: INFO
+    org.apache.kafka: WARN
+
+---
+# ---------------------------------------------------------------------------
+# NAIVE: stock Spring Data JPA. Nothing here is a strawman — this is what you
+# get by adding spring-boot-starter-data-jpa, writing saveAll(), and shipping.
+# Every one of these is a DEFAULT, expressed explicitly so the benchmark is
+# auditable rather than implicit.
+# ---------------------------------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: naive
+  kafka:
+    consumer:
+      group-id: jpa-baseline-naive
+    listener:
+      # Spring's default. One thread for the whole write path.
+      concurrency: 1
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          # Hibernate's default is no JDBC batching at all. saveAll() looks
+          # like a bulk operation and is not one: every row becomes its own
+          # round trip.
+          batch_size: 0
+  datasource:
+    hikari:
+      maximum-pool-size: 10
+
+baseline:
+  # false => Spring Data sees a non-null assigned id, assumes the row exists,
+  # and calls merge(): one SELECT per row before every INSERT. This is the
+  # default behaviour for any entity with an application-assigned id.
+  treat-as-new: false
+
+---
+# ---------------------------------------------------------------------------
+# TUNED: the same code, configured by someone who has read the Hibernate
+# performance guide. Matched to the COPY path wherever the setting exists on
+# both sides, so the remaining gap is the write mechanism itself and nothing
+# else.
+# ---------------------------------------------------------------------------
+spring:
+  config:
+    activate:
+      on-profile: tuned
+  kafka:
+    consumer:
+      group-id: jpa-baseline-tuned
+    listener:
+      # Matches the ingest service exactly.
+      concurrency: 6
+  jpa:
+    properties:
+      hibernate:
+        jdbc:
+          # Real JDBC batching: rows are grouped into multi-value round trips.
+          batch_size: 1000
+        order_inserts: true
+        order_updates: true
+        # Without this, batching is silently disabled for versioned entities.
+        jdbc.batch_versioned_data: true
+  datasource:
+    hikari:
+      maximum-pool-size: 8
+      minimum-idle: 8
+      # The same durability trade the COPY path makes, for the same reason:
+      # Kafka can replay anything lost.
+      connection-init-sql: SET synchronous_commit = off
+
+baseline:
+  # true => Spring Data calls persist() directly. Halves the statement count
+  # by removing the per-row SELECT.
+  treat-as-new: true

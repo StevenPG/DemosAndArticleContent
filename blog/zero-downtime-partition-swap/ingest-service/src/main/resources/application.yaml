@@ -93,10 +93,16 @@ demo:
   # How often the aggregated throughput line is logged (per-batch logging is
   # DEBUG; see IngestMetrics).
   metrics-report-interval-ms: 10000
+  consumer:
+    # Set false to run this app as a pure producer, e.g. when preloading the
+    # topic for benchmark.sh.
+    enabled: true
   producer:
     enabled: true
     messages-per-second: 1
     device-count: 8
+    # 0 = produce forever. Set to preload a fixed message set.
+    total-messages: 0
 
 logging:
   level:

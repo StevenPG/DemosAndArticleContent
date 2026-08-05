@@ -10,3 +10,5 @@ include("common")
 include("ingest-service")
 // Index build + CHECK constraint + ATTACH PARTITION orchestration (the swap), plus the JPA read API.
 include("maintenance-service")
+// Naive/tuned Spring Data JPA saveAll() baseline, for the COPY comparison.
+include("jpa-baseline-service")

@@ -76,9 +76,26 @@ coordination channel, which we'll come back to.
 
 ## Why COPY, not INSERT
 
-Spring Data JPA is in this project — on the read side. On the write side it
-would be the wrong tool by two orders of magnitude, and it's worth being
-precise about why.
+Spring Data JPA is in this project — on the read side. On the write side it is
+measurably slower, and since "measurably" is the kind of word people use when
+they haven't measured, this repo contains a second service that does it the
+ordinary way so the claim can be checked. Draining the same 300,000 messages
+from the same topic on the same database:
+
+| Implementation | Throughput | Relative |
+|---|---|---|
+| COPY into staging partitions | **128,205 rows/s** | 1.0× |
+| `saveAll()`, tuned (batching, 6 threads, `synchronous_commit=off`) | 48,709 rows/s | 2.6× slower |
+| `saveAll()`, stock Spring Data defaults | 2,629 rows/s | 48.8× slower |
+
+The tuned row is the honest one: a competently configured ORM is only 2.6×
+behind, and 48,709 rows/s is more than most services will ever need. The
+48.8× is a story about **defaults**, not about JPA — chiefly Hibernate's
+`batch_size` of 0 and the per-row SELECT that Spring Data issues for entities
+with application-assigned ids. Full method and the deletes/reads comparison
+are in [COMPARISON.md](./COMPARISON.md).
+
+Here's why the gap exists at all.
 
 A JPA `saveAll()` of 10,000 entities is, at best (with
 `hibernate.jdbc.batch_size` tuned, ids pre-assigned, versionless entities),
@@ -655,6 +672,17 @@ but before offsets do will redeliver and duplicate. If duplicates matter,
 write the batch's `(topic, partition, max-offset)` in the same transaction as
 the COPY and restore offsets from that table on rebalance. That makes the
 pipeline effectively exactly-once without Kafka transactions.
+
+**Is any of this worth it for your load?** There is a companion baseline
+service in this repo that writes the same events to a single flat table with
+`saveAll()`, and [COMPARISON.md](./COMPARISON.md) measures all three axes.
+Short version: on writes the tuned ORM is 2.6× behind, which many systems can
+afford; on **retention** the gap is structural (9.6 ms to drop a partition
+versus a 192 ms DELETE that reclaims nothing and needs a blocking
+`VACUUM FULL`); and on **reads** partitioning helps time-range scans (2.4×
+fewer buffers) and does nothing whatsoever for indexed point lookups. If your
+ingestion is in the low thousands per second and you delete by other means,
+the simpler design is the right one.
 
 **Postgres-generated UUIDv7.** PostgreSQL 18 added `uuidv7()` (alongside
 `uuidv4()`, `uuid_extract_version()` and `uuid_extract_timestamp()`). For a

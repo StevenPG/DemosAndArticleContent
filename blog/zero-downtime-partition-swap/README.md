@@ -41,6 +41,9 @@ costs ~516 ms of work, of which the live parent table is involved for **2 ms**.
 - **`ingest-service/`** — demo producer, Kafka **batch** consumer across 6
   threads, streaming pgjdbc `CopyIn` writer, Micrometer instrumentation,
   dead-letter handling, Flyway migration that owns the schema.
+- **`jpa-baseline-service/`** — the comparison baseline: the same events written
+  to a single flat table with Spring Data JPA `saveAll()`, in `naive` and
+  `tuned` profiles. See [COMPARISON.md](./COMPARISON.md).
 - **`maintenance-service/`** — swap scheduler, retention
   (`DETACH PARTITION CONCURRENTLY` + `DROP`), partition observability endpoints,
   and the Spring Data JPA read API over the parent table.
@@ -168,6 +171,24 @@ echo 'THIS IS NOT JSON {{{' | kafka-console-producer.sh \
 kafka-console-consumer.sh --bootstrap-server localhost:9092 \
     --topic sensor-readings.DLT --from-beginning
 ```
+
+## Compare against plain Spring Data JPA
+
+```bash
+./benchmark.sh 300000        # preloads the topic, drains it three ways
+```
+
+| Implementation | Throughput | Relative |
+|---|---|---|
+| COPY into staging partitions | **128,205 rows/s** | 1.0× |
+| `saveAll()`, tuned | 48,709 rows/s | 2.6× slower |
+| `saveAll()`, stock defaults | 2,629 rows/s | 48.8× slower |
+
+Retention: 9.6 ms to detach and drop a partition, versus a 192 ms `DELETE`
+that reclaims no space and needs a blocking `VACUUM FULL`. Reads: 2.4× fewer
+buffers on time-range scans, and no advantage at all on indexed point lookups.
+Full method, caveats, and the "when the baseline is the right choice" section
+are in [COMPARISON.md](./COMPARISON.md).
 
 ## Tests
 

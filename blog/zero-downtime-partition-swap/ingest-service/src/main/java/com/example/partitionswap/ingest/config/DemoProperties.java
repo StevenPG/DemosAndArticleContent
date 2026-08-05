@@ -9,8 +9,18 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * second is fine) to see the batching and COPY throughput logging earn its keep.
  */
 @ConfigurationProperties(prefix = "demo")
-public record DemoProperties(String topic, Producer producer) {
+public record DemoProperties(String topic, Consumer consumer, Producer producer) {
 
-    public record Producer(boolean enabled, int messagesPerSecond, int deviceCount) {
+    /**
+     * @param totalMessages stop after emitting this many (0 = run forever).
+     *                      Used to preload a fixed, reproducible message set
+     *                      for the benchmark, so no run is timed against a
+     *                      live producer whose rate could drift.
+     */
+    public record Producer(boolean enabled, int messagesPerSecond, int deviceCount, long totalMessages) {
+    }
+
+    /** Lets the app run as a pure producer while preloading the topic. */
+    public record Consumer(boolean enabled) {
     }
 }

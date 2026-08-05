@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.log.LogAccessor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.listener.BatchListenerFailedException;
 import org.springframework.kafka.support.serializer.DeserializationException;
@@ -34,6 +35,7 @@ import java.util.List;
  * reporting the offending index is what makes the dead-letter path work.
  */
 @Component
+@ConditionalOnProperty(prefix = "demo.consumer", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class SensorReadingBatchConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(SensorReadingBatchConsumer.class);
