@@ -25,10 +25,11 @@ Postgres has first-class machinery for exactly this — declarative partitioning
 plus `ATTACH PARTITION` — and this post builds the whole loop with Spring
 Boot 4: a Kafka consumer that `COPY`s events into per-minute staging tables,
 and a separate maintenance service that indexes each completed minute and
-attaches it, zero-downtime, once a minute. The demo trickles ~60 events/minute
-so you can watch each stage happen, but every design decision is made as if
-the topic carried thousands of events per second — the point is the shape,
-not the volume.
+attaches it, zero-downtime, once a minute.
+
+Every number in this post comes from actually running it at 2,000 events/sec,
+which produces ~120,000-row partitions — enough that the costs are real rather
+than rounding error.
 
 The complete runnable project is in this folder ([README](./README.md) for
 the commands). Here's why it's built the way it is.
@@ -37,7 +38,9 @@ the commands). Here's why it's built the way it is.
 
 ```
                      ┌────────────────── ingest-service ─────────────────────┐
-  producer (1/s) ──► │  Kafka topic ──► batch consumer ──► COPY FROM STDIN   │
+  producer ────────► │  Kafka topic ──► 6 listener threads                   │
+                     │                    │                                  │
+                     │                    └─► COPY FROM STDIN (streamed)     │
                      └────────────────────────────────┬─────────────────────-┘
                                                       ▼
                                      sensor_readings_p20260805_1432    ◄─ detached,
@@ -87,70 +90,110 @@ batching drops the ORM overhead but keeps the protocol overhead.
 `COPY ... FROM STDIN` is a different protocol mode, not a faster INSERT. The
 pgjdbc driver streams raw row data over the wire; Postgres parses it straight
 into heap tuples. One statement, one stream, one commit for the entire batch.
-The consumer's whole write path is:
-
-```java
-Instant ingestedAt = Instant.now();
-PartitionWindow window = Partitions.windowFor(ingestedAt);
-stagingTableManager.ensureExists(window);
-
-String payload = CopyTextEncoder.encode(events, ingestedAt);
-String copySql = "COPY %s (%s) FROM STDIN WITH (FORMAT text)"
-        .formatted(window.tableName(), CopyTextEncoder.COLUMNS);
-
-try (Connection connection = dataSource.getConnection()) {
-    CopyManager copyManager = connection.unwrap(PGConnection.class).getCopyAPI();
-    long rows = copyManager.copyIn(copySql, new StringReader(payload));
-}
-```
 
 Batches come from Kafka for free. `spring.kafka.listener.type: batch` hands
 the listener everything one `poll()` returned — up to `max.poll.records` —
-as a single `List`, and commits offsets only after the listener returns.
+as a single `List`, and commits the offsets only after the listener returns.
 One poll, one COPY, one offset commit. A single COPY is atomic (all rows or
 none), so a crash mid-batch means Kafka redelivers the whole batch and the
 staging table never holds a partial one: clean at-least-once semantics with
 no distributed-transaction machinery.
 
-Two deliberate choices in the encoder: COPY's `text` format (tab-separated,
-backslash-escaped) keeps the payload debuggable — you can eyeball exactly what
-went over the wire — and costs Postgres a text parse per value. The next gear
-up is `FORMAT binary`, which eliminates parsing at the cost of implementing
-per-type binary encoders. And the whole batch is stamped with **one** arrival
-timestamp, which pins the batch to a single staging table. No batch ever
-straddles a minute boundary, no matter when it commits. That one line quietly
-deletes an entire class of boundary races.
+### Stream the payload; don't build it
 
-## Constraints are handled separately — that's the whole trick
+The obvious implementation renders the batch to a `String` and hands it over:
 
-The staging table is created by the ingest service on first use of each
-minute:
-
-```sql
-CREATE TABLE IF NOT EXISTS sensor_readings_p20260805_1432
-    (LIKE sensor_readings INCLUDING DEFAULTS INCLUDING STORAGE);
+```java
+// Don't do this.
+String payload = encodeBatch(events);
+copyManager.copyIn(copySql, new StringReader(payload));
 ```
 
-`LIKE` clones the column definitions and NOT NULLs but — crucially — **not**
-the primary key and not the indexes. While it's being loaded, this table is a
-bare heap. COPY into it is a nearly pure sequential write. There is no index
-to update, no uniqueness to check, no constraint to evaluate per row.
+At 10,000 rows that's a multi-megabyte `char[]` — two bytes per character —
+which then gets encoded to UTF-8 on the way out. Two full copies of every
+batch, on every listener thread, straight into the young generation. The
+allocation profile alone undoes a good part of why you chose COPY.
 
-Every one of those deferred costs gets paid later, in bulk, by the
-maintenance service, at a moment when the table is *detached* — a private
-table no reader knows about:
+The version in this project encodes directly to UTF-8 bytes in a buffer the
+thread owns and reuses, and drains it to the server every 64 KB through
+pgjdbc's lower-level `CopyIn` handle:
 
-- `ALTER TABLE ... ADD PRIMARY KEY (id, ingested_at)` — one bulk sort-and-build
-  instead of 60 (or 60,000) incremental B-tree insertions, and uniqueness
-  checked once over sorted data.
-- Two `CREATE INDEX` runs matching the parent's partitioned indexes.
-- The bounds `CHECK` constraint (next section) — one full-table validation scan.
-- `ANALYZE` — so the planner has real statistics the instant the partition
-  becomes visible, not after some future autovacuum gets around to it.
+```java
+CopyIn copyIn = copyManager.copyIn(copySql);
+try {
+    for (SensorReadingEvent event : events) {
+        encoder.appendRow(event, ingestedAtBytes);
+        if (encoder.length() >= FLUSH_THRESHOLD) {
+            copyIn.writeToCopy(encoder.buffer(), 0, encoder.length());
+            encoder.reset();
+        }
+    }
+    if (encoder.length() > 0) {
+        copyIn.writeToCopy(encoder.buffer(), 0, encoder.length());
+    }
+    return copyIn.endCopy();
+} catch (SQLException | RuntimeException e) {
+    if (copyIn.isActive()) {
+        copyIn.cancelCopy();   // else the pooled connection stays in COPY mode
+    }
+    throw e;
+}
+```
 
-None of this touches the parent table. A reader hammering `sensor_readings`
-during the index build cannot be affected by it, because as far as Postgres
-lock semantics are concerned, the two tables are unrelated.
+Peak footprint is now flat — about 72 KB per writer — regardless of batch
+size. Two details worth stealing:
+
+- **`cancelCopy()` on failure.** An abandoned COPY leaves the connection stuck
+  in COPY mode, and the pool hands that broken connection to the next batch.
+  This is the kind of bug that shows up as a cascade of unrelated failures
+  ten minutes after the real problem.
+- **UUIDs written from their two `long`s** rather than via
+  `UUID.toString()`, which would allocate a String per row. Twenty lines,
+  and it removes an allocation from the innermost loop.
+
+Text format (tab-separated, backslash-escaped) keeps the wire payload
+debuggable, at the cost of a text parse per value server-side. The next gear
+up is `FORMAT binary`, which eliminates parsing at the cost of per-type binary
+encoders. Keep text until a profile tells you otherwise; you'll miss being
+able to read it.
+
+### One thread is not a write path
+
+This is the mistake that silently caps most COPY-based ingesters, and it's one
+line of configuration:
+
+```yaml
+spring:
+  kafka:
+    listener:
+      type: batch
+      concurrency: 6      # one consumer thread per topic partition
+```
+
+The default is **1**. Six topic partitions and a single listener thread means
+one COPY at a time no matter how much hardware you have. With `concurrency: 6`
+each thread owns partitions, encodes into its own buffer, and runs its own
+independent COPY.
+
+Two things must line up with it, or the parallelism is fictional:
+
+```yaml
+    hikari:
+      maximum-pool-size: 8      # ≥ concurrency, or writers serialize on checkout
+      minimum-idle: 8
+```
+
+```yaml
+      properties:
+        max.poll.interval.ms: 300000
+```
+
+`max.poll.interval.ms` has to comfortably exceed the worst-case COPY of a
+`max.poll.records`-sized batch. If it doesn't, a heavy batch trips a rebalance,
+the rebalance redelivers the batch, the redelivery makes the next batch
+heavier, and the pipeline oscillates itself to death. Sizing the connection
+pool below the listener concurrency is the same class of error, just quieter:
+the threads exist, they simply queue on connection checkout.
 
 ## Partition by arrival time, not event time
 
@@ -158,7 +201,7 @@ The schema (owned by the ingest service's Flyway migration):
 
 ```sql
 CREATE TABLE sensor_readings (
-    id          uuid             NOT NULL,
+    id          uuid             NOT NULL,   -- UUIDv7, time-ordered
     device_id   text             NOT NULL,
     metric      text             NOT NULL,
     reading     double precision NOT NULL,
@@ -180,10 +223,23 @@ partition of the minute they *arrived*, with their event time preserved in
 `recorded_at` for any query that cares. This is the same watermark trade-off
 every stream processor makes, applied to table layout.
 
-Note the primary key includes `ingested_at`: on a partitioned table, every
-unique constraint must include the partition key (Postgres has no global
-index), so `id` uniqueness is enforced per partition. For append-only
-telemetry with UUID ids, that's the standard, acceptable trade.
+The whole batch is stamped with **one** arrival timestamp, taken once at
+encode time. That pins the batch to a single staging table: no batch ever
+straddles a minute boundary, no matter when it commits. One line, and an
+entire class of boundary race disappears.
+
+Two more schema notes. The primary key includes `ingested_at` because on a
+partitioned table every unique constraint must contain the partition key
+(Postgres has no global index) — so `id` uniqueness is enforced per partition,
+which is the standard and acceptable trade for append-only telemetry. And the
+ids are **UUIDv7**, not v4: 48 bits of millisecond timestamp followed by
+randomness, so they sort in creation order. In this design the key is
+bulk-built rather than incrementally maintained, which mutes the difference —
+but the resulting index is physically correlated with the heap, and under the
+incremental-insert pattern this whole architecture avoids, random v4 keys
+scatter writes across every leaf page and inflate WAL through full-page
+writes. Shipping v4 keys in a project about write performance would argue
+against its own thesis.
 
 ## The swap, and exactly what it locks
 
@@ -285,6 +341,204 @@ for (int attempt = 1; attempt <= props.attachAttempts(); attempt++) {
 This is the discipline to copy into any production DDL you run against hot
 tables, partition-related or not.
 
+## Durability you can afford to lose
+
+The single largest throughput knob for a bulk loader is usually not in your
+application at all:
+
+```yaml
+spring:
+  datasource:
+    hikari:
+      connection-init-sql: SET synchronous_commit = off
+```
+
+With `synchronous_commit = off`, COPY returns without waiting for the WAL
+fsync. Measured A/B on the same hardware at 4,000 events/sec:
+
+| | COPY p50 | COPY p99 |
+|---|---|---|
+| `synchronous_commit = on` | 5.73 ms | ~109 ms |
+| `synchronous_commit = off` | 4.44 ms | ~18 ms |
+
+A ~6× improvement at p99, which is headroom you get to spend on burst
+absorption.
+
+Two things make this defensible rather than reckless. First, **it is not
+`fsync = off`** — the database remains crash-safe and will never corrupt;
+only the commit *acknowledgement* becomes asynchronous, so a crash loses at
+most a few hundred milliseconds of committed transactions. Second, and more
+importantly, **Kafka is the source of truth**. The offsets for anything lost
+were never committed either, so the consumer replays exactly those records on
+restart. We are trading durability we can reconstruct for latency we can't.
+
+Note that this is set on the ingest service's pool only. The maintenance
+service keeps full durability: its DDL isn't replayable from anywhere.
+
+The server side needs help too, and the defaults are tuned for a small shared
+machine, not for sustained ingestion:
+
+```yaml
+command:
+  - postgres
+  - -c
+  - max_wal_size=8GB              # stop checkpointing constantly under load
+  - -c
+  - checkpoint_timeout=15min
+  - -c
+  - checkpoint_completion_target=0.9
+  - -c
+  - wal_compression=lz4           # shrink full-page images after each checkpoint
+  - -c
+  - shared_buffers=1GB
+  - -c
+  - maintenance_work_mem=512MB    # the swap's bulk index builds
+  - -c
+  - log_lock_waits=on             # so the lock_timeout story is observable
+```
+
+Checkpoints are the dominant source of write stalls during ingestion. Letting
+WAL grow much larger before forcing one, and spreading the flush across 90% of
+the interval, converts a periodic I/O cliff into a background trickle.
+
+## When a batch can't be written
+
+The default behaviour of a Kafka listener that throws is worth stating
+plainly, because it's the failure mode most ingestion demos ship with: the
+offsets are never committed, Kafka redelivers the same batch immediately, and
+the loop spins as fast as the CPU allows. **One malformed record silently
+wedges a partition forever.**
+
+The policy here has two halves, and the split matters more than either half.
+
+**Transient failures retry forever.** The database being down is not the
+batch's fault. COPY failures are classified by SQLState *class* — the
+portable, documented part of the error code:
+
+```java
+return switch (stateClass) {
+    // 22 data exception, 23 integrity violation, 42 syntax/access rule
+    case "22", "23", "42" -> new PoisonBatchException(message, e);
+    // 08 connection, 40 rollback/deadlock, 53 resources, 57 shutdown, …
+    default               -> new TransientIngestException(message, e);
+};
+```
+
+Note the direction of the default: **anything unrecognised is transient**. A
+stalled partition is visible, alertable, and drains itself when the database
+comes back. A batch dead-lettered because Postgres was mid-failover is silent
+data loss. Given an unknown error, block loudly rather than discard quietly.
+
+**Un-processable data is dead-lettered immediately**, because retrying it can
+only ever block the partition. Getting this right for a *batch* listener has
+three parts that are each easy to miss:
+
+1. **`ErrorHandlingDeserializer` signals failure with a null value.** Without
+   it, a malformed record throws inside `poll()`, where no error handler can
+   catch it. With it, the bad record arrives as `null`.
+2. **The listener must therefore take `ConsumerRecord`s, not values.** A
+   listener declared `List<SensorReadingEvent>` cannot distinguish that null
+   and will just throw `NullPointerException` deep in the write path — which
+   the handler then treats as a generic, retryable failure. Same wedge, more
+   confusing stack trace.
+3. **`BatchListenerFailedException` carries the failing record's index**, which
+   is what lets the handler commit everything before it, dead-letter exactly
+   that one record, and redeliver the rest.
+
+```java
+for (int i = 0; i < records.size(); i++) {
+    SensorReadingEvent event = records.get(i).value();
+    if (event == null) {
+        DeserializationException cause = SerializationUtils.getExceptionFromHeader(
+                records.get(i), SerializationUtils.VALUE_DESERIALIZER_EXCEPTION_HEADER, HEADER_LOG);
+        throw new BatchListenerFailedException("routing to dead-letter topic", cause, i);
+    }
+    events.add(event);
+}
+```
+
+And one more trap, which I walked straight into while building this. Because
+the retry policy above is deliberately *unlimited*, the poison record inherits
+it: it retries forever and never reaches the recoverer, so the partition
+wedges anyway — just more slowly and with less to show for it. The exceptions
+that identify un-processable data have to be excluded explicitly:
+
+```java
+handler.addNotRetryableExceptions(
+        PoisonBatchException.class,
+        BatchListenerFailedException.class);
+```
+
+Dead letters are published as **raw bytes**, not as `SensorReadingEvent`: a
+record that failed to deserialize has no object form, and the original bytes
+are exactly what an operator needs to see.
+
+## Observability, and why the log line had to go
+
+The first version of this project logged a line per COPY. It reads beautifully
+in a demo and is actively harmful in production: at a few thousand batches a
+minute, the appender's synchronized write becomes a contention point shared by
+every listener thread, and the formatting cost lands on the hot path. Worse,
+it doesn't actually answer the question you care about.
+
+Per-batch logging moved to `DEBUG`. Steady state is Micrometer meters plus one
+aggregated line per window:
+
+```
+ingest: 20000 rows in 50 batches (2000 rows/s, 400 rows/batch) | copy p50 4.05 ms, p99 9.95 ms
+```
+
+A p99 COPY latency and a rows/sec rate tell you whether ingestion is healthy.
+No volume of individual log lines does. The same meters are on
+`/actuator/prometheus` as histograms, so the p99 is queryable rather than
+merely printed.
+
+## The read side never finds out
+
+The payoff for all of this is what the read side *doesn't* contain. The
+maintenance service maps a perfectly ordinary Spring Data JPA entity over the
+parent table:
+
+```java
+@Entity
+@Immutable                      // rows arrive via COPY; never dirty-check these
+@Table(name = "sensor_readings")
+@IdClass(SensorReadingId.class)
+public class SensorReading { ... }
+```
+
+Nothing in the entity, the repository, or the controllers knows partitions
+exist. A row that was invisible at 14:32:59 (in a detached staging table) is
+visible at 14:33:10 — already indexed, already analyzed — through the same
+JPQL query, because attach changed the *catalog*, not the query.
+
+And because every query carries a predicate on `ingested_at`, the planner
+prunes:
+
+```
+ Aggregate
+   ->  Append
+         Subplans Removed: 2
+         ->  Index Only Scan using sensor_readings_p20260805_0324_ingested_at_idx
+               Index Cond: (ingested_at >= (now() - '00:01:00'::interval))
+```
+
+`Subplans Removed: 2` is runtime pruning doing its job. Reads scale with the
+data you're actually asking about, not with total retained history.
+
+Retention is the same trick backwards, and it's where partitioning pays a
+second dividend: deleting a minute of data is not a `DELETE` (heap churn,
+index churn, bloat, vacuum debt) but
+
+```sql
+ALTER TABLE sensor_readings DETACH PARTITION sensor_readings_p20260805_1432 CONCURRENTLY;
+DROP TABLE sensor_readings_p20260805_1432;
+```
+
+`DETACH ... CONCURRENTLY` (Postgres 14+) waits out concurrent queries instead
+of blocking them, and the `DROP` afterwards removes a table no reader can see
+anymore. Deletion becomes O(1) with respect to row count.
+
 ## Coordination through the catalog, not a queue
 
 How does the maintenance service know which tables to promote? It asks the
@@ -322,120 +576,109 @@ operational properties:
   the swap is explicit SQL — you want to see every statement that runs, in
   order, on that connection.
 
-One subtlety on the ingest side closes the loop: eligibility requires the
-minute to be over plus a grace period (default 5s, scheduler fires at :10).
-The grace covers a COPY that started at 14:32:59.9 — its rows are stamped
-with the arrival timestamp taken at encode time, so the batch lands in the
-14:32 table even though it commits during 14:33. A few seconds of grace and
-the race window is gone.
-
-## The read side never finds out
-
-The payoff for all of this is what the read side *doesn't* contain. The
-maintenance service maps a perfectly ordinary Spring Data JPA entity over the
-parent table:
-
-```java
-@Entity
-@Immutable                      // rows arrive via COPY; never dirty-check these
-@Table(name = "sensor_readings")
-@IdClass(SensorReadingId.class)
-public class SensorReading { ... }
-```
-
-```java
-public interface SensorReadingRepository extends JpaRepository<SensorReading, SensorReadingId> {
-    List<SensorReading> findByDeviceIdAndMetricOrderByIngestedAtDesc(
-            String deviceId, String metric, Limit limit);
-    // + a native aggregate with a time-range predicate on ingested_at
-}
-```
-
-Nothing in the entity, the repository, or the controllers knows partitions
-exist. A row that was invisible at 14:32:59 (in a detached staging table)
-is visible at 14:33:10 — already indexed, already analyzed — through the same
-JPQL query, because attach changed the *catalog*, not the query. And because
-every query carries a predicate on `ingested_at`, the planner prunes: run
-`EXPLAIN` on the stats endpoint's SQL and old partitions simply don't appear
-in the plan. Reads scale with the data you're actually asking about, not with
-total retained history.
-
-Retention is the same trick backwards, and it's where partitioning pays a
-second dividend: deleting a minute of data is not a `DELETE` (heap churn,
-index churn, bloat, vacuum debt) but
-
-```sql
-ALTER TABLE sensor_readings DETACH PARTITION sensor_readings_p20260805_1432 CONCURRENTLY;
-DROP TABLE sensor_readings_p20260805_1432;
-```
-
-`DETACH ... CONCURRENTLY` (Postgres 14+) waits out concurrent queries instead
-of blocking them, and the `DROP` afterwards removes a table no reader can see
-anymore. Deletion becomes O(1) with respect to row count.
+On the ingest side, the staging-table DDL is memoized through
+`computeIfAbsent` so exactly one thread creates each minute's table. Letting
+all six threads fire `CREATE TABLE IF NOT EXISTS` at the minute boundary
+mostly works, but there's a genuine race: `IF NOT EXISTS` checks the catalog
+*before* taking the lock, so simultaneous creators can collide with a
+duplicate-key error on `pg_class` rather than politely no-opping.
 
 ## Numbers from the demo
 
-From an actual run of this project (60-row partitions — deliberately tiny;
-the point is where the time goes, not the totals):
+Running at 2,000 events/sec, which fills each per-minute partition with about
+120,000 rows:
 
 ```
-ingest-service       : COPY 4 rows -> sensor_readings_p20260805_0228 in 2361 µs (1694 rows/s)
-maintenance-service  : [sensor_readings_p20260805_0228] promoted to live partition: ~60 rows |
-                       pk 3 ms, indexes 4 ms, bounds-check 1 ms, analyze 1 ms,
-                       attach 2 ms, drop-check 0 ms, total 16 ms
+ingest: 20000 rows in 50 batches (2000 rows/s, 400 rows/batch) | copy p50 4.05 ms, p99 9.95 ms
+
+[sensor_readings_p20260805_0323] promoted to live partition: ~120000 rows |
+    pk 86 ms, indexes 183 ms, bounds-check 12 ms, analyze 67 ms,
+    attach 2 ms, drop-check 1 ms, total 357 ms
 ```
 
-The line to internalize is the last one: of a 16 ms promotion, the parent
-table was involved for **2 ms**, in a lock mode that doesn't conflict with
-readers anyway. Scale the partition from 60 rows to 6 million and the pk /
-indexes / bounds-check numbers grow with it — but they're all in the detached
-phase. The attach stays a metadata operation. That's the entire thesis of the
-design, visible in one log line.
+The line to internalize is the last one. Promoting 120,000 rows into the live
+table costs **357 ms of work, of which the parent table is involved for
+2 ms** — in a lock mode that doesn't conflict with readers anyway. The other
+355 ms happens on a table no reader can see.
 
-## Turning it up to production
+Scale the partition to 12 million rows and the pk / indexes / bounds-check
+numbers grow with it. They're all in the detached phase. The attach stays a
+metadata operation. That's the entire thesis of the design, visible in one log
+line.
 
-Things this demo keeps simple, and what changes at real scale:
+## What breaks next
 
-- **Batch density.** At 1 msg/s each COPY carries a handful of rows. At real
-  rates, `max.poll.records` (here 10,000) and `fetch.max.wait.ms` shape how
-  many rows each COPY carries; denser is better for COPY. The code path is
-  identical.
-- **`FORMAT binary`** for COPY once you've measured text parsing as a cost.
-  Keep text until then; you'll miss the debuggability.
-- **Partition granularity.** Per-minute is for demo watchability. Real
-  systems usually go hourly or daily: thousands of partitions inflate
-  planning time and catalog size. Same code, different `truncatedTo`.
-- **Delivery semantics.** This design is at-least-once (duplicates possible
-  on redelivery, e.g. a crash after COPY commits but before offsets do).
-  If duplicates matter, the batch's `(topic, partition, max-offset)` can be
-  written in the same transaction as the COPY and offsets restored from the
-  table on rebalance — turning the pipeline effectively exactly-once without
-  Kafka transactions.
-- **Unlogged staging.** `CREATE UNLOGGED TABLE` staging halves WAL on the
-  load path, at the price of losing un-attached staging data on a crash
-  (acceptable — Kafka replays it) and needing `ALTER TABLE ... SET LOGGED`
-  before attach, which rewrites the table. Measure before buying.
-- **Watch the lock retries.** The `55P03` retry warning in the maintenance
-  log is your early-warning system: if attaches start losing races, something
-  long-running is camping on the parent, and that's worth knowing regardless
-  of the swap.
+Things this project doesn't do, and where the next walls are:
+
+**Relation extension lock contention.** This is the one that bites right after
+you fix listener concurrency. Multiple concurrent COPYs into the *same* table
+contend on the relation extension lock — the lock Postgres takes to add a new
+page to a heap. Postgres 16 improved this with bulk extension, and at a few
+thousand rows/sec you won't see it, but at hundreds of thousands it becomes
+the ceiling. The fix is to give each writer its own physical table, which
+means sub-partitioning the minute:
+
+```sql
+CREATE TABLE sensor_readings_p20260805_1432 (LIKE sensor_readings ...)
+    PARTITION BY LIST (writer_shard);
+CREATE TABLE sensor_readings_p20260805_1432_s0
+    PARTITION OF sensor_readings_p20260805_1432 FOR VALUES IN (0);
+-- … one per writer thread
+```
+
+Each writer COPYs into its own shard with zero extension-lock contention, and
+the whole minute still attaches to the parent as one unit. The cost is real:
+you need a synthetic `writer_shard` column, it must join every unique
+constraint (making the PK three columns), and a physical-layout artifact is
+now visible in your data model. That's why it isn't in the demo — the
+complexity would obscure the lesson for a bottleneck most readers won't hit —
+but it's the correct answer when you do.
+
+**Exactly-once.** This design is at-least-once: a crash after the COPY commits
+but before offsets do will redeliver and duplicate. If duplicates matter,
+write the batch's `(topic, partition, max-offset)` in the same transaction as
+the COPY and restore offsets from that table on rebalance. That makes the
+pipeline effectively exactly-once without Kafka transactions.
+
+**`FORMAT binary`** once you've measured text parsing as a real cost, and
+**unlogged staging tables** (`CREATE UNLOGGED TABLE`) to halve WAL on the load
+path — at the price of needing `ALTER TABLE … SET LOGGED` before attach, which
+rewrites the table. Measure both before buying.
+
+**Partition granularity.** Per-minute is for demo watchability. Real systems
+usually go hourly or daily; thousands of partitions inflate planning time and
+catalog size. Same code, different `truncatedTo`.
+
+**Watch the lock-retry warnings.** The `55P03` retry line in the maintenance
+log is an early-warning system: if attaches start losing races, something
+long-running is camping on the parent, and that's worth knowing regardless of
+the swap.
 
 ## Takeaways
 
 1. **Bulk ingestion is a protocol question before it's a code question.**
    COPY isn't a faster INSERT; it's a different wire mode that removes
-   per-row overhead entirely. Kafka's batch listener gives you the batching
-   for free.
-2. **Indexes and constraints are deferrable work.** Build them once per
+   per-row overhead entirely — then stream into it instead of materializing
+   the payload, or you hand the allocator back what you saved.
+2. **Parallelism is three settings that must agree**: listener concurrency,
+   connection pool size, and `max.poll.interval.ms`. Any one of them wrong
+   and the other two are decoration.
+3. **Indexes and constraints are deferrable work.** Build them once per
    partition on a detached table instead of once per row on a live one, and
    `ANALYZE` before anyone can query.
-3. **The swap is three mechanisms, know all three:** `SHARE UPDATE EXCLUSIVE`
+4. **The swap is three mechanisms, know all three:** `SHARE UPDATE EXCLUSIVE`
    attach (PG12+), the pre-validated `CHECK` that skips the attach scan, and
    pre-built indexes that link instead of build. Miss one and the "instant"
    attach quietly does table-scale work under lock.
-4. **`lock_timeout` + retry around every piece of DDL on a hot table.**
+5. **`lock_timeout` + retry around every piece of DDL on a hot table.**
    A weak lock that queues behind a strong one is a strong lock.
-5. **Partition by arrival time when an automated process needs completeness.**
+6. **Relax durability exactly where you can rebuild it.** Kafka-replayable
+   writes are the textbook case for `synchronous_commit = off`; DDL is not.
+7. **Classify failures, don't just retry them.** Retry the database being
+   down forever; dead-letter un-processable data immediately. Defaulting an
+   unknown error to "transient" turns a mystery into a stalled partition
+   instead of into missing rows.
+8. **Partition by arrival time when an automated process needs completeness.**
    Event time is a query concern; keep it as a column.
-6. **Let the catalog be the queue.** created-but-unattached is a work state
+9. **Let the catalog be the queue.** created-but-unattached is a work state
    the database maintains for you, atomically, across process crashes.

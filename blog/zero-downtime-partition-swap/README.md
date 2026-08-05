@@ -13,10 +13,13 @@ the primary key and indexes, validates a bounds `CHECK` constraint, runs
 to the partitioned read table with a metadata-only `ATTACH PARTITION`. Readers
 querying the parent table never block and never see an unindexed row.
 
+At 2,000 events/sec (~120,000 rows per partition), promotion costs ~357 ms of
+work, of which the live parent table is involved for **2 ms**.
+
 ```
-                    ┌────────────────── ingest-service (8080) ──────────────────┐
- producer (1/s) ──► │ Kafka topic ──► batch consumer ──► COPY FROM STDIN        │
-                    └──────────────────────────────┬────────────────────────────┘
+                    ┌────────────── ingest-service (8080) ─────────────────┐
+ producer ────────► │ Kafka topic ─► 6 listener threads ─► COPY FROM STDIN │
+                    └──────────────────────────────┬──────────────────────-┘
                                                    ▼
                                     sensor_readings_p20260805_1432      (detached,
                                     sensor_readings_p20260805_1433 ◄──   no indexes)
@@ -35,8 +38,9 @@ querying the parent table never block and never see an unindexed row.
 
 - **`common/`** — the partition-naming contract (`sensor_readings_pYYYYMMDD_HHMM`)
   and the Kafka event record shared by both services.
-- **`ingest-service/`** — demo producer (~1 msg/s), Kafka **batch** consumer,
-  pgjdbc `CopyManager` writer, Flyway migration that owns the schema.
+- **`ingest-service/`** — demo producer, Kafka **batch** consumer across 6
+  threads, streaming pgjdbc `CopyIn` writer, Micrometer instrumentation,
+  dead-letter handling, Flyway migration that owns the schema.
 - **`maintenance-service/`** — swap scheduler, retention
   (`DETACH PARTITION CONCURRENTLY` + `DROP`), partition observability endpoints,
   and the Spring Data JPA read API over the parent table.
@@ -52,10 +56,12 @@ docker compose up -d                       # Postgres 18 + Kafka (KRaft) + Kafka
 Within a minute or two you'll see the lifecycle in the logs:
 
 ```
-ingest-service       : staging table ready: sensor_readings_p20260805_0228 [...]
-ingest-service       : COPY 4 rows -> sensor_readings_p20260805_0228 in 2361 µs (1694 rows/s)
-maintenance-service  : [sensor_readings_p20260805_0228] promoted to live partition: ~60 rows |
-                       pk 3 ms, indexes 4 ms, bounds-check 1 ms, analyze 1 ms, attach 2 ms, total 16 ms
+ingest-service       : staging table ready: sensor_readings_p20260805_0323 [...]
+ingest-service       : ingest: 20000 rows in 50 batches (2000 rows/s, 400 rows/batch)
+                       | copy p50 4.05 ms, p99 9.95 ms
+maintenance-service  : [sensor_readings_p20260805_0323] promoted to live partition: ~120000 rows |
+                       pk 86 ms, indexes 183 ms, bounds-check 12 ms, analyze 67 ms,
+                       attach 2 ms, drop-check 1 ms, total 357 ms
 ```
 
 ## Watch the swap happen
@@ -71,6 +77,9 @@ curl -s localhost:8081/api/partitions | jq
 curl -s "localhost:8081/api/readings/latest?limit=5" | jq
 curl -s "localhost:8081/api/readings/device/device-001?limit=5" | jq
 curl -s "localhost:8081/api/readings/stats?minutes=10" | jq
+
+# COPY throughput and latency percentiles
+curl -s localhost:8080/actuator/prometheus | grep '^ingest_'
 ```
 
 Or from `psql` (`psql -h localhost -U demo partition_swap`, password `demo`):
@@ -82,22 +91,54 @@ SELECT c.relname,
 FROM pg_class c
 WHERE c.relname LIKE 'sensor_readings_p%' ORDER BY 1;
 
--- prove partition pruning on the read path
-EXPLAIN SELECT * FROM sensor_readings
-WHERE ingested_at >= now() - interval '2 minutes';
+-- prove partition pruning on the read path ("Subplans Removed: N")
+EXPLAIN SELECT count(*) FROM sensor_readings
+WHERE ingested_at >= now() - interval '1 minute';
+
+-- confirm each partition's indexes are LINKED to the parent's partitioned
+-- indexes (which is why ATTACH is metadata-only, not a build)
+SELECT parent.relname AS parent_index, child.relname AS partition_index
+FROM pg_inherits i
+JOIN pg_class parent ON parent.oid = i.inhparent
+JOIN pg_class child  ON child.oid  = i.inhrelid
+WHERE parent.relkind = 'I';
 ```
 
 ## Crank it up
 
-The demo defaults to ~60 messages/minute so each partition is readable. The
-write path is one `COPY` per consumed Kafka batch, so it takes thousands of
-rows per second without code changes:
+The write path is one `COPY` per consumed Kafka batch across six listener
+threads, so it takes thousands of rows per second without code changes:
 
-```yaml
-# ingest-service application.yaml
-demo:
-  producer:
-    messages-per-second: 2000
+```bash
+./gradlew :ingest-service:bootRun --args='--demo.producer.messages-per-second=5000'
+```
+
+Knobs worth knowing (all in `ingest-service/src/main/resources/application.yaml`):
+
+| Setting | Why it matters |
+|---|---|
+| `spring.kafka.listener.concurrency` | One COPY stream per topic partition. Default of 1 caps the whole write path at one thread. |
+| `spring.datasource.hikari.maximum-pool-size` | Must be ≥ listener concurrency or writers serialize on connection checkout. |
+| `max.poll.records` / `fetch.max.wait.ms` | Shape how many rows each COPY carries. Denser batches are better for COPY. |
+| `max.poll.interval.ms` | Must exceed the worst-case COPY, or heavy batches trigger rebalance loops. |
+| `connection-init-sql: SET synchronous_commit = off` | ~6× better COPY p99. Safe here because Kafka replays anything lost. |
+
+The `docker-compose.yml` Postgres service also carries a bulk-ingest profile
+(`max_wal_size`, `checkpoint_timeout`, `wal_compression`, `maintenance_work_mem`)
+with comments explaining each choice.
+
+## Failure handling
+
+Malformed records go to `sensor-readings.DLT` as raw bytes and the consumer
+carries on; database outages retry forever with capped backoff rather than
+discarding data. To see it:
+
+```bash
+echo 'THIS IS NOT JSON {{{' | kafka-console-producer.sh \
+    --bootstrap-server localhost:9092 --topic sensor-readings
+
+kafka-console-consumer.sh --bootstrap-server localhost:9092 \
+    --topic sensor-readings.DLT --from-beginning
 ```
 
 ## Tests
@@ -106,7 +147,8 @@ demo:
 ./gradlew test
 ```
 
-Unit tests cover the naming contract and COPY text encoding. The integration
-tests (Testcontainers, skipped automatically without Docker) drive the real
-COPY path and the full promote → attach → retention lifecycle against
-Postgres 18.
+Unit tests cover the naming contract and the COPY encoder (UUID equivalence
+against `UUID.toString`, escaping, multi-byte and surrogate-pair text, buffer
+growth and reuse). The integration tests (Testcontainers, skipped automatically
+without Docker) drive the real COPY path and the full promote → attach →
+retention lifecycle against Postgres 18.
