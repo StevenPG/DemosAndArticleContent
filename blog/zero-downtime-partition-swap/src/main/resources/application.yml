@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: zero-downtime-partition-swap
+  datasource:
+    url: jdbc:postgresql://localhost:5432/eventsdb
+    username: events
+    password: events
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      # All DDL is owned by PartitionSchemaInitializer — Hibernate must never touch it.
+      # Partitioned parents and per-minute children are invisible to schema generation anyway.
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+demo:
+  producer:
+    enabled: true
+    batch-size: 25
+    delay-ms: 200
+  consumer:
+    enabled: true
+    delay-ms: 10000
+    window-minutes: 5
+  swap:
+    enabled: true
+    # second 5 of every minute: the minute that just closed is swapped 5s after it ends
+    cron: "5 * * * * *"
+    grace-seconds: 2
+    minutes-ahead: 3
+    retention-minutes: 30
+
+logging:
+  level:
+    com.example.partitionswap: INFO
+    # Uncomment to see Hibernate's generated statements next to our explicit DDL
+    # org.hibernate.SQL: DEBUG
+    # org.hibernate.orm.jdbc.bind: TRACE
