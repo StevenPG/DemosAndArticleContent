@@ -80,6 +80,31 @@ curl -s "localhost:8081/api/readings/stats?minutes=10" | jq
 
 # COPY throughput and latency percentiles
 curl -s localhost:8080/actuator/prometheus | grep '^ingest_'
+
+# swap phase timings — compare phase="attach" against phase="indexes"
+curl -s localhost:8081/actuator/prometheus | grep '^partition_swap_phase'
+
+# alarms when promotion falls behind (DOWN + HTTP 503 past the threshold)
+curl -s localhost:8081/actuator/health | jq .components.partitionSwap
+```
+
+The `partitionSwap` health component is the one to alert on. If the
+maintenance service stops promoting, ingestion keeps working and every probe
+keeps passing — the only symptom is that readers silently stop seeing recent
+data. It reports DOWN once the oldest unattached minute is older than
+`maintenance.staleness-threshold-seconds`:
+
+```json
+{
+  "status": "DOWN",
+  "details": {
+    "stagingBacklog": 1,
+    "oldestUnattachedTable": "sensor_readings_p20260805_0333",
+    "oldestUnattachedAgeSeconds": 1881,
+    "stalenessThresholdSeconds": 180,
+    "reason": "partition promotion is falling behind; readers cannot see data older than the threshold"
+  }
+}
 ```
 
 Or from `psql` (`psql -h localhost -U demo partition_swap`, password `demo`):
@@ -147,8 +172,10 @@ kafka-console-consumer.sh --bootstrap-server localhost:9092 \
 ./gradlew test
 ```
 
-Unit tests cover the naming contract and the COPY encoder (UUID equivalence
+Unit tests cover the naming contract, the COPY encoder (UUID equivalence
 against `UUID.toString`, escaping, multi-byte and surrogate-pair text, buffer
-growth and reuse). The integration tests (Testcontainers, skipped automatically
+growth and reuse), and the failure-handling policy — SQLState classification
+in both directions, the poison-record path, and the retry-versus-dead-letter
+configuration. The integration tests (Testcontainers, skipped automatically
 without Docker) drive the real COPY path and the full promote → attach →
 retention lifecycle against Postgres 18.
