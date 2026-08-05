@@ -10,6 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -49,6 +50,17 @@ public class PartitionRetentionService {
     public void dropExpiredPartitions() {
         if (!catalog.parentTableExists()) {
             return;
+        }
+        // DETACH PARTITION ... CONCURRENTLY cannot run inside a transaction
+        // block, and this method's correctness therefore depends on NOT being
+        // transactional. That dependency is invisible in the code — adding
+        // @Transactional here, or calling this from a transactional method,
+        // would compile fine and fail only at runtime, in a scheduled job, in
+        // production. Fail loudly and immediately instead.
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            throw new IllegalStateException(
+                    "retention must not run inside a transaction: DETACH PARTITION ... CONCURRENTLY "
+                            + "is rejected by Postgres inside a transaction block");
         }
         Instant cutoff = clock.instant().minusSeconds(props.retention().maxAgeMinutes() * 60L);
         catalog.attachedPartitions().stream()

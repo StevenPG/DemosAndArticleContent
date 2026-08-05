@@ -133,10 +133,9 @@ table took 843 ms, into three separate tables 856 ms.
 
 On PostgreSQL 18 (and 16), at 8 concurrent COPY writers, on storage where I/O
 is the ceiling, **relation extension contention did not materialise at all**.
-That is
-the honest result, it is the reason this design is documented rather than
-implemented in the demo, and it should update your priors: this problem is
-real, but it lives further out than folklore suggests.
+That is the honest result, it is the reason this design is documented rather
+than implemented in the demo, and it should update your priors: this problem
+is real, but it lives further out than folklore suggests.
 
 The conditions under which it *does* show up, in rough order of importance:
 

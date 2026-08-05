@@ -494,7 +494,7 @@ Per-batch logging moved to `DEBUG`. Steady state is Micrometer meters plus one
 aggregated line per window:
 
 ```
-ingest: 20000 rows in 50 batches (2000 rows/s, 400 rows/batch) | copy p50 4.05 ms, p99 9.95 ms
+ingest: 20000 rows in 100 batches (2000 rows/s, 200 rows/batch) | copy p50 3.92 ms, p99 15.71 ms
 ```
 
 A p99 COPY latency and a rows/sec rate tell you whether ingestion is healthy.
@@ -670,6 +670,24 @@ keys would give index builds an unrepresentative locality profile.
 **unlogged staging tables** (`CREATE UNLOGGED TABLE`) to halve WAL on the load
 path — at the price of needing `ALTER TABLE … SET LOGGED` before attach, which
 rewrites the table. Measure both before buying.
+
+**Schema evolution needs a plan.** This is the operational sharp edge the
+design adds, and it is worth thinking about before you need it. The COPY
+statement names its columns explicitly, and staging tables are cloned from the
+parent with `LIKE`. Add a column to the parent and the two can disagree for
+exactly as long as one staging table outlives the deploy: an old ingest
+instance COPYing its old column list into a table cloned from the new parent
+is fine (the new column takes its default), but a new instance COPYing a new
+column into a staging table cloned *before* the migration fails with SQLState
+42703 — which the classifier correctly routes to the dead-letter topic, so a
+careless deploy costs you a minute of data rather than a stalled partition.
+
+The safe sequence is the ordinary online-migration discipline, and partitioning
+does not change it: add the column as nullable with a default first, deploy
+readers, deploy writers, and only then make it `NOT NULL`. What partitioning
+*does* change is the window: a per-minute staging table means the disagreement
+can only last about a minute, which is a genuine argument for fine granularity
+that has nothing to do with swap latency.
 
 **Partition granularity.** Per-minute is for demo watchability. Real systems
 usually go hourly or daily; thousands of partitions inflate planning time and
