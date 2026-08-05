@@ -1,0 +1,132 @@
+spring:
+  application:
+    name: ingest-service
+
+  task:
+    scheduling:
+      # Spring's default is ONE scheduler thread shared by every @Scheduled
+      # method. Here the producer's emit() and the metrics reporter would
+      # contend for it, so a busy producer delays throughput reporting.
+      pool-size: 4
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/partition_swap
+    username: demo
+    password: demo
+    hikari:
+      # One connection per in-flight COPY (i.e. per listener thread) plus a
+      # little headroom for staging-table DDL. Sizing the pool BELOW the
+      # listener concurrency would silently serialize the writers on connection
+      # checkout, which is the classic way a "parallel" ingester turns out not
+      # to be.
+      maximum-pool-size: 8
+      minimum-idle: 8
+      # Relax durability on the WRITE PATH ONLY. synchronous_commit = off lets
+      # COPY return without waiting for the WAL fsync, which is typically the
+      # single largest throughput win available to a bulk loader — and it is
+      # safe *here* specifically because Kafka is the source of truth: a crash
+      # loses at most a few hundred milliseconds of commits, and the consumer
+      # replays those offsets on restart. This trades durability we can
+      # reconstruct for latency we cannot.
+      #
+      # Note this is NOT the same as fsync = off: the database stays crash-safe
+      # and never corrupts. Only the commit acknowledgement is asynchronous.
+      # The maintenance service deliberately does not set this — its DDL is
+      # not replayable from anywhere.
+      connection-init-sql: SET synchronous_commit = off
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    listener:
+      # Hand the whole poll() result to the listener as one List -> one COPY.
+      type: batch
+      # One consumer thread per topic partition, each running its own
+      # independent COPY. Without this the default of 1 pins the entire write
+      # path to a single thread no matter how many topic partitions exist —
+      # the single most common reason a COPY-based ingester fails to scale.
+      # Never exceed the partition count; the surplus threads would idle.
+      concurrency: 6
+    consumer:
+      group-id: ingest-service
+      auto-offset-reset: earliest
+      # Offsets are committed by the listener container only after the COPY
+      # succeeds -> at-least-once into the staging table.
+      enable-auto-commit: false
+      # ErrorHandlingDeserializer wraps the real deserializer so a malformed
+      # record surfaces as a failed record the error handler can dead-letter,
+      # instead of an exception thrown inside poll() that no handler can catch
+      # and that wedges the consumer in a tight retry loop.
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      # At demo rates each poll returns a handful of records. Under real load
+      # max.poll.records caps the COPY batch size, and fetch.max.wait trades a
+      # few ms of latency for denser batches.
+      properties:
+        # The deserializer ErrorHandlingDeserializer delegates to.
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+        spring.json.value.default.type: com.example.partitionswap.common.SensorReadingEvent
+        spring.json.use.type.headers: false
+        max.poll.records: 10000
+        fetch.min.bytes: 1
+        fetch.max.wait.ms: 500
+        # The consumer must return to poll() within this window or the broker
+        # assumes it died and rebalances the group. It has to comfortably
+        # exceed the worst-case COPY of a max.poll.records-sized batch,
+        # including a slow-disk outlier — otherwise heavy batches trigger a
+        # rebalance, which redelivers them, which makes the next batch heavier.
+        # That feedback loop is how ingestion pipelines fall over.
+        max.poll.interval.ms: 300000
+    producer:
+      # Demo load generator settings, tuned the way a real high-volume
+      # producer would be: allow batching a few ms, compress batches, and
+      # keep acks=all (with idempotence, the Kafka default) for durability.
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      compression-type: lz4
+      properties:
+        spring.json.add.type.headers: false
+        linger.ms: 20
+        batch.size: 65536
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+demo:
+  topic: sensor-readings
+  # THE ceiling on consumer parallelism: listener concurrency above this just
+  # creates idle threads. Raise this and spring.kafka.listener.concurrency
+  # together when moving to a bigger machine. Kafka can grow a topic's
+  # partition count but never shrink it.
+  topic-partitions: 6
+  # How often the aggregated throughput line is logged (per-batch logging is
+  # DEBUG; see IngestMetrics).
+  metrics-report-interval-ms: 10000
+  consumer:
+    # Set false to run this app as a pure producer, e.g. when preloading the
+    # topic for benchmark.sh.
+    enabled: true
+  producer:
+    enabled: true
+    messages-per-second: 1
+    device-count: 8
+    # 0 = produce forever (rate mode). Set > 0 for preload mode: N threads run
+    # flat out until the total is reached, then stop.
+    total-messages: 0
+    # Preload parallelism only; rate mode is single-threaded by design. One
+    # thread caps preload around 20-30k msg/s regardless of hardware.
+    threads: 4
+
+logging:
+  level:
+    com.example.partitionswap: INFO
+    # Flip to DEBUG to get the per-batch "COPY n rows" line back. Fine for the
+    # demo; leave it off under real load.
+    # com.example.partitionswap.ingest.copy: DEBUG
+    # Quiet the per-poll chatter; the interesting lines are ours.
+    org.apache.kafka: WARN
+    # Retries, backoff, and dead-letter decisions are worth seeing.
+    org.springframework.kafka.listener: INFO

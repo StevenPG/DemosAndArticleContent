@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: maintenance-service
+
+  task:
+    scheduling:
+      # Spring's default is ONE scheduler thread shared by every @Scheduled
+      # method. The swap and retention schedulers would share it, so a long
+      # index build on a large partition would delay retention behind it.
+      pool-size: 4
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/partition_swap
+    username: demo
+    password: demo
+    hikari:
+      # One connection for the promotion in flight, a couple for the read API.
+      maximum-pool-size: 4
+
+  jpa:
+    # The ingest service owns the schema (Flyway); Hibernate must never touch DDL.
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+server:
+  port: 8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+maintenance:
+  # :00 the minute ends -> grace covers in-flight COPYs -> :10 the scheduler
+  # indexes, bounds-checks, analyzes, and attaches the completed minute.
+  swap-cron: "10 * * * * *"
+  grace-seconds: 5
+  # Never let the attach park in the parent's lock queue for more than this;
+  # a parked ACCESS-level waiter would block every query that queues behind it.
+  attach-lock-timeout-ms: 2000
+  attach-attempts: 5
+  # /actuator/health goes DOWN when the oldest unattached minute is older than
+  # this. A backlog is normal (the current minute is always unattached, and
+  # the previous one until grace + tick elapse); only a backlog beyond that
+  # budget means readers are silently missing data. Keep comfortably above
+  # 60s window + grace + tick or healthy systems will flap.
+  staleness-threshold-seconds: 180
+  retention-cron: "40 * * * * *"
+  retention:
+    enabled: true
+    # Plenty for a demo session; drops old minutes so a long-running demo
+    # doesn't accumulate hundreds of partitions.
+    max-age-minutes: 120
+
+logging:
+  level:
+    com.example.partitionswap: INFO
+    # Flip to DEBUG to see every DDL statement the swap executes.
+    # com.example.partitionswap.maintenance.swap: DEBUG
