@@ -82,9 +82,36 @@ public class CopyBatchWriter {
         } catch (SQLException e) {
             metrics.recordFailure();
             // Propagate so the Kafka container does NOT commit offsets; the
-            // batch is redelivered and re-COPYed after the error backoff.
-            throw new IllegalStateException("COPY into " + window.tableName() + " failed", e);
+            // batch is redelivered and re-COPYed after the error backoff. The
+            // exception TYPE decides whether that redelivery repeats forever
+            // or the batch is dead-lettered — see classify().
+            throw classify(e, window.tableName());
         }
+    }
+
+    /**
+     * Splits COPY failures into "this batch will never work" and "the database
+     * is having a moment", using the SQLState class — the portable, documented
+     * part of the error code, rather than message matching.
+     *
+     * <p>Anything unrecognised is treated as transient on purpose. A blocked
+     * partition is visible, alertable, and resumes on its own; a batch
+     * dead-lettered because Postgres was mid-failover is silent data loss.
+     */
+    private RuntimeException classify(SQLException e, String tableName) {
+        String sqlState = e.getSQLState();
+        String stateClass = sqlState == null || sqlState.length() < 2 ? "" : sqlState.substring(0, 2);
+        String message = "COPY into " + tableName + " failed (SQLState " + sqlState + ")";
+        return switch (stateClass) {
+            // 22 data exception, 23 integrity constraint violation,
+            // 42 syntax error or access rule violation (e.g. the staging table
+            // no longer matches the encoder's column list after a bad deploy).
+            case "22", "23", "42" -> new PoisonBatchException(message, e);
+            // 08 connection exception, 40 transaction rollback (deadlock,
+            // serialization failure), 53 insufficient resources, 57 operator
+            // intervention (shutdown, cancellation), 58 system error.
+            default -> new TransientIngestException(message, e);
+        };
     }
 
     private long streamBatch(CopyManager copyManager,

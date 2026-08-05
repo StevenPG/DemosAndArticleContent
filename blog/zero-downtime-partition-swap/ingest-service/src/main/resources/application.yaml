@@ -45,13 +45,17 @@ spring:
       # Offsets are committed by the listener container only after the COPY
       # succeeds -> at-least-once into the staging table.
       enable-auto-commit: false
-      # spring-kafka 4's Jackson 3 based JSON deserializer, pinned to the event
-      # type so no type headers are needed on the wire.
-      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      # ErrorHandlingDeserializer wraps the real deserializer so a malformed
+      # record surfaces as a failed record the error handler can dead-letter,
+      # instead of an exception thrown inside poll() that no handler can catch
+      # and that wedges the consumer in a tight retry loop.
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       # At demo rates each poll returns a handful of records. Under real load
       # max.poll.records caps the COPY batch size, and fetch.max.wait trades a
       # few ms of latency for denser batches.
       properties:
+        # The deserializer ErrorHandlingDeserializer delegates to.
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
         spring.json.value.default.type: com.example.partitionswap.common.SensorReadingEvent
         spring.json.use.type.headers: false
         max.poll.records: 10000
@@ -102,3 +106,5 @@ logging:
     # com.example.partitionswap.ingest.copy: DEBUG
     # Quiet the per-poll chatter; the interesting lines are ours.
     org.apache.kafka: WARN
+    # Retries, backoff, and dead-letter decisions are worth seeing.
+    org.springframework.kafka.listener: INFO
