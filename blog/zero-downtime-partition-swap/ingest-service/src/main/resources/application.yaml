@@ -7,15 +7,25 @@ spring:
     username: demo
     password: demo
     hikari:
-      # The write path uses one connection per in-flight COPY (one per Kafka
-      # listener thread) plus occasional DDL; a small fixed pool is plenty.
-      maximum-pool-size: 6
+      # One connection per in-flight COPY (i.e. per listener thread) plus a
+      # little headroom for staging-table DDL. Sizing the pool BELOW the
+      # listener concurrency would silently serialize the writers on connection
+      # checkout, which is the classic way a "parallel" ingester turns out not
+      # to be.
+      maximum-pool-size: 8
+      minimum-idle: 8
 
   kafka:
     bootstrap-servers: localhost:9092
     listener:
       # Hand the whole poll() result to the listener as one List -> one COPY.
       type: batch
+      # One consumer thread per topic partition, each running its own
+      # independent COPY. Without this the default of 1 pins the entire write
+      # path to a single thread no matter how many topic partitions exist —
+      # the single most common reason a COPY-based ingester fails to scale.
+      # Never exceed the partition count; the surplus threads would idle.
+      concurrency: 6
     consumer:
       group-id: ingest-service
       auto-offset-reset: earliest
@@ -34,6 +44,13 @@ spring:
         max.poll.records: 10000
         fetch.min.bytes: 1
         fetch.max.wait.ms: 500
+        # The consumer must return to poll() within this window or the broker
+        # assumes it died and rebalances the group. It has to comfortably
+        # exceed the worst-case COPY of a max.poll.records-sized batch,
+        # including a slow-disk outlier — otherwise heavy batches trigger a
+        # rebalance, which redelivers them, which makes the next batch heavier.
+        # That feedback loop is how ingestion pipelines fall over.
+        max.poll.interval.ms: 300000
     producer:
       # Demo load generator settings, tuned the way a real high-volume
       # producer would be: allow batching a few ms, compress batches, and
