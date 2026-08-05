@@ -40,6 +40,25 @@ TIMEOUT_S="${TIMEOUT_S:-1800}"
 # Both apps auto-create their topic, so this needs no Kafka CLI tooling.
 BENCH_TOPIC="${BENCH_TOPIC:-sensor-readings-bench-$(date +%s)}"
 
+# --- scaling knobs ---------------------------------------------------------
+# Defaults match the demo. On a bigger machine raise PARTITIONS and CONCURRENCY
+# together (concurrency above the partition count only creates idle threads),
+# keep POOL_SIZE >= CONCURRENCY, and raise MESSAGES so the COPY drain lasts
+# tens of seconds rather than two — a short drain is dominated by page-cache
+# and checkpoint state, not by throughput.
+PARTITIONS="${PARTITIONS:-6}"
+CONCURRENCY="${CONCURRENCY:-6}"
+POOL_SIZE="${POOL_SIZE:-8}"
+MAX_POLL="${MAX_POLL:-10000}"
+PRELOAD_THREADS="${PRELOAD_THREADS:-4}"
+
+SCALE_ARGS="--demo.topic-partitions=$PARTITIONS \
+--spring.kafka.listener.concurrency=$CONCURRENCY \
+--spring.datasource.hikari.maximum-pool-size=$POOL_SIZE \
+--spring.kafka.consumer.properties.max.poll.records=$MAX_POLL"
+BASELINE_SCALE_ARGS="--spring.datasource.hikari.maximum-pool-size=$POOL_SIZE \
+--spring.kafka.consumer.properties.max.poll.records=$MAX_POLL"
+
 # --- preflight -------------------------------------------------------------
 # Fail up front with a readable message rather than mid-run with a confusing
 # one. psql in particular is easy to be missing when the stack came from
@@ -121,13 +140,15 @@ record "benchmark $(date -u +%FT%TZ)"
 record "postgres  $(psql -h "$PGHOST" -U "$PGUSER" -d "$PGDATABASE" -tAqc 'SHOW server_version')"
 record "messages  $MESSAGES"
 record "topic     $BENCH_TOPIC"
+record "scaling   partitions=$PARTITIONS concurrency=$CONCURRENCY pool=$POOL_SIZE max.poll.records=$MAX_POLL"
 stop_all
 
 banner "preload: $MESSAGES messages (all consumers stopped)"
 ./gradlew -q :ingest-service:bootRun --args="\
 --demo.topic=$BENCH_TOPIC \
+--demo.topic-partitions=$PARTITIONS \
 --demo.consumer.enabled=false \
---demo.producer.messages-per-second=20000 \
+--demo.producer.threads=$PRELOAD_THREADS \
 --demo.producer.total-messages=$MESSAGES" > /tmp/preload.log 2>&1 &
 for _ in $(seq 1 300); do grep -q "preload complete" /tmp/preload.log && break; sleep 2; done
 grep -h "preload complete" /tmp/preload.log | tail -1 | while read -r l; do record "  $l"; done
@@ -137,7 +158,7 @@ DROP_STAGING="DO \$\$ DECLARE t text; BEGIN FOR t IN SELECT c.relname FROM pg_cl
 
 run_case "COPY into staging partitions" \
   "ingest-service" \
-  "--demo.topic=$BENCH_TOPIC --demo.producer.enabled=false --spring.kafka.consumer.group-id=bench-copy" \
+  "--demo.topic=$BENCH_TOPIC --demo.producer.enabled=false --spring.kafka.consumer.group-id=bench-copy $SCALE_ARGS" \
   8080 "ingest_rows_written_total" "ingest_drain_seconds" "$DROP_STAGING"
 
 run_case "Spring Data JPA saveAll - NAIVE" \
@@ -148,7 +169,7 @@ run_case "Spring Data JPA saveAll - NAIVE" \
 
 run_case "Spring Data JPA saveAll - TUNED" \
   "jpa-baseline-service" \
-  "--baseline.topic=$BENCH_TOPIC --spring.profiles.active=tuned --spring.kafka.consumer.group-id=bench-jpa-tuned" \
+  "--baseline.topic=$BENCH_TOPIC --spring.profiles.active=tuned --spring.kafka.consumer.group-id=bench-jpa-tuned --spring.kafka.listener.concurrency=$CONCURRENCY $BASELINE_SCALE_ARGS" \
   8082 "baseline_rows_written_total" "baseline_drain_seconds" \
   "TRUNCATE sensor_readings_jpa"
 

@@ -247,6 +247,47 @@ whether Spring Data calls `persist()` or `merge()`). Run one with
 `--demo.producer.messages-per-second=N` on the ingest service alongside it to
 feed the topic.
 
+## Running it on a bigger machine
+
+The demo's defaults are sized for a laptop. Three of them are hard ceilings
+rather than gentle limits, so raising message volume alone will not use a
+bigger box:
+
+| Knob | Default | Why it caps you |
+|---|---|---|
+| `demo.topic-partitions` | 6 | **The ceiling.** A consumer thread owns whole partitions, so listener concurrency above this only creates idle threads. |
+| `spring.kafka.listener.concurrency` | 6 | Must move in lockstep with the partition count. |
+| `spring.datasource.hikari.maximum-pool-size` | 8 | Below concurrency, writers serialise on connection checkout and the extra threads are decoration. |
+| `spring.task.scheduling.pool-size` | 4 | Spring's own default is **1**, shared by every `@Scheduled` method — a long index build would delay retention behind it. |
+| `max.poll.records` | 10000 | Caps batch size; denser batches are strictly better for COPY. |
+| `demo.producer.threads` | 4 | Preload parallelism. One thread caps preload near 20–30k msg/s regardless of hardware. |
+
+`benchmark.sh` takes these as environment variables and passes them through:
+
+```bash
+PARTITIONS=32 CONCURRENCY=32 POOL_SIZE=40 MAX_POLL=50000 PRELOAD_THREADS=16 \
+  ./benchmark.sh 20000000
+```
+
+Also worth raising on the database side (`docker-compose.yml`):
+`shared_buffers`, `maintenance_work_mem`, and `max_parallel_maintenance_workers`
+— index builds are the longest phase of a promotion and parallelise well.
+
+**Raise the message count too.** The COPY drain already varies by about a third
+run-to-run at ~2.5 seconds, because page-cache and checkpoint state are a large
+fraction of so short a window. On faster hardware that window shrinks and the
+noise gets worse. Aim for a drain of tens of seconds — 10M+ messages — and take
+a median of several runs.
+
+**Two limits that config cannot move.** Per-minute partitions stop working when
+a minute's data takes longer than a minute to index: at very high rates you
+want coarser windows (the swap code is unchanged, only `truncatedTo` differs),
+and the staleness health check will tell you when you have crossed that line.
+And a fast machine with fast storage is exactly the condition under which
+relation extension lock contention might finally appear — see
+[RELATION_EXTENSION_LOCK_FIX.md](./RELATION_EXTENSION_LOCK_FIX.md), which has
+the wait-event sampler to check and the sub-partitioned design if it does.
+
 ## Tests
 
 ```bash

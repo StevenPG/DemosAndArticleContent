@@ -2,6 +2,13 @@ spring:
   application:
     name: ingest-service
 
+  task:
+    scheduling:
+      # Spring's default is ONE scheduler thread shared by every @Scheduled
+      # method. Here the producer's emit() and the metrics reporter would
+      # contend for it, so a busy producer delays throughput reporting.
+      pool-size: 4
+
   datasource:
     url: jdbc:postgresql://localhost:5432/partition_swap
     username: demo
@@ -90,6 +97,11 @@ management:
 
 demo:
   topic: sensor-readings
+  # THE ceiling on consumer parallelism: listener concurrency above this just
+  # creates idle threads. Raise this and spring.kafka.listener.concurrency
+  # together when moving to a bigger machine. Kafka can grow a topic's
+  # partition count but never shrink it.
+  topic-partitions: 6
   # How often the aggregated throughput line is logged (per-batch logging is
   # DEBUG; see IngestMetrics).
   metrics-report-interval-ms: 10000
@@ -101,8 +113,12 @@ demo:
     enabled: true
     messages-per-second: 1
     device-count: 8
-    # 0 = produce forever. Set to preload a fixed message set.
+    # 0 = produce forever (rate mode). Set > 0 for preload mode: N threads run
+    # flat out until the total is reached, then stop.
     total-messages: 0
+    # Preload parallelism only; rate mode is single-threaded by design. One
+    # thread caps preload around 20-30k msg/s regardless of hardware.
+    threads: 4
 
 logging:
   level:

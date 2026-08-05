@@ -2,6 +2,13 @@ spring:
   application:
     name: maintenance-service
 
+  task:
+    scheduling:
+      # Spring's default is ONE scheduler thread shared by every @Scheduled
+      # method. The swap and retention schedulers would share it, so a long
+      # index build on a large partition would delay retention behind it.
+      pool-size: 4
+
   datasource:
     url: jdbc:postgresql://localhost:5432/partition_swap
     username: demo

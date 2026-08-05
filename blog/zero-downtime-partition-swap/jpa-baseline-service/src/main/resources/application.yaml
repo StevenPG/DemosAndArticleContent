@@ -2,6 +2,10 @@ spring:
   application:
     name: jpa-baseline-service
 
+  task:
+    scheduling:
+      pool-size: 4
+
   datasource:
     url: jdbc:postgresql://localhost:5432/partition_swap
     username: demo
