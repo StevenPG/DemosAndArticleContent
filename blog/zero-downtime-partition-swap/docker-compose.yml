@@ -16,6 +16,39 @@ services:
       POSTGRES_DB: partition_swap
       POSTGRES_USER: demo
       POSTGRES_PASSWORD: demo
+    # A bulk-ingest profile. The stock defaults are tuned for a small shared
+    # machine and will checkpoint constantly under sustained COPY, which shows
+    # up as periodic multi-hundred-millisecond spikes in COPY p99.
+    command:
+      - postgres
+      # Checkpoints are the dominant source of write stalls during ingestion.
+      # Letting WAL grow much larger before forcing one, and spreading the
+      # flush across 90% of the interval, converts a periodic I/O cliff into
+      # a smooth background trickle.
+      - -c
+      - max_wal_size=8GB
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - checkpoint_completion_target=0.9
+      # After each checkpoint the first write to a page logs the whole page.
+      # Compressing those full-page images cuts WAL volume substantially for
+      # a few percent of CPU — almost always the right trade when ingesting.
+      - -c
+      - wal_compression=lz4
+      # Room for the working set: recent partitions being written plus the
+      # indexes being built on them.
+      - -c
+      - shared_buffers=1GB
+      # Bulk index builds during the swap; this is per-build working memory.
+      - -c
+      - maintenance_work_mem=512MB
+      # Surfaces the swap's DDL and any lock waits in the container logs.
+      - -c
+      - log_min_duration_statement=1000
+      - -c
+      - log_lock_waits=on
+    shm_size: 1gb
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U demo -d partition_swap"]
       interval: 5s

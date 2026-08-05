@@ -14,6 +14,19 @@ spring:
       # to be.
       maximum-pool-size: 8
       minimum-idle: 8
+      # Relax durability on the WRITE PATH ONLY. synchronous_commit = off lets
+      # COPY return without waiting for the WAL fsync, which is typically the
+      # single largest throughput win available to a bulk loader — and it is
+      # safe *here* specifically because Kafka is the source of truth: a crash
+      # loses at most a few hundred milliseconds of commits, and the consumer
+      # replays those offsets on restart. This trades durability we can
+      # reconstruct for latency we cannot.
+      #
+      # Note this is NOT the same as fsync = off: the database stays crash-safe
+      # and never corrupts. Only the commit acknowledgement is asynchronous.
+      # The maintenance service deliberately does not set this — its DDL is
+      # not replayable from anywhere.
+      connection-init-sql: SET synchronous_commit = off
 
   kafka:
     bootstrap-servers: localhost:9092
