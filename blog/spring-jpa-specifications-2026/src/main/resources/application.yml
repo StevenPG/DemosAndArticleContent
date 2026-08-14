@@ -1,0 +1,34 @@
+spring:
+  application:
+    name: spring-jpa-specifications-2026
+  datasource:
+    url: jdbc:postgresql://localhost:5432/flights
+    username: flights
+    password: flights
+  jpa:
+    open-in-view: false
+    hibernate:
+      # The guide's demo builds its schema from the entities so the mapping can never drift
+      # from the DDL. Real services should use a migration tool instead.
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+  data:
+    web:
+      pageable:
+        # Serialize Page responses through Spring Data's PagedModel DTO:
+        #   {"content": [...], "page": {"size":..., "number":..., "totalElements":...}}
+        # The default (DIRECT) writes PageImpl's own field layout, which puts totalElements at
+        # the top level and logs "Serializing PageImpl instances as-is is not supported,
+        # meaning that there is no guarantee about the stability of the resulting JSON
+        # structure" on the first paged response. scripts/demo-requests.sh reads
+        # .page.totalElements, so this is also what makes the match counts show up there
+        # instead of nulls.
+        serialization-mode: via-dto
+
+logging:
+  level:
+    # Every SQL statement quoted in the blog post came out of these two loggers.
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
