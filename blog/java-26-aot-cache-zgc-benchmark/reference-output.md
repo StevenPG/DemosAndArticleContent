@@ -10,6 +10,7 @@
 Captured on 2026-08-01 with **Temurin JDK 26.0.2+10**, Gradle 9.3, Spring Boot 4.1.0,
 4 vCPU / 15 GB, `postgres`-free (H2 in memory).
 
+
 > **Re-verified 2026-08-15** on a second, unrelated 4-core Linux container (Temurin
 > 26.0.2+10 again, fresh clone, nothing cached). Everything below reproduced: `bootJar`
 > builds, both caches train with all three requests answering 200, the matrix runs, and the
@@ -81,10 +82,11 @@ FATAL: AOT cache was requested but the JVM did not map it:
 JEP 516 made the *object* cache GC-agnostic — archived references became logical indices — but
 the cache still records the **oop encoding** it was built with, and ZGC does not support
 compressed oops. A cache trained under the default (G1) collector is therefore unusable under
+
 ZGC, and the JVM says so and then starts anyway, uncached, at full cold-start cost.
 (An earlier version of this section claimed nothing is printed without `-Xlog:aot`. That is
 wrong — the warning and errors go to stderr regardless; what they do not do is fail the
-process. See §7.3.)
+process. See §7.3.
 
 So the original claim in this README — "train with G1 here, consume it under ZGC/Serial in the
 matrix; one cache artifact per app version" — was half right. Serial does consume the G1-built

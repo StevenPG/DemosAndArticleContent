@@ -179,3 +179,4 @@ No module loading in these microVMs, so this is not a fixable gap here. Both imp
 matrices — Linux `netem` and the macOS `dnctl`/`pfctl` recipe — remain **unexecuted on any
 machine**, across two independent attempts. They are the runs the post's central argument
 rests on.
+
