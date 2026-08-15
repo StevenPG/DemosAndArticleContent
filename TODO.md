@@ -9,6 +9,21 @@ shared 4-core x86_64 Linux container. Everything compiles and runs; four real de
 found and fixed. Captured output lives in each project's `reference-output.md`. What is still
 open is the impaired-network runs and the numbers themselves, which have to come off the M3.
 
+**Re-verified 2026-08-15** on a second, unrelated cloud container (fresh clone, Temurin
+26.0.2+10, Caddy 2.11.4). Both projects build and run end to end with no source changes; the
+`Caddyfile` SNI fix and the ZGC two-artifact finding both hold. Three things the second run
+changed:
+
+- **`netem` is unavailable here too** (no `sch_netem` in the microVM kernel, even after
+  `apt install iproute2`). Two independent environments, so the loss-injection runs are not
+  blocked on tooling — they need real hardware.
+- **The clean-network HTTP/3 rows did not reproduce.** Run 1 had HTTP/3 losing everywhere;
+  run 2 has HTTP/2 winning every p50 and HTTP/3 winning every p95/p99 on the 1 MB rows. The
+  two runs disagree on sign, so neither is evidence for the post's clean-network claim.
+- **"Silently ignored" is wrong for a bad AOT cache.** Both failure modes print
+  `[warning][aot]`/`[error][aot]` to stderr with no logging flags, then start anyway. The
+  failure is non-fatal, not silent — see `reference-output.md` §7.3.
+
 ## `blog/java-26-httpclient-http3-benchmark`
 
 ### Done
