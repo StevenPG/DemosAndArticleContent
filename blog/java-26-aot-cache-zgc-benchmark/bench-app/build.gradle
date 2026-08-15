@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    // 26, matching the one JDK the README already asks for. Boot 4's baseline is 25 and
+    // nothing here needs 26 at COMPILE time - the AOT cache is a runtime feature, and
+    // JEP 516 (any-GC object caching) needs the 26 JVM, not a 26 compiler - but pinning the
+    // toolchain to 25 makes `./gradlew bootJar` fail with "Cannot find a Java installation
+    // matching {languageVersion=25}" on a machine that has exactly the JDK 26 the benchmark
+    // requires. Requiring a second JDK just to compile is friction for no benefit.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(26)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Deliberately app-shaped, not hello-world: MVC + JPA/Hibernate + actuator
+    // loads ~20k classes at startup, comparable to Spring PetClinic (the app
+    // the OpenJDK team quotes for JEP 516's 41% startup improvement).
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'com.h2database:h2'
+}
+
+// Predictable jar name for the scripts (no version suffix).
+bootJar {
+    archiveFileName = 'bench-app.jar'
+}
