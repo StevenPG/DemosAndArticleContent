@@ -118,3 +118,65 @@ Two things fix it, both confirmed:
    handshake.
 
 The committed `Caddyfile` now takes option 1, so `localhost:4443` works out of the box.
+
+## 6. Second run — 2026-08-15, different container, newer Caddy
+
+Re-verified on an unrelated 4-core x86_64 Linux container with **Temurin 26.0.2+10** and
+**Caddy 2.11.4** (the run above used Caddy 2.10.0), from a fresh clone.
+
+Everything reproduced. `setup-payloads.sh`, `caddy run --config Caddyfile`, the `keytool`
+truststore recipe in the README, and both protocols all worked as documented, and the
+committed `Caddyfile` fix (`default_sni localhost` + `tls internal`) still carries HTTP/3
+through the handshake on Caddy 2.11.4 — worth knowing, since that fix depends on Caddy's
+connection-policy behaviour. Every row completed, so the fallback guard never fired and the
+HTTP/3 rows really were QUIC.
+
+| Protocol | Payload | Mode | p50 | p95 | p99 | wall |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+| HTTP/2 | 1 KB | sequential | 1.38ms | 2.78ms | 5.20ms | 797ms |
+| HTTP/3 | 1 KB | sequential | 1.73ms | 3.64ms | 5.39ms | 974ms |
+| HTTP/2 | 1 MB | sequential | 7.41ms | 34.44ms | 38.11ms | 5767ms |
+| HTTP/3 | 1 MB | sequential | 11.39ms | **20.85ms** | **25.65ms** | 6220ms |
+| HTTP/2 | 1 MB | concurrent | 364.56ms | 1679.42ms | 1720.91ms | 5612ms |
+| HTTP/3 | 1 MB | concurrent | 833.57ms | **1102.48ms** | **1110.72ms** | 8816ms |
+
+### The result that differs from the first run, and it is the interesting one
+
+The 2026-08-01 run had HTTP/3 losing or drawing on every column. This run splits: **HTTP/2
+wins every p50, HTTP/3 wins every p95/p99 on the 1 MB rows** — and not marginally. On the
+concurrent row HTTP/3's p99 is 1111ms against HTTP/2's 1721ms, a 35% better tail, while its
+median is more than twice HTTP/2's.
+
+That is worth pausing on, because it happened on a **loss-free loopback** — the condition
+under which the post predicts HTTP/3 has "nothing to win". The mechanism is not packet loss;
+it is that 50 streams sharing one TCP connection queue behind each other in a way that
+produces a long tail, while QUIC's per-stream flow control spreads the pain more evenly.
+QUIC is paying userspace CPU on every request (hence the worse median) and buying tail
+predictability with it.
+
+Two consequences for the post:
+
+1. The two runs disagree on the clean-network rows, which means **neither container run is
+   evidence for the clean-network claim**. Run-to-run variance on shared vCPUs is large
+   enough to flip the sign. The M3 numbers are the only ones that can settle it.
+2. The post's framing — HTTP/3's advantage arrives *with packet loss* — is too narrow. Even
+   without loss, median and tail can point in opposite directions, and a post that reports
+   only p50 would conclude "HTTP/3 is slower" while a post that reports only p99 would
+   conclude the opposite. The benchmark already reports all three percentiles; the prose
+   should commit to reading them separately.
+
+### Loss injection: still not verifiable in a container
+
+Second environment, same wall. `tc` is now installed (`apt install iproute2`) but the kernel
+has no `sch_netem`:
+
+```
+$ tc qdisc add dev lo root netem loss 2% delay 20ms
+Error: Specified qdisc kind is unknown.
+```
+
+No module loading in these microVMs, so this is not a fixable gap here. Both impaired
+matrices — Linux `netem` and the macOS `dnctl`/`pfctl` recipe — remain **unexecuted on any
+machine**, across two independent attempts. They are the runs the post's central argument
+rests on.
+
