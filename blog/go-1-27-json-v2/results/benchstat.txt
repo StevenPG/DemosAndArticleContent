@@ -1,0 +1,61 @@
+goos: linux
+goarch: amd64
+pkg: github.com/StevenPG/demos/go-1-27-json-v2/bench
+cpu: Intel(R) Xeon(R) Processor @ 2.10GHz
+                     │      v1      │                 v2                  │
+                     │    sec/op    │   sec/op     vs base                │
+Marshal/Small-4         649.0n ± 3%   679.2n ± 6%        ~ (p=0.353 n=10)
+Marshal/Nested-4        6.676µ ± 5%   7.024µ ± 2%   +5.21% (p=0.004 n=10)
+Marshal/Batch-4         917.9µ ± 4%   921.6µ ± 3%        ~ (p=0.393 n=10)
+Marshal/Document-4      48.83µ ± 1%   48.94µ ± 3%        ~ (p=0.393 n=10)
+Marshal/Dynamic-4       86.61µ ± 2%   60.01µ ± 5%  -30.71% (p=0.000 n=10)
+Unmarshal/Small-4      1061.5n ± 2%   855.7n ± 3%  -19.39% (p=0.000 n=10)
+Unmarshal/Nested-4      14.47µ ± 4%   13.19µ ± 9%   -8.80% (p=0.000 n=10)
+Unmarshal/Batch-4       2.071m ± 5%   1.743m ± 8%  -15.86% (p=0.000 n=10)
+Unmarshal/Document-4   119.50µ ± 2%   86.97µ ± 5%  -27.22% (p=0.000 n=10)
+Unmarshal/Dynamic-4    147.77µ ± 4%   95.46µ ± 4%  -35.40% (p=0.000 n=10)
+geomean                 39.58µ        34.07µ       -13.92%
+
+                     │      v1      │                   v2                   │
+                     │     B/s      │      B/s        vs base                │
+Marshal/Small-4        169.0Mi ± 3%    161.5Mi ±  7%        ~ (p=0.353 n=10)
+Marshal/Nested-4       180.3Mi ± 5%    171.3Mi ±  2%   -4.96% (p=0.004 n=10)
+Marshal/Batch-4        209.1Mi ± 4%    208.3Mi ±  3%        ~ (p=0.393 n=10)
+Marshal/Document-4     463.3Mi ± 1%    462.2Mi ±  3%        ~ (p=0.382 n=10)
+Marshal/Dynamic-4      52.50Mi ± 2%    75.77Mi ±  5%  +44.32% (p=0.000 n=10)
+Unmarshal/Small-4      103.3Mi ± 2%    128.2Mi ±  3%  +24.09% (p=0.000 n=10)
+Unmarshal/Nested-4     83.19Mi ± 4%    91.23Mi ± 10%   +9.66% (p=0.000 n=10)
+Unmarshal/Batch-4      92.68Mi ± 5%   110.14Mi ±  7%  +18.84% (p=0.000 n=10)
+Unmarshal/Document-4   189.3Mi ± 2%    260.1Mi ±  5%  +37.42% (p=0.000 n=10)
+Unmarshal/Dynamic-4    30.77Mi ± 4%    47.64Mi ±  4%  +54.81% (p=0.000 n=10)
+geomean                121.8Mi         141.5Mi        +16.18%
+
+                     │      v1       │                   v2                   │
+                     │     B/op      │     B/op      vs base                  │
+Marshal/Small-4           208.0 ± 0%     208.0 ± 0%        ~ (p=1.000 n=10) ¹
+Marshal/Nested-4        1.250Ki ± 0%   1.250Ki ± 0%        ~ (p=1.000 n=10) ¹
+Marshal/Batch-4         200.7Ki ± 0%   200.8Ki ± 0%        ~ (p=0.637 n=10)
+Marshal/Document-4      24.07Ki ± 0%   24.07Ki ± 0%        ~ (p=0.801 n=10)
+Marshal/Dynamic-4      10.425Ki ± 0%   7.119Ki ± 0%  -31.71% (p=0.000 n=10)
+Unmarshal/Small-4         80.00 ± 0%     80.00 ± 0%        ~ (p=1.000 n=10) ¹
+Unmarshal/Nested-4      1.250Ki ± 0%   1.250Ki ± 0%        ~ (p=1.000 n=10) ¹
+Unmarshal/Batch-4       234.3Ki ± 0%   234.3Ki ± 0%        ~ (p=0.669 n=10)
+Unmarshal/Document-4    45.48Ki ± 0%   45.48Ki ± 0%        ~ (p=0.269 n=10)
+Unmarshal/Dynamic-4     46.79Ki ± 0%   41.76Ki ± 0%  -10.75% (p=0.000 n=10)
+geomean                 7.576Ki        7.210Ki        -4.83%
+¹ all samples are equal
+
+                     │     v1      │                  v2                  │
+                     │  allocs/op  │ allocs/op   vs base                  │
+Marshal/Small-4         2.000 ± 0%   2.000 ± 0%        ~ (p=1.000 n=10) ¹
+Marshal/Nested-4        1.000 ± 0%   1.000 ± 0%        ~ (p=1.000 n=10) ¹
+Marshal/Batch-4         2.000 ± 0%   2.000 ± 0%        ~ (p=1.000 n=10) ¹
+Marshal/Document-4      2.000 ± 0%   2.000 ± 0%        ~ (p=1.000 n=10) ¹
+Marshal/Dynamic-4       404.0 ± 0%   204.0 ± 0%  -49.50% (p=0.000 n=10)
+Unmarshal/Small-4       1.000 ± 0%   1.000 ± 0%        ~ (p=1.000 n=10) ¹
+Unmarshal/Nested-4      64.00 ± 0%   64.00 ± 0%        ~ (p=1.000 n=10) ¹
+Unmarshal/Batch-4       14.00 ± 0%   14.00 ± 0%        ~ (p=1.000 n=10) ¹
+Unmarshal/Document-4    8.000 ± 0%   8.000 ± 0%        ~ (p=1.000 n=10) ¹
+Unmarshal/Dynamic-4    1273.0 ± 0%   793.0 ± 0%  -37.71% (p=0.000 n=10)
+geomean                 11.14        9.925       -10.92%
+¹ all samples are equal

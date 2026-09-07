@@ -1,0 +1,16 @@
+package p
+
+// The interface is ordinary and legal: no type parameters.
+type Store interface {
+	Get(id string) (any, error)
+}
+
+type PostgresStore struct{}
+
+// The implementation tries to satisfy it with a generic method.
+func (s PostgresStore) Get[T any](id string) (T, error) {
+	var zero T
+	return zero, nil
+}
+
+var _ Store = PostgresStore{}

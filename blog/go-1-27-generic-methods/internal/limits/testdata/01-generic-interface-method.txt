@@ -1,0 +1,7 @@
+package p
+
+// A repository port, written the way you would want to write it: one method,
+// generic over the entity being fetched.
+type Repository interface {
+	Get[T any](id string) (T, error)
+}
