@@ -1,0 +1,9 @@
+package p
+
+type Encoder struct{}
+
+func (e Encoder) Encode[T any](v T) []byte { return nil }
+
+// Even referring to the uninstantiated generic method as a value fails: there
+// is no single func type to give it.
+var _ = Encoder{}.Encode
