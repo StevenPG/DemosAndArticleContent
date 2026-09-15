@@ -66,6 +66,13 @@ $ docker run --rm --entrypoint java jarbench:05-extracted-cds \
 Variant 08 was checked the same way against `/opt/java/bin/java`, the jlink runtime, which
 is the binary that trained its cache.
 
+## Trained cache sizes inside the images
+
+```
+/app/app.aot   132,259,840 bytes   (variant 06 and 08)
+/app/app.jsa   102,916,096 bytes   (variant 05)
+```
+
 ## Throughput variance check
 
 Throughput differences are small enough to be worth a sanity check, so two variants were
