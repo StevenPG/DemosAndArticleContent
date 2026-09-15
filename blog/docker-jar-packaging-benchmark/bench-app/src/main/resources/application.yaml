@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: fleet-bench
+  datasource:
+    url: jdbc:h2:mem:fleet;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create
+    open-in-view: false
+    properties:
+      hibernate.jdbc.batch_size: 50
+      hibernate.order_inserts: true
+
+server:
+  port: 8080
+  shutdown: graceful
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+bench:
+  seed:
+    rows: 25
+
+logging:
+  level:
+    org.hibernate.SQL: warn

@@ -1,0 +1,47 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.stevenpg'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    // JDK 25 LTS. Spring Boot 4's baseline, and the version every Dockerfile in
+    // ../docker builds against.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // The point of this app is to be *heavy*, not clever. MVC + JPA/Hibernate +
+    // validation + security + actuator pulls in a realistic ~80MB of dependencies
+    // and loads tens of thousands of classes at startup, which is what makes the
+    // packaging differences (layering, CDS, AOT, jlink) actually measurable.
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+    runtimeOnly 'com.h2database:h2'
+}
+
+// Predictable jar name so every Dockerfile and script can hard-code it.
+bootJar {
+    archiveFileName = 'bench-app.jar'
+}
+
+// The generator that produces src/main/java/com/stevenpg/fleet/domain/**.
+// Sources are committed - this task only exists to regenerate them.
+tasks.register('generateDomains', Exec) {
+    group = 'build setup'
+    description = 'Regenerate the synthetic domain packages'
+    commandLine 'python3', "${rootDir}/../scripts/generate-domains.py", "${rootDir}/src/main/java"
+}
