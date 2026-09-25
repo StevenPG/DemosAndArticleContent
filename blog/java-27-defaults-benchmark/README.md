@@ -1,12 +1,14 @@
 # Java 27 Defaults Benchmark
 
-JDK 27 changed three defaults that apply the moment you swap the base image. You
+JDK 27 changed four defaults that apply the moment you swap the base image. You
 don't set a flag for any of them:
 
 - **[JEP 534](https://openjdk.org/jeps/534)**: compact object headers are on by default. Headers are 8 bytes instead of 12.
 - **[JEP 523](https://openjdk.org/jeps/523)**: G1 is the default collector everywhere. Before this, a JVM that
   saw a single CPU or less than 1792 MB picked Serial. A `--cpus 1` pod is exactly that case.
 - **[JEP 527](https://openjdk.org/jeps/527)**: TLS 1.3 offers the hybrid `X25519MLKEM768` key exchange first.
+- **[JEP 536](https://openjdk.org/jeps/536)**: JFR recordings redact secrets by default: environment variables,
+  system properties and JVM arguments whose names look like passwords, tokens or secrets.
 
 This project measures what those changes do to one Spring Boot app when nothing else
 changes: the same jar, the same data and the same container limits. Only the `java`
@@ -19,6 +21,7 @@ Accompanies the post **[Java 27 Changed Your Defaults: What Happens When You Jus
 ```
 probes/DefaultsProbe.java     single-file: prints what the JVM picked (GC, headers, heap, TLS groups)
 probes/HeaderFootprint.java   single-file: retained bytes per instance for 10 object shapes
+probes/jfr-redaction.sh       records a JFR file with planted secrets and shows what got into it
 bench-app/                    Spring Boot 4.1 app with a 2M-object in-memory telemetry cache
 scripts/fetch-jdks.sh         downloads Temurin 25/26/27 for Docker's architecture into .jdks/
 scripts/benchmark.py          runs the container matrix, writes results/raw.json + results.md
@@ -129,5 +132,9 @@ hardware.
 - **The default TLS named groups changed in two ways on 27.** `X25519MLKEM768` is first,
   and `ffdhe6144` and `ffdhe8192` are no longer in the default list. If you talk to a peer
   that only offers large finite-field DH groups, check it before you upgrade.
+- **JFR on JDK 26 and earlier writes secrets into the recording.** `probes/jfr-redaction.sh` plants
+  `DB_PASSWORD`, `API_TOKEN` and `-Dapp.secret`. JDK 26 records all three in plain text, and JDK 27 records
+  `[REDACTED]`, including the whole `-Dapp.secret=...` argument. Recordings that were already shipped to
+  a support ticket or bucket before you upgrade still contain them.
 - **"Serial" shows up as `Copy` and `MarkSweepCompact`** in the GC MXBeans. `/bench/info` reports
   the raw bean names, and the report maps them.

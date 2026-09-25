@@ -120,3 +120,20 @@ String, 8 latin1 chars                           48.0
 ArrayList, 4 Integers                           120.2
 HashMap entry (Long -> Point)                    89.6
 ```
+
+## jfr-redaction.sh - JDK 26 vs 27 (JEP 536)
+
+```
+== openjdk version "26.0.2.1" 2026-08-18
+  key = "app.secret"	  value = "s3cr3t"
+  key = "AWS_REGION"	  value = "us-east-1"
+  key = "DB_PASSWORD"	  value = "hunter2"
+  key = "API_TOKEN"	  value = "abc123"
+  jvmArguments = "-XX:StartFlightRecording:filename=/tmp/.../r.jfr,settings=default -Dapp.secret=s3cr3t --add-modules=ALL-DEFAULT"
+== openjdk version "27" 2026-09-15
+  key = "app.secret"	  value = "[REDACTED]"
+  key = "AWS_REGION"	  value = "us-east-1"
+  key = "DB_PASSWORD"	  value = "[REDACTED]"
+  key = "API_TOKEN"	  value = "[REDACTED]"
+  jvmArguments = "-XX:StartFlightRecording:filename=/tmp/.../r.jfr,settings=default [REDACTED] --add-modules=ALL-DEFAULT"
+```
