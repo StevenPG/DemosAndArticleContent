@@ -1,0 +1,127 @@
+"""fleetctl - a small flight-log CLI with a realistic import block.
+
+This file is the source of truth. app_lazy.py and app_lazy_modules.py are
+generated from it by scripts/make_variants.py - edit this one, then re-run it.
+
+Every subcommand needs argparse. Only `report` needs everything else, which is
+exactly the situation lazy imports are for: `fleetctl version` should not pay
+for sqlite3, email, xml, asyncio, requests and rich.
+"""
+import argparse
+import sys
+
+# --- IMPORTS: everything below is rewritten by make_variants.py --------------
+import asyncio
+import csv
+import decimal
+import email.message
+import http.client
+import json
+import sqlite3
+import statistics
+import tomllib
+import urllib.request
+import xml.etree.ElementTree as ET
+import zipfile
+from pathlib import Path
+
+import requests
+from rich.console import Console
+from rich.table import Table
+# --- END IMPORTS ---------------------------------------------------------------
+
+VERSION = "1.0.0"
+
+CONFIG = """
+[report]
+title = "Fleet utilisation"
+currency = "USD"
+"""
+
+
+def cmd_version(_: argparse.Namespace) -> None:
+    print(f"fleetctl {VERSION}")
+
+
+def load(path: str) -> list[dict]:
+    with open(path, newline="") as f:
+        return list(csv.DictReader(f))
+
+
+def cmd_summary(args: argparse.Namespace) -> None:
+    rows = load(args.csv)
+    minutes = [int(r["block_minutes"]) for r in rows]
+    print(json.dumps({
+        "flights": len(rows),
+        "mean_block_minutes": round(statistics.fmean(minutes), 1),
+        "p90_block_minutes": statistics.quantiles(minutes, n=10)[-1],
+    }))
+
+
+async def _enrich(tail: str) -> tuple[str, int]:
+    await asyncio.sleep(0)
+    return tail, http.client.OK
+
+
+def cmd_report(args: argparse.Namespace) -> None:
+    config = tomllib.loads(CONFIG)["report"]
+    rows = load(args.csv)
+
+    db = sqlite3.connect(":memory:")
+    db.execute("create table flights (tail text, block_minutes int, fuel_cost text)")
+    db.executemany("insert into flights values (?, ?, ?)",
+                   [(r["tail"], int(r["block_minutes"]), r["fuel_cost"]) for r in rows])
+    per_tail = db.execute(
+        "select tail, count(*), sum(block_minutes) from flights group by tail order by 3 desc limit 5").fetchall()
+
+    total_cost = sum((decimal.Decimal(r["fuel_cost"]) for r in rows), decimal.Decimal("0"))
+    statuses = asyncio.run(_gather([t for t, _, _ in per_tail]))
+
+    root = ET.Element("report", title=config["title"])
+    for tail, flights, minutes in per_tail:
+        ET.SubElement(root, "aircraft", tail=tail, flights=str(flights), minutes=str(minutes))
+
+    msg = email.message.EmailMessage()
+    msg["Subject"] = f"{config['title']}: {len(rows)} flights, {total_cost} {config['currency']}"
+    msg.set_content(ET.tostring(root, encoding="unicode"))
+
+    # Prepared, never sent: the point is the import cost, not the network.
+    upload = requests.Request("POST", "https://example.invalid/reports", data=msg.as_bytes()).prepare()
+    ping = urllib.request.Request("https://example.invalid/health", method="HEAD")
+
+    out = Path(args.out)
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("report.xml", ET.tostring(root))
+        z.writestr("report.eml", msg.as_bytes())
+
+    table = Table(title=config["title"])
+    for column in ("tail", "flights", "block minutes", "status"):
+        table.add_column(column)
+    for (tail, flights, minutes), (_, status) in zip(per_tail, statuses):
+        table.add_row(tail, str(flights), str(minutes), str(status))
+    Console(file=sys.stderr if args.quiet else sys.stdout, force_terminal=False).print(table)
+    print(f"wrote {out} ({len(upload.body)} byte upload prepared, {ping.get_method()} ping prepared)")
+
+
+async def _gather(tails: list[str]) -> list[tuple[str, int]]:
+    return await asyncio.gather(*(_enrich(t) for t in tails))
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(prog="fleetctl")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("version").set_defaults(func=cmd_version)
+    summary = sub.add_parser("summary")
+    summary.add_argument("csv")
+    summary.set_defaults(func=cmd_summary)
+    report = sub.add_parser("report")
+    report.add_argument("csv")
+    report.add_argument("--out", default="report.zip")
+    report.add_argument("--quiet", action="store_true")
+    report.set_defaults(func=cmd_report)
+    args = parser.parse_args(argv)
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
