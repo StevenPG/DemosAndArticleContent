@@ -1,0 +1,4 @@
+.jdks/
+bench-app/.gradle/
+bench-app/build/
+scripts/__pycache__/
