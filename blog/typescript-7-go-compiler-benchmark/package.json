@@ -1,0 +1,14 @@
+{
+  "name": "typescript-7-go-compiler-benchmark",
+  "private": true,
+  "type": "module",
+  "description": "tsc 6 (JavaScript) vs tsc 7 (Go) on real repositories, with the parallelism split out",
+  "scripts": {
+    "bench": "node scripts/bench.mjs run",
+    "report": "node scripts/bench.mjs report"
+  },
+  "devDependencies": {
+    "@typescript/typescript6": "6.0.2",
+    "typescript": "7.0.2"
+  }
+}
