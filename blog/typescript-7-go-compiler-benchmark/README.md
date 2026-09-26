@@ -73,37 +73,23 @@ same code works on macOS.
 
 ## Results
 
-`results/results.md` is a run on a shared 4-core x86_64 cloud container, 3 runs per configuration. **Read the
-timings as shape only.** Parallel speedups are capped at 4 cores there. The blog post's numbers come from a
-re-run on dedicated hardware.
-
-The shape:
+`results/results.md` and `raw.json` are the published run: an M3 Pro MacBook (12 cores), Node 24.16, TypeScript
+6.0.3 against 7.0.2, median of 5 runs after a warm-up.
 
 | Target | tsc 6 | tsc 7 single-threaded | tsc 7 default | Native | Parallel | Total |
 |---|---:|---:|---:|---:|---:|---:|
-| coding-steve | 2.37 s | 0.56 s | 0.52 s | 4.2× | 1.1× | 4.6× |
-| cesium-spatial (3 packages) | 3.11 s | 0.65 s | 0.55 s | 4.8× | 1.2× | 5.7× |
-| playwright | 16.48 s | 4.77 s | 3.54 s | 3.5× | 1.35× | 4.7× |
+| coding-steve | 0.84 s | 0.23 s | 0.12 s | 3.7× | 1.9× | 6.8× |
+| cesium-spatial (3 packages) | 1.02 s | 0.26 s | 0.19 s | 3.9× | 1.4× | 5.5× |
+| playwright | 5.18 s | 1.65 s | 0.81 s | 3.1× | 2.0× | 6.4× |
 
-- **Most of the speedup is native code, not threads.** Even with parallelism off, TypeScript 7 was 3.5–4.8×
-  faster. On the two small targets the difference is mostly startup: Node loading and JIT-warming a large
-  compiler, against a Go binary that's ready in milliseconds.
-- **More checkers means more memory, and past the core count, slower.** On playwright, peak RSS went from 751 MiB
-  single-threaded to 1,123 MiB at 4 checkers and 1,452 MiB at 8. On 4 cores, 8 checkers was slower than 4. Size
-  `--checkers` to your CI runner, not above it.
-- **`tsc 6` burns about 2× its wall time in CPU** (Node's GC and JIT threads). `tsc 7 --singleThreaded` burns about
-  1.2×.
-- **Identical diagnostics.** Every configuration reported the same errors as `tsc 6`: 4 in this blog (real ones),
-  0 in cesium-spatial, and 12 in playwright (missing `generated/` modules from a build step that isn't run here).
+- **Native code accounts for 3–4×** (`tsc 6` against `tsc 7 --singleThreaded`), and it was similar on a 4-core cloud
+  container (3.5–4.8×). Parallelism adds 1.4–2× at the default 4 checkers, growing with codebase size.
+- **`--checkers 1` isn't single-threaded.** Parsing and binding still run in parallel, so it was 1.2–1.7× faster than
+  `--singleThreaded`.
+- **8 checkers vs 4 on playwright:** 7% faster, 30% more peak RSS (1,430 MiB, more than tsc 6's 1,274), 57% more CPU.
+- **Total CPU drops too:** 4.1 s at 4 checkers against tsc 6's 10.0 s on playwright.
+- **Identical diagnostics** from every configuration on every target (4 / 0 / 12 errors).
+- **Exit code:** with type errors under `--noEmit`, `tsc 6` exits **2** and `tsc 7` exits **1**, on every target and
+  both machines.
 - `tsc6 --version` prints `6.0.3` even though the compat package is `6.0.2`, because it runs the aliased
   `typescript@^6` underneath.
-
-`--checkers` scaling on playwright:
-
-| Configuration | Wall s | CPU s | Peak RSS MiB |
-|---|---:|---:|---:|
-| `--singleThreaded` | 4.77 | 5.78 | 751 |
-| `--checkers 1` | 4.55 | 7.25 | 730 |
-| `--checkers 2` | 3.65 | 9.23 | 886 |
-| default (4) | 3.54 | 12.90 | 1,123 |
-| `--checkers 8` | 4.52 | 17.22 | 1,452 |
