@@ -1,6 +1,6 @@
 # TypeScript 6 vs 7 - results
 
-`Version 6.0.3` vs `Version 7.0.2`, Node v22.22.2, Linux x86_64, 4 CPUs, median of 3 runs after a warm-up.
+`Version 6.0.3` vs `Version 7.0.2`, Node v24.16.0, Darwin arm64, 12 CPUs, median of 5 runs after a warm-up.
 
 ## coding-steve
 
@@ -8,12 +8,12 @@ Astro 6 blog (this site). Small. `astro sync` generates the content-collection t
 
 | Configuration | Wall s | vs tsc 6 | vs single-threaded 7 | CPU s | Peak RSS MiB | Errors reported |
 |---|---:|---:|---:|---:|---:|---:|
-| `tsc 6` | 2.37 | 1.0x | - | 5.30 | 365 | 4 |
-| `tsc 7 --singleThreaded` | 0.56 | 4.2x | 1.0x | 0.77 | 178 | 4 |
-| `tsc 7 --checkers 1` | 0.50 | 4.8x | 1.1x | 1.34 | 181 | 4 |
-| `tsc 7 --checkers 2` | 0.50 | 4.7x | 1.1x | 1.42 | 194 | 4 |
-| `tsc 7 (default: 4 checkers)` | 0.52 | 4.6x | 1.1x | 1.66 | 211 | 4 |
-| `tsc 7 --checkers 8` | 0.59 | 4.0x | 1.0x | 1.87 | 230 | 4 |
+| `tsc 6` | 0.84 | 1.0x | - | 1.91 | 464 | 4 |
+| `tsc 7 --singleThreaded` | 0.23 | 3.7x | 1.0x | 0.34 | 192 | 4 |
+| `tsc 7 --checkers 1` | 0.13 | 6.4x | 1.7x | 0.50 | 198 | 4 |
+| `tsc 7 --checkers 2` | 0.13 | 6.5x | 1.8x | 0.54 | 209 | 4 |
+| `tsc 7 (default: 4 checkers)` | 0.12 | 6.8x | 1.9x | 0.59 | 220 | 4 |
+| `tsc 7 --checkers 8` | 0.12 | 6.8x | 1.8x | 0.67 | 247 | 4 |
 
 ## cesium-spatial
 
@@ -21,12 +21,12 @@ pnpm monorepo, three library packages checked one after another (its own typeche
 
 | Configuration | Wall s | vs tsc 6 | vs single-threaded 7 | CPU s | Peak RSS MiB | Errors reported |
 |---|---:|---:|---:|---:|---:|---:|
-| `tsc 6` | 3.11 | 1.0x | - | 6.66 | 210 | 0 |
-| `tsc 7 --singleThreaded` | 0.65 | 4.8x | 1.0x | 0.83 | 73 | 0 |
-| `tsc 7 --checkers 1` | 0.57 | 5.5x | 1.2x | 1.19 | 74 | 0 |
-| `tsc 7 --checkers 2` | 0.58 | 5.4x | 1.1x | 1.31 | 76 | 0 |
-| `tsc 7 (default: 4 checkers)` | 0.55 | 5.7x | 1.2x | 1.28 | 78 | 0 |
-| `tsc 7 --checkers 8` | 0.55 | 5.7x | 1.2x | 1.27 | 79 | 0 |
+| `tsc 6` | 1.02 | 1.0x | - | 2.27 | 258 | 0 |
+| `tsc 7 --singleThreaded` | 0.26 | 3.9x | 1.0x | 0.35 | 80 | 0 |
+| `tsc 7 --checkers 1` | 0.19 | 5.3x | 1.4x | 0.46 | 85 | 0 |
+| `tsc 7 --checkers 2` | 0.19 | 5.4x | 1.4x | 0.49 | 87 | 0 |
+| `tsc 7 (default: 4 checkers)` | 0.19 | 5.5x | 1.4x | 0.50 | 89 | 0 |
+| `tsc 7 --checkers 8` | 0.18 | 5.5x | 1.4x | 0.52 | 90 | 0 |
 
 ## playwright
 
@@ -34,10 +34,10 @@ microsoft/playwright, one of the TypeScript team's own published benchmarks (12.
 
 | Configuration | Wall s | vs tsc 6 | vs single-threaded 7 | CPU s | Peak RSS MiB | Errors reported |
 |---|---:|---:|---:|---:|---:|---:|
-| `tsc 6` | 16.48 | 1.0x | - | 30.95 | 1158 | 12 |
-| `tsc 7 --singleThreaded` | 4.77 | 3.5x | 1.0x | 5.78 | 751 | 12 |
-| `tsc 7 --checkers 1` | 4.55 | 3.6x | 1.0x | 7.25 | 730 | 12 |
-| `tsc 7 --checkers 2` | 3.65 | 4.5x | 1.3x | 9.23 | 886 | 12 |
-| `tsc 7 (default: 4 checkers)` | 3.54 | 4.7x | 1.3x | 12.90 | 1123 | 12 |
-| `tsc 7 --checkers 8` | 4.52 | 3.6x | 1.1x | 17.22 | 1452 | 12 |
+| `tsc 6` | 5.18 | 1.0x | - | 9.95 | 1274 | 12 |
+| `tsc 7 --singleThreaded` | 1.65 | 3.1x | 1.0x | 2.22 | 778 | 12 |
+| `tsc 7 --checkers 1` | 1.41 | 3.7x | 1.2x | 2.77 | 763 | 12 |
+| `tsc 7 --checkers 2` | 1.05 | 4.9x | 1.6x | 3.53 | 896 | 12 |
+| `tsc 7 (default: 4 checkers)` | 0.81 | 6.4x | 2.0x | 4.12 | 1102 | 12 |
+| `tsc 7 --checkers 8` | 0.75 | 6.9x | 2.2x | 6.47 | 1430 | 12 |
 
