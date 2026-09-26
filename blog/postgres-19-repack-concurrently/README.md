@@ -85,13 +85,33 @@ It also can't run inside a transaction block. A partitioned table means repackin
 
 ## Results
 
-Two runs on a shared 4-core x86_64 cloud container, 8 writers each. **Read them as shape only.** The blog post
-numbers come from a re-run on dedicated hardware.
+**`results/results.md` / `raw.json` is the published run:** an M3 Pro MacBook, Docker Desktop with 2 CPUs, 2M rows and
+8 writers:
 
-- `results/results.md` / `raw.json`: 8M rows (heap 1,124 MB → ~420 MB)
-- `results/results-2m.md` / `raw-2m.json`: 2M rows (heap 281 MB → ~129 MB)
+| Method | Duration s | Seconds with zero commits | Worst writer transaction (baseline) | Writer tps before → during |
+|---|---:|---:|---:|---:|
+| `VACUUM FULL` | 0.8 | 0 | 706 ms (22) | 8,654 → 8,138 |
+| `REPACK` | 0.7 | 0 | 585 ms (56) | 12,915 → 10,980 |
+| `REPACK (CONCURRENTLY)` | 1.2 | 0 | **38 ms** (30) | 13,728 → 10,384 |
 
-The 8M-row shape:
+At 2M rows on the M3, every rewrite finished in about a second, so none of them produced a whole second with zero
+commits. The per-transaction latency is where the lock shows: the locking methods' worst writer waited 0.6–0.7 s,
+while CONCURRENTLY stayed within 8 ms of baseline.
+
+**Table sizes: `results/results-sizes-container-2m.md` / `raw-sizes-container-2m.json`.** The M3 run, like the earlier
+container runs, recorded the "after" size at the end of the writer's window, so it counts every row inserted in the
+meantime (600k rows became 1.5–1.8M). That understates what the rewrite reclaimed. `scripts/repack_bench.py` now measures
+size the moment the command returns, and a re-run in a shared 4-core container gives the real figures. Size, unlike
+timing, doesn't depend on the hardware:
+
+| Method | Heap MB before → after | Indexes MB before → after |
+|---|---:|---:|
+| `VACUUM FULL` | 281 → 91 | 103 → 34 |
+| `REPACK` | 281 → 92 | 103 → 34 |
+| `REPACK (CONCURRENTLY)` | 281 → 93 | 103 → 34 |
+
+**Earlier container runs (in git history, commit `93f5714`):** 8M rows on a 4-core container. At that size, the
+locking methods did produce whole seconds with zero commits:
 
 | Method | Duration s | Seconds with zero commits | Worst writer transaction (baseline) | Writer tps before → during |
 |---|---:|---:|---:|---:|
@@ -99,6 +119,5 @@ The 8M-row shape:
 | `REPACK` | 3.4 | 2 | 3,198 ms (29) | 4,290 → 1,098 |
 | `REPACK (CONCURRENTLY)` | 5.0 | **0** | **108 ms** (16) | 5,447 → 3,623 |
 
-The locking methods block the writer for about the whole rewrite: the worst transaction takes as long as the
-command. `CONCURRENTLY` never stops the writer. Its worst transaction was ~108 ms, which is the final swap, and
-throughput dropped by about a third while it copied.
+`results/results-2m.md` / `raw-2m.json` is the 2M-row container run from the same session. Its "after" sizes have the
+same end-of-window problem.

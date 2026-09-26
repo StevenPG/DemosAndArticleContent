@@ -125,17 +125,21 @@ def run_method(name: str, sql: str, rows: int, clients: int, warmup: int, max_me
     t0 = time.time()
     psql(sql + ";")
     t1 = time.time()
+    # Measure immediately: the writer keeps inserting for the rest of its window,
+    # so a later measurement would count those new rows as "didn't shrink".
+    size_after = table_size_mb()
     if t1 - t0 > max_method:
         print(f"[{name}] WARNING: took {t1 - t0:.0f}s, longer than --max-method-seconds {max_method}; "
               f"the writer stopped before it finished", file=sys.stderr)
     series = collect_writer(writer)
 
-    size_after = table_size_mb()
+    size_after_window = table_size_mb()
     result = {
         "sql": sql,
         "duration_s": t1 - t0,
         "before": size_before,
         "after": size_after,
+        "after_window": size_after_window,
         "writer": analyse(series, t0, t1),
         "series": series,
         "window": [t0, t1],
@@ -183,6 +187,10 @@ def cmd_report(_: argparse.Namespace) -> None:
             f"{r['before']['indexes_mb']:.0f} -> {r['after']['indexes_mb']:.0f} | {w['baseline_tps'] or 0:,.0f} | "
             f"{w['during_tps'] or 0:,.0f} | {w['stalled_seconds']} | {w['max_latency_ms']:,.0f} "
             f"({w['baseline_max_latency_ms']:,.0f}) |")
+    if any(name in raw and "after_window" not in raw[name] for name in METHODS):
+        lines += ["", "_Recorded before the harness measured size right after the command: the \"after\" sizes above were "
+                  "taken at the end of the writer window and include every row the writer inserted in the meantime, "
+                  "so they understate how much the rewrite reclaimed._"]
     (RESULTS / "results.md").write_text("\n".join(lines) + "\n")
     print("\n".join(lines))
 
