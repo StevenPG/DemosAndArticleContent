@@ -118,9 +118,18 @@ No `-Xmx` is set anywhere. The point is what the defaults do: max heap is the JV
 `results/probes.md` has the probe output. Object layout numbers are deterministic for a given
 JDK and flag set, so they're valid on any host.
 
-`results/results.md` is a run on a shared 4-core x86_64 cloud container. **Read its
-timing columns as shape only.** The numbers in the blog post come from a re-run on dedicated
-hardware.
+`results/results.md` and `raw.json` are the published run: an M3 Pro MacBook, Docker Desktop
+(linux/arm64, 2 CPUs given to the Docker VM), the load generator on macOS outside the VM, and 3 runs
+per row (medians shown). Headline results:
+
+- Compact headers: 14.5% smaller live set (118.5 → 101 MiB) on every JDK that has them, and 11–13% less
+  container memory under load going from `jdk26` to `jdk27`.
+- 1 CPU: JDK 27's default G1 served 18.5% fewer req/s than JDK 26's Serial, with a 14% worse p99.
+  `-XX:+UseSerialGC` on 27 recovered all of it.
+- 2 CPUs: Serial on 27 served 37% more req/s than the G1 default, with a p99 of 51 ms against 73 ms.
+- Compact headers' throughput effect ranged from +13% (G1, 1 CPU) to -12%/-20% (G1, 2 CPUs, JDK 27/25).
+
+An earlier run on a shared 4-core x86_64 cloud container showed the same shape. It was replaced by this one.
 
 ## Notes and gotchas
 
