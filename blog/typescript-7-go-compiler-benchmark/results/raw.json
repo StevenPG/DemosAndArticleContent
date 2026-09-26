@@ -1,0 +1,225 @@
+{
+  "_meta": {
+    "tsc6": "Version 6.0.3",
+    "tsc7": "Version 7.0.2",
+    "node": "v24.16.0",
+    "machine": "Darwin arm64, 12 CPUs",
+    "runs": 5
+  },
+  "coding-steve": {
+    "tsc 6": {
+      "wall_s": 0.8383014999999432,
+      "wall_min_s": 0.8278760829998646,
+      "cpu_s": 1.910613,
+      "rss_mib": 463.984375,
+      "errors": 4,
+      "exit": 2,
+      "tail": [
+        "src/pages/projects/[slug]/index.png.ts(16,5): error TS2345: Argument of type 'Buffer<ArrayBufferLike>' is not assignable to parameter of type 'BodyInit | null | undefined'.",
+        "  Type 'Buffer<ArrayBufferLike>' is missing the following properties from type 'URLSearchParams': size, append, delete, get, and 2 more.",
+        "src/pages/rss.xml.ts(13,37): error TS2339: Property 'slug' does not exist on type '{ id: string; body?: string | undefined; collection: \"blog\"; data: { author: string; pubDatetime: Date; title: string; tags: string[]; description: string; modDatetime?: Date | null | undefined; ... 4 more ...; canonicalURL?: string | undefined; }; rendered?: RenderedContent | undefined; filePath?: string | undefine...'."
+      ]
+    },
+    "tsc 7 --singleThreaded": {
+      "wall_s": 0.2286539999913657,
+      "wall_min_s": 0.22276299999793991,
+      "cpu_s": 0.339977,
+      "rss_mib": 191.921875,
+      "errors": 4,
+      "exit": 1,
+      "tail": [
+        "src/pages/projects/[slug]/index.png.ts(16,5): error TS2345: Argument of type 'Buffer<ArrayBufferLike>' is not assignable to parameter of type 'BodyInit | null | undefined'.",
+        "  Type 'Buffer<ArrayBufferLike>' is missing the following properties from type 'URLSearchParams': size, append, delete, get, and 2 more.",
+        "src/pages/rss.xml.ts(13,37): error TS2339: Property 'slug' does not exist on type '{ id: string; body?: string | undefined; collection: \"blog\"; data: { author: string; pubDatetime: Date; modDatetime?: Date | null | undefined; title: string; featured?: boolean | undefined; ... 5 more ...; canonicalURL?: string | undefined; }; rendered?: RenderedContent | undefined; filePath?: string | undefined; }'."
+      ]
+    },
+    "tsc 7 --checkers 1": {
+      "wall_s": 0.13073866699414793,
+      "wall_min_s": 0.1260466250096215,
+      "cpu_s": 0.5022249999999999,
+      "rss_mib": 198.078125,
+      "errors": 4,
+      "exit": 1,
+      "tail": [
+        "src/pages/projects/[slug]/index.png.ts(16,5): error TS2345: Argument of type 'Buffer<ArrayBufferLike>' is not assignable to parameter of type 'BodyInit | null | undefined'.",
+        "  Type 'Buffer<ArrayBufferLike>' is missing the following properties from type 'URLSearchParams': size, append, delete, get, and 2 more.",
+        "src/pages/rss.xml.ts(13,37): error TS2339: Property 'slug' does not exist on type '{ id: string; body?: string | undefined; collection: \"blog\"; data: { author: string; pubDatetime: Date; modDatetime?: Date | null | undefined; title: string; featured?: boolean | undefined; ... 5 more ...; canonicalURL?: string | undefined; }; rendered?: RenderedContent | undefined; filePath?: string | undefined; }'."
+      ]
+    },
+    "tsc 7 --checkers 2": {
+      "wall_s": 0.12803416600218043,
+      "wall_min_s": 0.12382320800679736,
+      "cpu_s": 0.535528,
+      "rss_mib": 209.421875,
+      "errors": 4,
+      "exit": 1,
+      "tail": [
+        "src/pages/projects/[slug]/index.png.ts(16,5): error TS2345: Argument of type 'Buffer<ArrayBufferLike>' is not assignable to parameter of type 'BodyInit | null | undefined'.",
+        "  Type 'Buffer<ArrayBufferLike>' is missing the following properties from type 'URLSearchParams': size, append, delete, get, and 2 more.",
+        "src/pages/rss.xml.ts(13,37): error TS2339: Property 'slug' does not exist on type '{ id: string; body?: string | undefined; collection: \"blog\"; data: { author: string; pubDatetime: Date; modDatetime?: Date | null | undefined; title: string; featured?: boolean | undefined; ... 5 more ...; canonicalURL?: string | undefined; }; rendered?: RenderedContent | undefined; filePath?: string | undefined; }'."
+      ]
+    },
+    "tsc 7 (default: 4 checkers)": {
+      "wall_s": 0.12343991700618062,
+      "wall_min_s": 0.1189250840106979,
+      "cpu_s": 0.588495,
+      "rss_mib": 220.203125,
+      "errors": 4,
+      "exit": 1,
+      "tail": [
+        "src/pages/projects/[slug]/index.png.ts(16,5): error TS2345: Argument of type 'Buffer<ArrayBufferLike>' is not assignable to parameter of type 'BodyInit | null | undefined'.",
+        "  Type 'Buffer<ArrayBufferLike>' is missing the following properties from type 'URLSearchParams': size, append, delete, get, and 2 more.",
+        "src/pages/rss.xml.ts(13,37): error TS2339: Property 'slug' does not exist on type '{ id: string; body?: string | undefined; collection: \"blog\"; data: { author: string; pubDatetime: Date; modDatetime?: Date | null | undefined; title: string; featured?: boolean | undefined; ... 5 more ...; canonicalURL?: string | undefined; }; rendered?: RenderedContent | undefined; filePath?: string | undefined; }'."
+      ]
+    },
+    "tsc 7 --checkers 8": {
+      "wall_s": 0.12408395799866412,
+      "wall_min_s": 0.12009333299647551,
+      "cpu_s": 0.671392,
+      "rss_mib": 247.1875,
+      "errors": 4,
+      "exit": 1,
+      "tail": [
+        "src/pages/projects/[slug]/index.png.ts(16,5): error TS2345: Argument of type 'Buffer<ArrayBufferLike>' is not assignable to parameter of type 'BodyInit | null | undefined'.",
+        "  Type 'Buffer<ArrayBufferLike>' is missing the following properties from type 'URLSearchParams': size, append, delete, get, and 2 more.",
+        "src/pages/rss.xml.ts(13,37): error TS2339: Property 'slug' does not exist on type '{ id: string; body?: string | undefined; collection: \"blog\"; data: { author: string; pubDatetime: Date; modDatetime?: Date | null | undefined; title: string; featured?: boolean | undefined; ... 5 more ...; canonicalURL?: string | undefined; }; rendered?: RenderedContent | undefined; filePath?: string | undefined; }'."
+      ]
+    }
+  },
+  "cesium-spatial": {
+    "tsc 6": {
+      "wall_s": 1.0209163749968866,
+      "wall_min_s": 1.0147836250107503,
+      "cpu_s": 2.270927,
+      "rss_mib": 258.28125,
+      "errors": 0,
+      "exit": 0,
+      "tail": []
+    },
+    "tsc 7 --singleThreaded": {
+      "wall_s": 0.2624102509871591,
+      "wall_min_s": 0.2586252090113703,
+      "cpu_s": 0.34612,
+      "rss_mib": 80.3125,
+      "errors": 0,
+      "exit": 0,
+      "tail": []
+    },
+    "tsc 7 --checkers 1": {
+      "wall_s": 0.1920872919872636,
+      "wall_min_s": 0.18963700099266134,
+      "cpu_s": 0.464765,
+      "rss_mib": 84.703125,
+      "errors": 0,
+      "exit": 0,
+      "tail": []
+    },
+    "tsc 7 --checkers 2": {
+      "wall_s": 0.18776187399635091,
+      "wall_min_s": 0.18596258200705051,
+      "cpu_s": 0.49085999999999996,
+      "rss_mib": 87.046875,
+      "errors": 0,
+      "exit": 0,
+      "tail": []
+    },
+    "tsc 7 (default: 4 checkers)": {
+      "wall_s": 0.18533429202216212,
+      "wall_min_s": 0.1822817079955712,
+      "cpu_s": 0.502802,
+      "rss_mib": 88.609375,
+      "errors": 0,
+      "exit": 0,
+      "tail": []
+    },
+    "tsc 7 --checkers 8": {
+      "wall_s": 0.1849170409986982,
+      "wall_min_s": 0.18393012500018813,
+      "cpu_s": 0.5234509999999999,
+      "rss_mib": 90.28125,
+      "errors": 0,
+      "exit": 0,
+      "tail": []
+    }
+  },
+  "playwright": {
+    "tsc 6": {
+      "wall_s": 5.178194459003862,
+      "wall_min_s": 5.171001875001821,
+      "cpu_s": 9.946641,
+      "rss_mib": 1273.53125,
+      "errors": 12,
+      "exit": 2,
+      "tail": [
+        "packages/playwright-core/src/server/recorder.ts(30,36): error TS2307: Cannot find module './../generated/pollingRecorderSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(32,40): error TS2307: Cannot find module '../../../generated/webViewInputSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(33,41): error TS2307: Cannot find module '../../../generated/webViewDialogSource' or its corresponding type declarations."
+      ]
+    },
+    "tsc 7 --singleThreaded": {
+      "wall_s": 1.6505848340020748,
+      "wall_min_s": 1.64946520900412,
+      "cpu_s": 2.221145,
+      "rss_mib": 778.09375,
+      "errors": 12,
+      "exit": 1,
+      "tail": [
+        "packages/playwright-core/src/server/recorder.ts(30,36): error TS2307: Cannot find module './../generated/pollingRecorderSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(32,40): error TS2307: Cannot find module '../../../generated/webViewInputSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(33,41): error TS2307: Cannot find module '../../../generated/webViewDialogSource' or its corresponding type declarations."
+      ]
+    },
+    "tsc 7 --checkers 1": {
+      "wall_s": 1.4141426249989308,
+      "wall_min_s": 1.4091628329915693,
+      "cpu_s": 2.774699,
+      "rss_mib": 762.90625,
+      "errors": 12,
+      "exit": 1,
+      "tail": [
+        "packages/playwright-core/src/server/recorder.ts(30,36): error TS2307: Cannot find module './../generated/pollingRecorderSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(32,40): error TS2307: Cannot find module '../../../generated/webViewInputSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(33,41): error TS2307: Cannot find module '../../../generated/webViewDialogSource' or its corresponding type declarations."
+      ]
+    },
+    "tsc 7 --checkers 2": {
+      "wall_s": 1.0492609590000939,
+      "wall_min_s": 1.0282356249954319,
+      "cpu_s": 3.534548,
+      "rss_mib": 896.46875,
+      "errors": 12,
+      "exit": 1,
+      "tail": [
+        "packages/playwright-core/src/server/recorder.ts(30,36): error TS2307: Cannot find module './../generated/pollingRecorderSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(32,40): error TS2307: Cannot find module '../../../generated/webViewInputSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(33,41): error TS2307: Cannot find module '../../../generated/webViewDialogSource' or its corresponding type declarations."
+      ]
+    },
+    "tsc 7 (default: 4 checkers)": {
+      "wall_s": 0.8098832079995191,
+      "wall_min_s": 0.794752415997209,
+      "cpu_s": 4.122606,
+      "rss_mib": 1101.625,
+      "errors": 12,
+      "exit": 1,
+      "tail": [
+        "packages/playwright-core/src/server/recorder.ts(30,36): error TS2307: Cannot find module './../generated/pollingRecorderSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(32,40): error TS2307: Cannot find module '../../../generated/webViewInputSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(33,41): error TS2307: Cannot find module '../../../generated/webViewDialogSource' or its corresponding type declarations."
+      ]
+    },
+    "tsc 7 --checkers 8": {
+      "wall_s": 0.7497567499958677,
+      "wall_min_s": 0.7157954169961158,
+      "cpu_s": 6.468142,
+      "rss_mib": 1430.28125,
+      "errors": 12,
+      "exit": 1,
+      "tail": [
+        "packages/playwright-core/src/server/recorder.ts(30,36): error TS2307: Cannot find module './../generated/pollingRecorderSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(32,40): error TS2307: Cannot find module '../../../generated/webViewInputSource' or its corresponding type declarations.",
+        "packages/playwright-core/src/server/webkit/webview/wvPage.ts(33,41): error TS2307: Cannot find module '../../../generated/webViewDialogSource' or its corresponding type declarations."
+      ]
+    }
+  }
+}

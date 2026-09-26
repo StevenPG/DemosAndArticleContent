@@ -1,0 +1,78 @@
+[
+  {
+    "name": "coding-steve",
+    "about": "Astro 6 blog (this site). Small. `astro sync` generates the content-collection types first, as `astro check` would.",
+    "repo": "https://github.com/StevenPG/coding-steve",
+    "ref": "2f12d49",
+    "install": [
+      "npm",
+      "ci",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "args": [
+      "--noEmit",
+      "-p",
+      "."
+    ],
+    "patches": {
+      "tsconfig.json": "patches/coding-steve.tsconfig.json"
+    },
+    "post_install": [
+      "npx",
+      "astro",
+      "sync"
+    ]
+  },
+  {
+    "name": "cesium-spatial",
+    "about": "pnpm monorepo, three library packages checked one after another (its own typecheck script does the same). The core package is built first so h3 and s2 can resolve its types.",
+    "repo": "https://github.com/StevenPG/cesium-spatial",
+    "ref": "8be14c4",
+    "install": [
+      "npx",
+      "--yes",
+      "pnpm@10",
+      "install",
+      "--frozen-lockfile",
+      "--ignore-scripts"
+    ],
+    "args": [
+      "--noEmit",
+      "-p",
+      "packages/core"
+    ],
+    "extra_projects": [
+      "packages/h3",
+      "packages/s2"
+    ],
+    "post_install": [
+      "npx",
+      "--yes",
+      "pnpm@10",
+      "--filter",
+      "./packages/core",
+      "run",
+      "build"
+    ]
+  },
+  {
+    "name": "playwright",
+    "about": "microsoft/playwright, one of the TypeScript team's own published benchmarks (12.8s -> 1.47s). Its generated/ sources come from a build step that isn't run here, so both compilers report the same 12 missing-module errors.",
+    "repo": "https://github.com/microsoft/playwright",
+    "ref": "48844a5",
+    "install": [
+      "npm",
+      "ci",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund"
+    ],
+    "args": [
+      "--noEmit",
+      "-p",
+      "."
+    ]
+  }
+]
