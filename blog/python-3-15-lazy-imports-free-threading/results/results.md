@@ -2,52 +2,52 @@
 
 ## CLI wall time (median ms) and modules imported
 
-### 3.14 (bare interpreter: 17.2 ms)
+### 3.14 (bare interpreter: 16.8 ms)
 
 | Variant | version | summary | report |
 |---|---|---|---|
-| `eager` | 190.8 ms / 377 mods | 198.9 ms / 377 mods | 212.4 ms / 384 mods |
-| `lazy_modules` | 195.4 ms / 377 mods | 196.2 ms / 377 mods | 211.0 ms / 384 mods |
+| `eager` | 114.0 ms / 378 mods | 129.5 ms / 378 mods | 112.7 ms / 385 mods |
+| `lazy_modules` | 95.8 ms / 378 mods | 91.3 ms / 378 mods | 96.5 ms / 385 mods |
 | `lazy_keyword` | n/a (SyntaxError) | n/a (SyntaxError) | n/a (SyntaxError) |
-| `eager + -X lazy_imports=all` | 199.0 ms / 377 mods | 208.9 ms / 377 mods | 213.4 ms / 384 mods |
+| `eager + -X lazy_imports=all` | 88.8 ms / 378 mods | 90.4 ms / 378 mods | 115.7 ms / 385 mods |
 
-### 3.14t (bare interpreter: 23.0 ms)
+### 3.14t (bare interpreter: 17.9 ms)
 
 | Variant | version | summary | report |
 |---|---|---|---|
-| `eager` | 226.3 ms / 377 mods | 231.6 ms / 377 mods | 256.4 ms / 384 mods |
-| `lazy_modules` | 235.9 ms / 377 mods | 237.0 ms / 377 mods | 241.3 ms / 384 mods |
+| `eager` | 133.6 ms / 378 mods | 141.5 ms / 378 mods | 112.8 ms / 385 mods |
+| `lazy_modules` | 97.3 ms / 378 mods | 97.9 ms / 378 mods | 105.3 ms / 385 mods |
 | `lazy_keyword` | n/a (SyntaxError) | n/a (SyntaxError) | n/a (SyntaxError) |
-| `eager + -X lazy_imports=all` | 231.0 ms / 377 mods | 231.1 ms / 377 mods | 244.0 ms / 384 mods |
+| `eager + -X lazy_imports=all` | 96.5 ms / 378 mods | 97.8 ms / 378 mods | 104.5 ms / 385 mods |
 
-### 3.15 (bare interpreter: 18.2 ms)
-
-| Variant | version | summary | report |
-|---|---|---|---|
-| `eager` | 196.9 ms / 381 mods | 202.0 ms / 381 mods | 205.8 ms / 387 mods |
-| `lazy_modules` | 30.6 ms / 64 mods | 39.1 ms / 83 mods | 201.9 ms / 385 mods |
-| `lazy_keyword` | 31.3 ms / 64 mods | 38.8 ms / 83 mods | 211.5 ms / 385 mods |
-| `eager + -X lazy_imports=all` | 30.8 ms / 60 mods | 36.4 ms / 73 mods | 158.6 ms / 268 mods |
-
-### 3.15t (bare interpreter: 21.7 ms)
+### 3.15 (bare interpreter: 14.0 ms)
 
 | Variant | version | summary | report |
 |---|---|---|---|
-| `eager` | 227.0 ms / 381 mods | 224.5 ms / 381 mods | 238.8 ms / 387 mods |
-| `lazy_modules` | 39.6 ms / 64 mods | 52.1 ms / 83 mods | 245.1 ms / 385 mods |
-| `lazy_keyword` | 40.1 ms / 64 mods | 49.4 ms / 83 mods | 237.0 ms / 385 mods |
-| `eager + -X lazy_imports=all` | 38.3 ms / 60 mods | 48.0 ms / 73 mods | 193.6 ms / 268 mods |
+| `eager` | 99.9 ms / 381 mods | 112.3 ms / 381 mods | 119.8 ms / 388 mods |
+| `lazy_modules` | 19.8 ms / 64 mods | 28.5 ms / 83 mods | 117.2 ms / 386 mods |
+| `lazy_keyword` | 25.1 ms / 64 mods | 25.8 ms / 83 mods | 137.7 ms / 386 mods |
+| `eager + -X lazy_imports=all` | 26.3 ms / 60 mods | 23.9 ms / 73 mods | 116.9 ms / 268 mods |
+
+### 3.15t (bare interpreter: 25.2 ms)
+
+| Variant | version | summary | report |
+|---|---|---|---|
+| `eager` | 151.4 ms / 381 mods | 109.0 ms / 381 mods | 115.1 ms / 388 mods |
+| `lazy_modules` | 33.1 ms / 64 mods | 38.7 ms / 83 mods | 156.0 ms / 386 mods |
+| `lazy_keyword` | 23.5 ms / 64 mods | 27.7 ms / 83 mods | 153.7 ms / 386 mods |
+| `eager + -X lazy_imports=all` | 24.7 ms / 60 mods | 36.5 ms / 73 mods | 93.6 ms / 268 mods |
 
 ## CPU-bound threads (best of N, seconds; speedup vs 1 thread)
 
-Work: Collatz steps for 1..1,500,000.
+Work: Collatz steps for 1..2,000,000.
 
 | Interpreter | GIL at runtime | 1 thread(s) | 2 thread(s) | 4 thread(s) | 4 processes |
 |---|---|---|---|---|---|
-| `3.14` | on | 11.24 s (1.0x) | 11.52 s (1.0x) | 12.03 s (0.9x) | 3.05 s |
-| `3.14 (PYTHON_JIT=1)` | on | 10.62 s (1.0x) | 10.64 s (1.0x) | 11.02 s (1.0x) | 2.87 s |
-| `3.14t` | off | 12.08 s (1.0x) | 6.24 s (1.9x) | 3.21 s (3.8x) | 3.26 s |
-| `3.15` | on | 10.96 s (1.0x) | 11.17 s (1.0x) | 11.49 s (1.0x) | 2.91 s |
-| `3.15 (PYTHON_JIT=1)` | on | 6.41 s (1.0x) | 6.96 s (0.9x) | 6.95 s (0.9x) | 1.81 s |
-| `3.15t` | off | 11.48 s (1.0x) | 5.94 s (1.9x) | 3.10 s (3.7x) | 3.09 s |
+| `3.14` | on | 12.19 s (1.0x) | 11.78 s (1.0x) | 13.49 s (0.9x) | 3.22 s |
+| `3.14 (PYTHON_JIT=1)` | on | 13.17 s (1.0x) | 11.77 s (1.1x) | 11.47 s (1.1x) | 3.10 s |
+| `3.14t` | off | 10.74 s (1.0x) | 5.77 s (1.9x) | 3.01 s (3.6x) | 2.97 s |
+| `3.15` | on | 11.62 s (1.0x) | 11.55 s (1.0x) | 11.53 s (1.0x) | 3.19 s |
+| `3.15 (PYTHON_JIT=1)` | on | 5.45 s (1.0x) | 5.42 s (1.0x) | 5.51 s (1.0x) | 1.60 s |
+| `3.15t` | off | 11.64 s (1.0x) | 6.30 s (1.8x) | 3.22 s (3.6x) | 3.26 s |
 
