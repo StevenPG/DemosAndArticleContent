@@ -1,0 +1,12 @@
+-- The writer that runs while the table is rewritten: one insert, one indexed
+-- read, one update per transaction. Anything that blocks the table shows up as
+-- seconds with zero transactions in pgbench's aggregate log.
+-- :maxid is passed with -D maxid=<rows/10 - 1>; ids ending in 9 survive the 70% delete.
+\set aid random(1, 20000)
+\set id random(0, :maxid)
+BEGIN;
+INSERT INTO positions (aircraft_id, ts, lat, lon, altitude_ft, note)
+     VALUES (:aid, now(), 40.0, -75.0, 30000, 'live');
+SELECT id, ts, altitude_ft FROM positions WHERE aircraft_id = :aid ORDER BY ts DESC LIMIT 10;
+UPDATE positions SET altitude_ft = altitude_ft + 1 WHERE id = :id * 10 + 9;
+END;

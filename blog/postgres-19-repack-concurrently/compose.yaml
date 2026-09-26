@@ -1,0 +1,25 @@
+# PostgreSQL 19 beta. REPACK (CONCURRENTLY) works with the default wal_level=replica;
+# it uses its own replication slots, capped by max_repack_replication_slots (default 5).
+services:
+  pg19:
+    image: postgres:19beta4
+    container_name: pg19-repack
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5439:5432"
+    shm_size: 1g
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_stash_advice
+      - -c
+      - max_wal_size=4GB
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - log_lock_waits=on
+      - -c
+      - deadlock_timeout=200ms
+    volumes:
+      - ./sql:/sql:ro
