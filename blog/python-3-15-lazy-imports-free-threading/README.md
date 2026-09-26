@@ -83,20 +83,23 @@ don't have one.
 
 ## Results
 
-`results/results.md` is a run on a shared 4-core x86_64 cloud container, 20 launches per startup cell
-and best of 3 for threads. The module counts are deterministic. **Read the timings as shape only.**
-The blog post's numbers come from a re-run on dedicated hardware.
+`results/results.md` and `raw.json` are the published run: an M3 Pro MacBook (12 cores) on **3.14.6, 3.14.6t,
+3.15.0b2 and 3.15.0b2t**. Note that 3.15 is a pre-release beta there; 3.15.0 final is due October 1. An earlier run in
+a shared 4-core Linux container on 3.15.0rc2 showed the same shape.
 
-Headline shape from the container run:
-
-- `fleetctl version` on 3.15: **197 ms eager vs 31 ms lazy**, 381 vs 64 modules. Both lazy variants land
-  on the same numbers.
-- `fleetctl report` (uses everything): per-file lazy is a wash, but `-X lazy_imports=all` was
-  **~23% faster** because it defers imports *inside* the dependencies too (385 → 268 modules).
-- Free-threaded builds: ~3.6× at 4 threads, the same as 4 processes. There's about 5% single-thread
-  overhead, and startup costs +10–30 ms.
-- `PYTHON_JIT=1`: the same single-threaded loop took **~41% less time on 3.15** but only ~6% less on 3.14.
-  The upgraded JIT is real. It isn't available in either free-threaded build.
+- `fleetctl version` on 3.15: **~100 ms eager vs 20–26 ms lazy** (381 vs 64 modules), within about 12 ms of the bare
+  interpreter. All three ways of enabling laziness land in the same place.
+- Module counts are deterministic per platform. macOS loads one more module than Linux for `report` (388/386 against
+  387/385).
+- macOS startup timings were noisy for the eager rows (standard deviation 13–30 ms, and 111 ms on one row). The lazy
+  rows varied by 1–5 ms.
+- `-X lazy_imports=all` on `report` loads 268 modules instead of 388. The wall-time gain was within noise on 3.15, 19%
+  on 3.15t, and ~23% in the container run.
+- Free-threaded builds: 3.6× at 4 threads, the same as 4 processes. There's no measurable single-thread tax on the M3
+  (11.64 s vs 11.62 s on 3.15), about 5% in the container, and about 11 ms more startup.
+- `PYTHON_JIT=1` on 3.15: the single-threaded loop went from 11.62 s to 5.45 s (-53%). On 3.14 there was no gain.
+  The JIT isn't available in the free-threaded builds, so **JIT + 4 processes (1.60 s) beat free-threaded 4 threads
+  (3.22 s)**.
 
 ## Gotchas found while building this
 
