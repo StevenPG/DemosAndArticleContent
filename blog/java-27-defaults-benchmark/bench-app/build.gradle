@@ -1,0 +1,30 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.stevenpg'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    // Compiled for JDK 25 so the *same jar* runs on 25, 26 and 27. The only
+    // thing that changes between benchmark rows is the java binary.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+}
+
+// Predictable jar name so the harness can hard-code it.
+bootJar {
+    archiveFileName = 'bench-app.jar'
+}

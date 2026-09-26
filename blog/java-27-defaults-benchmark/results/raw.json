@@ -1,0 +1,1676 @@
+{
+  "_meta": {
+    "host": {
+      "docker_arch": "aarch64",
+      "docker_cpus": "2",
+      "load_seconds": 30,
+      "runs": 3,
+      "threads": 16
+    }
+  },
+  "medium/jdk25": [
+    {
+      "gc_collections": 19,
+      "gc_millis": 98,
+      "idle_container_mib": 286.0,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 213
+      },
+      "live_set_mib": 118.28518676757812,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 14487,
+            "p50_ms": 1.3737090048380196,
+            "p99_ms": 9.457833002670668
+          },
+          "stats": {
+            "n": 7079,
+            "p50_ms": 49.30416701245122,
+            "p99_ms": 81.35787499486469
+          },
+          "track": {
+            "n": 50608,
+            "p50_ms": 1.1413329921197146,
+            "p99_ms": 9.60562500404194
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.3590000016847625,
+        "p99_ms": 64.03462500020396,
+        "requests": 72174,
+        "rps": 2405.8
+      },
+      "loaded_container_mib": 463.3,
+      "ready_s": 1.9490341659984551
+    },
+    {
+      "gc_collections": 20,
+      "gc_millis": 91,
+      "idle_container_mib": 286.3,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 200
+      },
+      "live_set_mib": 118.33741760253906,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 13228,
+            "p50_ms": 1.5034169919090346,
+            "p99_ms": 12.065584000083618
+          },
+          "stats": {
+            "n": 6507,
+            "p50_ms": 51.812292003887706,
+            "p99_ms": 99.46166600275319
+          },
+          "track": {
+            "n": 46353,
+            "p50_ms": 1.250707995495759,
+            "p99_ms": 11.213583013159223
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.4913749910192564,
+        "p99_ms": 69.08724999811966,
+        "requests": 66088,
+        "rps": 2202.9333333333334
+      },
+      "loaded_container_mib": 446.8,
+      "ready_s": 1.7814621249999618
+    },
+    {
+      "gc_collections": 28,
+      "gc_millis": 118,
+      "idle_container_mib": 312.4,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 138
+      },
+      "live_set_mib": 118.199462890625,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 13203,
+            "p50_ms": 1.424957998096943,
+            "p99_ms": 9.400084003573284
+          },
+          "stats": {
+            "n": 6497,
+            "p50_ms": 54.56525000045076,
+            "p99_ms": 86.88575000269338
+          },
+          "track": {
+            "n": 46230,
+            "p50_ms": 1.1805829999502748,
+            "p99_ms": 9.647792001487687
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.400541004841216,
+        "p99_ms": 70.18974999664351,
+        "requests": 65930,
+        "rps": 2197.6666666666665
+      },
+      "loaded_container_mib": 412.0,
+      "ready_s": 1.7249870829982683
+    }
+  ],
+  "medium/jdk25+coh": [
+    {
+      "gc_collections": 27,
+      "gc_millis": 118,
+      "idle_container_mib": 298.9,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 191
+      },
+      "live_set_mib": 100.97982025146484,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 11276,
+            "p50_ms": 1.887790989712812,
+            "p99_ms": 12.535500005469657
+          },
+          "stats": {
+            "n": 5569,
+            "p50_ms": 60.58162500266917,
+            "p99_ms": 125.18608299433254
+          },
+          "track": {
+            "n": 39490,
+            "p50_ms": 1.569917003507726,
+            "p99_ms": 11.776832994655706
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.8886250036302954,
+        "p99_ms": 84.92924999154638,
+        "requests": 56335,
+        "rps": 1877.8333333333333
+      },
+      "loaded_container_mib": 376.1,
+      "ready_s": 1.777506042009918
+    },
+    {
+      "gc_collections": 25,
+      "gc_millis": 96,
+      "idle_container_mib": 288.1,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 248
+      },
+      "live_set_mib": 101.00108337402344,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 9651,
+            "p50_ms": 2.1822910057380795,
+            "p99_ms": 14.428666996536776
+          },
+          "stats": {
+            "n": 4777,
+            "p50_ms": 72.91862501006108,
+            "p99_ms": 129.1381659975741
+          },
+          "track": {
+            "n": 33839,
+            "p50_ms": 1.8213339935755357,
+            "p99_ms": 13.135708999470808
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.199750000727363,
+        "p99_ms": 102.94837498804554,
+        "requests": 48267,
+        "rps": 1608.9
+      },
+      "loaded_container_mib": 375.7,
+      "ready_s": 2.5501573749934323
+    },
+    {
+      "gc_collections": 14,
+      "gc_millis": 78,
+      "idle_container_mib": 265.8,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 319
+      },
+      "live_set_mib": 101.05126953125,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 10592,
+            "p50_ms": 2.219792004325427,
+            "p99_ms": 13.141667004674673
+          },
+          "stats": {
+            "n": 5250,
+            "p50_ms": 64.1803749895189,
+            "p99_ms": 118.58862498775125
+          },
+          "track": {
+            "n": 37214,
+            "p50_ms": 1.8229580018669367,
+            "p99_ms": 11.913333990378305
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.192917003412731,
+        "p99_ms": 90.71887499885634,
+        "requests": 53056,
+        "rps": 1768.5333333333333
+      },
+      "loaded_container_mib": 422.7,
+      "ready_s": 2.9439572499977658
+    }
+  ],
+  "medium/jdk26": [
+    {
+      "gc_collections": 20,
+      "gc_millis": 105,
+      "idle_container_mib": 346.5,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "26.0.2.1",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 134
+      },
+      "live_set_mib": 118.42770385742188,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 13557,
+            "p50_ms": 1.650833000894636,
+            "p99_ms": 10.819208007887937
+          },
+          "stats": {
+            "n": 6654,
+            "p50_ms": 49.90712499420624,
+            "p99_ms": 98.13262500392739
+          },
+          "track": {
+            "n": 47442,
+            "p50_ms": 1.3813340046908706,
+            "p99_ms": 10.112500007380731
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.6407079965574667,
+        "p99_ms": 72.57320800272282,
+        "requests": 67653,
+        "rps": 2255.1
+      },
+      "loaded_container_mib": 437.8,
+      "ready_s": 1.7247746659995755
+    },
+    {
+      "gc_collections": 14,
+      "gc_millis": 72,
+      "idle_container_mib": 316.9,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "26.0.2.1",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 215
+      },
+      "live_set_mib": 118.40831756591797,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 13320,
+            "p50_ms": 1.4658340078312904,
+            "p99_ms": 9.243666994734667
+          },
+          "stats": {
+            "n": 6542,
+            "p50_ms": 54.4779159972677,
+            "p99_ms": 86.59100001386832
+          },
+          "track": {
+            "n": 46645,
+            "p50_ms": 1.19554199045524,
+            "p99_ms": 9.309500004746951
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.4271669933805242,
+        "p99_ms": 70.23912499425933,
+        "requests": 66507,
+        "rps": 2216.9
+      },
+      "loaded_container_mib": 490.5,
+      "ready_s": 1.8315173339942703
+    },
+    {
+      "gc_collections": 21,
+      "gc_millis": 100,
+      "idle_container_mib": 358.9,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "26.0.2.1",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 180
+      },
+      "live_set_mib": 118.44033813476562,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 12784,
+            "p50_ms": 1.6499999910593033,
+            "p99_ms": 12.100959007511847
+          },
+          "stats": {
+            "n": 6271,
+            "p50_ms": 50.816417002351955,
+            "p99_ms": 124.61850000545382
+          },
+          "track": {
+            "n": 44708,
+            "p50_ms": 1.373749997583218,
+            "p99_ms": 11.76475000102073
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.6509999986737967,
+        "p99_ms": 79.48770798975602,
+        "requests": 63763,
+        "rps": 2125.4333333333334
+      },
+      "loaded_container_mib": 449.7,
+      "ready_s": 1.760823958000401
+    }
+  ],
+  "medium/jdk27": [
+    {
+      "gc_collections": 19,
+      "gc_millis": 100,
+      "idle_container_mib": 321.5,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 148
+      },
+      "live_set_mib": 101.34966278076172,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 12940,
+            "p50_ms": 2.0392919977894053,
+            "p99_ms": 12.7877500053728
+          },
+          "stats": {
+            "n": 6349,
+            "p50_ms": 50.09195899765473,
+            "p99_ms": 98.97349998936988
+          },
+          "track": {
+            "n": 45263,
+            "p50_ms": 1.6160830127773806,
+            "p99_ms": 12.011917002382688
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.9534169987309724,
+        "p99_ms": 73.15825000114273,
+        "requests": 64552,
+        "rps": 2151.733333333333
+      },
+      "loaded_container_mib": 392.6,
+      "ready_s": 1.7202404580020811
+    },
+    {
+      "gc_collections": 24,
+      "gc_millis": 106,
+      "idle_container_mib": 325.5,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 180
+      },
+      "live_set_mib": 101.42120361328125,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 10168,
+            "p50_ms": 2.525124989915639,
+            "p99_ms": 14.470624999376014
+          },
+          "stats": {
+            "n": 5033,
+            "p50_ms": 66.23416600632481,
+            "p99_ms": 128.3931250072783
+          },
+          "track": {
+            "n": 35645,
+            "p50_ms": 2.043750006123446,
+            "p99_ms": 13.19712499389425
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.4360420065931976,
+        "p99_ms": 96.26508399378508,
+        "requests": 50846,
+        "rps": 1694.8666666666666
+      },
+      "loaded_container_mib": 388.3,
+      "ready_s": 2.736279625009047
+    },
+    {
+      "gc_collections": 13,
+      "gc_millis": 77,
+      "idle_container_mib": 303.6,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 228
+      },
+      "live_set_mib": 101.37387084960938,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 13273,
+            "p50_ms": 1.8027500045718625,
+            "p99_ms": 12.415832999977283
+          },
+          "stats": {
+            "n": 6529,
+            "p50_ms": 50.247416002093814,
+            "p99_ms": 88.37587499874644
+          },
+          "track": {
+            "n": 46430,
+            "p50_ms": 1.4979589905124158,
+            "p99_ms": 11.27612499112729
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.7994999943766743,
+        "p99_ms": 68.74437500664499,
+        "requests": 66232,
+        "rps": 2207.733333333333
+      },
+      "loaded_container_mib": 477.6,
+      "ready_s": 2.6242179590044543
+    }
+  ],
+  "medium/jdk27+serial": [
+    {
+      "gc_collections": 35,
+      "gc_millis": 117,
+      "idle_container_mib": 281.1,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 536805376,
+        "positions": 2000000,
+        "seedMillis": 199
+      },
+      "live_set_mib": 101.28546905517578,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 18546,
+            "p50_ms": 1.345750002656132,
+            "p99_ms": 8.639708990813233
+          },
+          "stats": {
+            "n": 9080,
+            "p50_ms": 35.89812500285916,
+            "p99_ms": 59.96508299722336
+          },
+          "track": {
+            "n": 64721,
+            "p50_ms": 1.1624579929048195,
+            "p99_ms": 8.312334000947885
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.3480000052368268,
+        "p99_ms": 48.05020800267812,
+        "requests": 92347,
+        "rps": 3078.233333333333
+      },
+      "loaded_container_mib": 382.9,
+      "ready_s": 1.826511457999004
+    },
+    {
+      "gc_collections": 39,
+      "gc_millis": 135,
+      "idle_container_mib": 289.2,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 536805376,
+        "positions": 2000000,
+        "seedMillis": 162
+      },
+      "live_set_mib": 101.28133392333984,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 17694,
+            "p50_ms": 1.3554159959312528,
+            "p99_ms": 8.705917003680952
+          },
+          "stats": {
+            "n": 8671,
+            "p50_ms": 37.9467089951504,
+            "p99_ms": 64.74704100401141
+          },
+          "track": {
+            "n": 61815,
+            "p50_ms": 1.1750829871743917,
+            "p99_ms": 8.244833996286616
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.3630000030389056,
+        "p99_ms": 51.19091698725242,
+        "requests": 88180,
+        "rps": 2939.3333333333335
+      },
+      "loaded_container_mib": 428.0,
+      "ready_s": 1.7591380840021884
+    },
+    {
+      "gc_collections": 36,
+      "gc_millis": 124,
+      "idle_container_mib": 317.4,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 536805376,
+        "positions": 2000000,
+        "seedMillis": 170
+      },
+      "live_set_mib": 101.31377410888672,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 17426,
+            "p50_ms": 1.3573329924838617,
+            "p99_ms": 8.726790998480283
+          },
+          "stats": {
+            "n": 8548,
+            "p50_ms": 38.86391699779779,
+            "p99_ms": 64.64041699655354
+          },
+          "track": {
+            "n": 60892,
+            "p50_ms": 1.1480419925646856,
+            "p99_ms": 8.37383299949579
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.3412910047918558,
+        "p99_ms": 51.72645799757447,
+        "requests": 86866,
+        "rps": 2895.5333333333333
+      },
+      "loaded_container_mib": 417.0,
+      "ready_s": 1.8431082500028424
+    }
+  ],
+  "medium/jdk27-coh": [
+    {
+      "gc_collections": 20,
+      "gc_millis": 97,
+      "idle_container_mib": 346.2,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "27",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 208
+      },
+      "live_set_mib": 118.62283325195312,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 14912,
+            "p50_ms": 1.4744999934919178,
+            "p99_ms": 9.634667003410868
+          },
+          "stats": {
+            "n": 7277,
+            "p50_ms": 47.29470898746513,
+            "p99_ms": 78.73349999135826
+          },
+          "track": {
+            "n": 52095,
+            "p50_ms": 1.2383749999571592,
+            "p99_ms": 9.243499996955507
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.462917003664188,
+        "p99_ms": 62.06962499709334,
+        "requests": 74284,
+        "rps": 2476.133333333333
+      },
+      "loaded_container_mib": 438.4,
+      "ready_s": 2.0219593340007123
+    },
+    {
+      "gc_collections": 39,
+      "gc_millis": 134,
+      "idle_container_mib": 337.6,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "27",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 222
+      },
+      "live_set_mib": 118.56040954589844,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 13018,
+            "p50_ms": 1.4989159972174093,
+            "p99_ms": 10.09837500168942
+          },
+          "stats": {
+            "n": 6390,
+            "p50_ms": 55.562624998856336,
+            "p99_ms": 89.02041699911933
+          },
+          "track": {
+            "n": 45574,
+            "p50_ms": 1.2618330074474216,
+            "p99_ms": 9.539959006360732
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.4939579996280372,
+        "p99_ms": 72.33916700351983,
+        "requests": 64982,
+        "rps": 2166.0666666666666
+      },
+      "loaded_container_mib": 376.0,
+      "ready_s": 2.0134442080016015
+    },
+    {
+      "gc_collections": 18,
+      "gc_millis": 84,
+      "idle_container_mib": 320.7,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 2,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "27",
+        "maxHeapBytes": 536870912,
+        "positions": 2000000,
+        "seedMillis": 156
+      },
+      "live_set_mib": 118.4632797241211,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 14679,
+            "p50_ms": 1.425584006938152,
+            "p99_ms": 9.212625009240583
+          },
+          "stats": {
+            "n": 7151,
+            "p50_ms": 48.6840000085067,
+            "p99_ms": 77.6226250018226
+          },
+          "track": {
+            "n": 51226,
+            "p50_ms": 1.1748329998226836,
+            "p99_ms": 9.065916005056351
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.399708999088034,
+        "p99_ms": 62.701709000975825,
+        "requests": 73056,
+        "rps": 2435.2
+      },
+      "loaded_container_mib": 462.8,
+      "ready_s": 1.7683469170005992
+    }
+  ],
+  "small/jdk25": [
+    {
+      "gc_collections": 22,
+      "gc_millis": 181,
+      "idle_container_mib": 289.9,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 259522560,
+        "positions": 2000000,
+        "seedMillis": 234
+      },
+      "live_set_mib": 118.38180541992188,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 9291,
+            "p50_ms": 1.915999993798323,
+            "p99_ms": 51.74824999994598
+          },
+          "stats": {
+            "n": 4606,
+            "p50_ms": 77.55379199807066,
+            "p99_ms": 109.64683299243916
+          },
+          "track": {
+            "n": 32603,
+            "p50_ms": 1.5744590054964647,
+            "p99_ms": 50.42729100387078
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.836458992329426,
+        "p99_ms": 94.52499999315478,
+        "requests": 46500,
+        "rps": 1550.0
+      },
+      "loaded_container_mib": 384.1,
+      "ready_s": 5.654442375001963
+    },
+    {
+      "gc_collections": 20,
+      "gc_millis": 87,
+      "idle_container_mib": 261.9,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 259522560,
+        "positions": 2000000,
+        "seedMillis": 384
+      },
+      "live_set_mib": 118.30089569091797,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 8116,
+            "p50_ms": 2.247374999569729,
+            "p99_ms": 53.22300000989344
+          },
+          "stats": {
+            "n": 4027,
+            "p50_ms": 79.31316700705793,
+            "p99_ms": 185.67229200561997
+          },
+          "track": {
+            "n": 28473,
+            "p50_ms": 1.8527920037740842,
+            "p99_ms": 52.03750000509899
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.1844170114491135,
+        "p99_ms": 107.18024999368936,
+        "requests": 40616,
+        "rps": 1353.8666666666666
+      },
+      "loaded_container_mib": 377.7,
+      "ready_s": 3.741712458009715
+    },
+    {
+      "gc_collections": 23,
+      "gc_millis": 129,
+      "idle_container_mib": 293.4,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 259522560,
+        "positions": 2000000,
+        "seedMillis": 387
+      },
+      "live_set_mib": 118.40620422363281,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 9367,
+            "p50_ms": 1.9796669948846102,
+            "p99_ms": 50.89870899973903
+          },
+          "stats": {
+            "n": 4634,
+            "p50_ms": 77.0320829906268,
+            "p99_ms": 111.29416699986905
+          },
+          "track": {
+            "n": 32859,
+            "p50_ms": 1.644249990931712,
+            "p99_ms": 50.49804100417532
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.8973749974975362,
+        "p99_ms": 94.341957999859,
+        "requests": 46860,
+        "rps": 1562.0
+      },
+      "loaded_container_mib": 383.0,
+      "ready_s": 3.5318320419901283
+    }
+  ],
+  "small/jdk25+coh": [
+    {
+      "gc_collections": 17,
+      "gc_millis": 75,
+      "idle_container_mib": 245.9,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 259522560,
+        "positions": 2000000,
+        "seedMillis": 305
+      },
+      "live_set_mib": 101.21875,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 7768,
+            "p50_ms": 2.494041997124441,
+            "p99_ms": 53.13708400353789
+          },
+          "stats": {
+            "n": 3840,
+            "p50_ms": 86.69708299566992,
+            "p99_ms": 161.0432919987943
+          },
+          "track": {
+            "n": 27215,
+            "p50_ms": 1.968542012036778,
+            "p99_ms": 52.188375004334375
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.3078329977579415,
+        "p99_ms": 103.60787500394508,
+        "requests": 38823,
+        "rps": 1294.1
+      },
+      "loaded_container_mib": 362.2,
+      "ready_s": 3.4073747920047026
+    },
+    {
+      "gc_collections": 20,
+      "gc_millis": 125,
+      "idle_container_mib": 244.6,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 259522560,
+        "positions": 2000000,
+        "seedMillis": 389
+      },
+      "live_set_mib": 101.21646118164062,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 8864,
+            "p50_ms": 1.9143749959766865,
+            "p99_ms": 52.466124994680285
+          },
+          "stats": {
+            "n": 4396,
+            "p50_ms": 80.41391600272618,
+            "p99_ms": 149.11570798722096
+          },
+          "track": {
+            "n": 31083,
+            "p50_ms": 1.6139159997692332,
+            "p99_ms": 51.432334003038704
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.8649580015335232,
+        "p99_ms": 98.38408400537446,
+        "requests": 44343,
+        "rps": 1478.1
+      },
+      "loaded_container_mib": 356.5,
+      "ready_s": 3.4542005420080386
+    },
+    {
+      "gc_collections": 25,
+      "gc_millis": 177,
+      "idle_container_mib": 246.8,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "25.0.4.1",
+        "maxHeapBytes": 259522560,
+        "positions": 2000000,
+        "seedMillis": 369
+      },
+      "live_set_mib": 101.55045318603516,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 5644,
+            "p50_ms": 2.1093750110594556,
+            "p99_ms": 55.356333003146574
+          },
+          "stats": {
+            "n": 2801,
+            "p50_ms": 116.87920898839366,
+            "p99_ms": 203.37975000438746
+          },
+          "track": {
+            "n": 19777,
+            "p50_ms": 1.778457997716032,
+            "p99_ms": 54.451165997306816
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.097332995617762,
+        "p99_ms": 178.11366698879283,
+        "requests": 28222,
+        "rps": 940.7333333333333
+      },
+      "loaded_container_mib": 350.9,
+      "ready_s": 3.5271817089960678
+    }
+  ],
+  "small/jdk26": [
+    {
+      "gc_collections": 19,
+      "gc_millis": 43,
+      "idle_container_mib": 295.5,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "26.0.2.1",
+        "maxHeapBytes": 268369920,
+        "positions": 2000000,
+        "seedMillis": 312
+      },
+      "live_set_mib": 119.0300521850586,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 9429,
+            "p50_ms": 1.8322910036658868,
+            "p99_ms": 50.39116699481383
+          },
+          "stats": {
+            "n": 4666,
+            "p50_ms": 78.80454199039377,
+            "p99_ms": 108.29891700996086
+          },
+          "track": {
+            "n": 33028,
+            "p50_ms": 1.5302919928217307,
+            "p99_ms": 50.16075000457931
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.7532920028315857,
+        "p99_ms": 94.57229099643882,
+        "requests": 47123,
+        "rps": 1570.7666666666667
+      },
+      "loaded_container_mib": 388.2,
+      "ready_s": 3.558786916997633
+    },
+    {
+      "gc_collections": 19,
+      "gc_millis": 49,
+      "idle_container_mib": 295.7,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "26.0.2.1",
+        "maxHeapBytes": 268369920,
+        "positions": 2000000,
+        "seedMillis": 345
+      },
+      "live_set_mib": 118.62056732177734,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 9436,
+            "p50_ms": 1.877167000202462,
+            "p99_ms": 50.83312500210013
+          },
+          "stats": {
+            "n": 4669,
+            "p50_ms": 77.73429100052454,
+            "p99_ms": 104.47554099664558
+          },
+          "track": {
+            "n": 33025,
+            "p50_ms": 1.5606250090058893,
+            "p99_ms": 50.42679200414568
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.7997079994529486,
+        "p99_ms": 93.78512499097269,
+        "requests": 47130,
+        "rps": 1571.0
+      },
+      "loaded_container_mib": 395.2,
+      "ready_s": 3.3568120840063784
+    },
+    {
+      "gc_collections": 25,
+      "gc_millis": 64,
+      "idle_container_mib": 273.1,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "26.0.2.1",
+        "maxHeapBytes": 268369920,
+        "positions": 2000000,
+        "seedMillis": 313
+      },
+      "live_set_mib": 118.46745300292969,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 7747,
+            "p50_ms": 1.9072089926339686,
+            "p99_ms": 52.83495900221169
+          },
+          "stats": {
+            "n": 3833,
+            "p50_ms": 87.29500000481494,
+            "p99_ms": 182.67187500896398
+          },
+          "track": {
+            "n": 27191,
+            "p50_ms": 1.5800410037627444,
+            "p99_ms": 52.759457990759984
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.8534590053604916,
+        "p99_ms": 120.53904098866042,
+        "requests": 38771,
+        "rps": 1292.3666666666666
+      },
+      "loaded_container_mib": 382.9,
+      "ready_s": 3.386628209002083
+    }
+  ],
+  "small/jdk27": [
+    {
+      "gc_collections": 29,
+      "gc_millis": 224,
+      "idle_container_mib": 294.9,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 268435456,
+        "positions": 2000000,
+        "seedMillis": 338
+      },
+      "live_set_mib": 101.39146423339844,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 6536,
+            "p50_ms": 2.5574580067768693,
+            "p99_ms": 55.85324999992736
+          },
+          "stats": {
+            "n": 3226,
+            "p50_ms": 98.65608399559278,
+            "p99_ms": 181.8725000048289
+          },
+          "track": {
+            "n": 22885,
+            "p50_ms": 2.0441249944269657,
+            "p99_ms": 54.75900000601541
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.4317909992532805,
+        "p99_ms": 144.28233398939483,
+        "requests": 32647,
+        "rps": 1088.2333333333333
+      },
+      "loaded_container_mib": 328.2,
+      "ready_s": 3.723225374997128
+    },
+    {
+      "gc_collections": 23,
+      "gc_millis": 105,
+      "idle_container_mib": 282.8,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 268435456,
+        "positions": 2000000,
+        "seedMillis": 317
+      },
+      "live_set_mib": 101.3757095336914,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 7730,
+            "p50_ms": 2.1077089913887903,
+            "p99_ms": 53.64858299435582
+          },
+          "stats": {
+            "n": 3820,
+            "p50_ms": 89.3835409951862,
+            "p99_ms": 162.3715839959914
+          },
+          "track": {
+            "n": 27059,
+            "p50_ms": 1.7360829951940104,
+            "p99_ms": 52.3110829963116
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.0286249928176403,
+        "p99_ms": 106.50058300234377,
+        "requests": 38609,
+        "rps": 1286.9666666666667
+      },
+      "loaded_container_mib": 345.8,
+      "ready_s": 4.2224674169992795
+    },
+    {
+      "gc_collections": 30,
+      "gc_millis": 161,
+      "idle_container_mib": 313.1,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 268435456,
+        "positions": 2000000,
+        "seedMillis": 472
+      },
+      "live_set_mib": 101.3128662109375,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 7685,
+            "p50_ms": 2.0953749917680398,
+            "p99_ms": 54.696833991329186
+          },
+          "stats": {
+            "n": 3791,
+            "p50_ms": 89.9614170048153,
+            "p99_ms": 160.7276249997085
+          },
+          "track": {
+            "n": 26935,
+            "p50_ms": 1.7361250065732747,
+            "p99_ms": 54.954667008132674
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.0244589977664873,
+        "p99_ms": 107.65579099825118,
+        "requests": 38411,
+        "rps": 1280.3666666666666
+      },
+      "loaded_container_mib": 355.2,
+      "ready_s": 3.6807894999947166
+    }
+  ],
+  "small/jdk27+serial": [
+    {
+      "gc_collections": 19,
+      "gc_millis": 79,
+      "idle_container_mib": 264.4,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 268369920,
+        "positions": 2000000,
+        "seedMillis": 489
+      },
+      "live_set_mib": 101.29936981201172,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 9656,
+            "p50_ms": 2.069333990220912,
+            "p99_ms": 51.556582999182865
+          },
+          "stats": {
+            "n": 4783,
+            "p50_ms": 73.44037499569822,
+            "p99_ms": 104.80358300264925
+          },
+          "track": {
+            "n": 33857,
+            "p50_ms": 1.7281660111621022,
+            "p99_ms": 50.63891600002535
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.9917910103686154,
+        "p99_ms": 90.91766699566506,
+        "requests": 48296,
+        "rps": 1609.8666666666666
+      },
+      "loaded_container_mib": 371.0,
+      "ready_s": 3.5660249590000603
+    },
+    {
+      "gc_collections": 20,
+      "gc_millis": 81,
+      "idle_container_mib": 249.3,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 268369920,
+        "positions": 2000000,
+        "seedMillis": 404
+      },
+      "live_set_mib": 101.32076263427734,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 9675,
+            "p50_ms": 1.9585419940995052,
+            "p99_ms": 52.13295899739023
+          },
+          "stats": {
+            "n": 4789,
+            "p50_ms": 73.24062498810235,
+            "p99_ms": 107.77904100541491
+          },
+          "track": {
+            "n": 33879,
+            "p50_ms": 1.6762500017648563,
+            "p99_ms": 51.23220800305717
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.9215829961467534,
+        "p99_ms": 91.92133399483282,
+        "requests": 48343,
+        "rps": 1611.4333333333334
+      },
+      "loaded_container_mib": 365.7,
+      "ready_s": 3.6490683749871096
+    },
+    {
+      "gc_collections": 19,
+      "gc_millis": 70,
+      "idle_container_mib": 255.8,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "Copy",
+          "MarkSweepCompact"
+        ],
+        "compactObjectHeaders": "true",
+        "javaVersion": "27",
+        "maxHeapBytes": 268369920,
+        "positions": 2000000,
+        "seedMillis": 302
+      },
+      "live_set_mib": 101.27654266357422,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 9636,
+            "p50_ms": 2.0080829999642447,
+            "p99_ms": 53.01879199396353
+          },
+          "stats": {
+            "n": 4779,
+            "p50_ms": 72.73304199043196,
+            "p99_ms": 109.22583400679287
+          },
+          "track": {
+            "n": 33764,
+            "p50_ms": 1.6721249994589016,
+            "p99_ms": 50.91954200179316
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.9285419984953478,
+        "p99_ms": 92.86516699648928,
+        "requests": 48179,
+        "rps": 1605.9666666666667
+      },
+      "loaded_container_mib": 369.7,
+      "ready_s": 3.3992907500069123
+    }
+  ],
+  "small/jdk27-coh": [
+    {
+      "gc_collections": 30,
+      "gc_millis": 166,
+      "idle_container_mib": 308.0,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "27",
+        "maxHeapBytes": 268435456,
+        "positions": 2000000,
+        "seedMillis": 395
+      },
+      "live_set_mib": 118.52006530761719,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 6796,
+            "p50_ms": 2.1312919998308644,
+            "p99_ms": 54.28208300145343
+          },
+          "stats": {
+            "n": 3351,
+            "p50_ms": 100.04208300961182,
+            "p99_ms": 178.531750003458
+          },
+          "track": {
+            "n": 23796,
+            "p50_ms": 1.7025839915731922,
+            "p99_ms": 54.12079198868014
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.0088330056751147,
+        "p99_ms": 123.47795801179018,
+        "requests": 33943,
+        "rps": 1131.4333333333334
+      },
+      "loaded_container_mib": 362.7,
+      "ready_s": 3.451863417009008
+    },
+    {
+      "gc_collections": 54,
+      "gc_millis": 206,
+      "idle_container_mib": 293.7,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "27",
+        "maxHeapBytes": 268435456,
+        "positions": 2000000,
+        "seedMillis": 395
+      },
+      "live_set_mib": 118.52723693847656,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 6613,
+            "p50_ms": 2.081541999359615,
+            "p99_ms": 56.14070799492765
+          },
+          "stats": {
+            "n": 3272,
+            "p50_ms": 101.58841700467747,
+            "p99_ms": 180.71762500039767
+          },
+          "track": {
+            "n": 23140,
+            "p50_ms": 1.7260419990634546,
+            "p99_ms": 55.12570800783578
+          }
+        },
+        "errors": 0,
+        "p50_ms": 2.0325829973444343,
+        "p99_ms": 143.2963330007624,
+        "requests": 33025,
+        "rps": 1100.8333333333333
+      },
+      "loaded_container_mib": 343.3,
+      "ready_s": 3.515718750000815
+    },
+    {
+      "gc_collections": 21,
+      "gc_millis": 98,
+      "idle_container_mib": 299.4,
+      "info": {
+        "aircraft": 20000,
+        "availableProcessors": 1,
+        "collectors": [
+          "G1 Young Generation",
+          "G1 Concurrent GC",
+          "G1 Old Generation"
+        ],
+        "compactObjectHeaders": "false",
+        "javaVersion": "27",
+        "maxHeapBytes": 268435456,
+        "positions": 2000000,
+        "seedMillis": 400
+      },
+      "live_set_mib": 118.49376678466797,
+      "load": {
+        "by_kind": {
+          "ingest": {
+            "n": 7024,
+            "p50_ms": 2.0084580028196797,
+            "p99_ms": 55.55604200344533
+          },
+          "stats": {
+            "n": 3454,
+            "p50_ms": 98.25420899142046,
+            "p99_ms": 176.58729199320078
+          },
+          "track": {
+            "n": 24665,
+            "p50_ms": 1.6363340109819546,
+            "p99_ms": 54.18291699606925
+          }
+        },
+        "errors": 0,
+        "p50_ms": 1.9147909915773198,
+        "p99_ms": 120.79729200922884,
+        "requests": 35143,
+        "rps": 1171.4333333333334
+      },
+      "loaded_container_mib": 370.3,
+      "ready_s": 3.5081029159919126
+    }
+  ]
+}
