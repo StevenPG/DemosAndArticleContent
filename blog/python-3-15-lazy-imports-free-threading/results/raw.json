@@ -1,0 +1,440 @@
+{
+  "startup": {
+    "3.14": {
+      "bare interpreter": {
+        "-c pass": {
+          "median_ms": 16.808374479296617,
+          "min_ms": 16.038208006648347,
+          "stdev_ms": 4.747920445424614
+        }
+      },
+      "eager": {
+        "report": {
+          "median_ms": 112.68297901551705,
+          "min_ms": 100.08820900111459,
+          "modules": 385,
+          "stdev_ms": 24.35114620416015
+        },
+        "summary": {
+          "median_ms": 129.46677151194308,
+          "min_ms": 111.86533299041912,
+          "modules": 378,
+          "stdev_ms": 111.45319697541747
+        },
+        "version": {
+          "median_ms": 113.98495848698076,
+          "min_ms": 93.5175420017913,
+          "modules": 378,
+          "stdev_ms": 13.478022627890752
+        }
+      },
+      "eager + -X lazy_imports=all": {
+        "report": {
+          "median_ms": 115.72089600667823,
+          "min_ms": 93.13087500049733,
+          "modules": 385,
+          "stdev_ms": 38.173660332302006
+        },
+        "summary": {
+          "median_ms": 90.42372950352728,
+          "min_ms": 86.4040830056183,
+          "modules": 378,
+          "stdev_ms": 3.980119724226805
+        },
+        "version": {
+          "median_ms": 88.84272899013013,
+          "min_ms": 85.76379201258533,
+          "modules": 378,
+          "stdev_ms": 5.630324030606766
+        }
+      },
+      "lazy_keyword": {
+        "report": {
+          "error": "SyntaxError: invalid syntax"
+        },
+        "summary": {
+          "error": "SyntaxError: invalid syntax"
+        },
+        "version": {
+          "error": "SyntaxError: invalid syntax"
+        }
+      },
+      "lazy_modules": {
+        "report": {
+          "median_ms": 96.50095850520302,
+          "min_ms": 92.93637500377372,
+          "modules": 385,
+          "stdev_ms": 3.189124507153587
+        },
+        "summary": {
+          "median_ms": 91.25729100196622,
+          "min_ms": 86.46416600095108,
+          "modules": 378,
+          "stdev_ms": 7.148965294198859
+        },
+        "version": {
+          "median_ms": 95.83612500864547,
+          "min_ms": 86.3550829817541,
+          "modules": 378,
+          "stdev_ms": 7.964571913118766
+        }
+      }
+    },
+    "3.14t": {
+      "bare interpreter": {
+        "-c pass": {
+          "median_ms": 17.859416504506953,
+          "min_ms": 16.35641697794199,
+          "stdev_ms": 5.708762676058334
+        }
+      },
+      "eager": {
+        "report": {
+          "median_ms": 112.7584795030998,
+          "min_ms": 104.53237500041723,
+          "modules": 385,
+          "stdev_ms": 11.54658944633563
+        },
+        "summary": {
+          "median_ms": 141.4971254998818,
+          "min_ms": 99.46487500565127,
+          "modules": 378,
+          "stdev_ms": 32.12784837327355
+        },
+        "version": {
+          "median_ms": 133.62939600483514,
+          "min_ms": 106.13837497658096,
+          "modules": 378,
+          "stdev_ms": 22.878935942414543
+        }
+      },
+      "eager + -X lazy_imports=all": {
+        "report": {
+          "median_ms": 104.5324170117965,
+          "min_ms": 103.04366698255762,
+          "modules": 385,
+          "stdev_ms": 2.260489063812443
+        },
+        "summary": {
+          "median_ms": 97.80056249292102,
+          "min_ms": 95.40829202160239,
+          "modules": 378,
+          "stdev_ms": 1.990904506463512
+        },
+        "version": {
+          "median_ms": 96.54312449856661,
+          "min_ms": 95.10495798895136,
+          "modules": 378,
+          "stdev_ms": 6.596826138428415
+        }
+      },
+      "lazy_keyword": {
+        "report": {
+          "error": "SyntaxError: invalid syntax"
+        },
+        "summary": {
+          "error": "SyntaxError: invalid syntax"
+        },
+        "version": {
+          "error": "SyntaxError: invalid syntax"
+        }
+      },
+      "lazy_modules": {
+        "report": {
+          "median_ms": 105.29433350893669,
+          "min_ms": 103.23962499387562,
+          "modules": 385,
+          "stdev_ms": 4.698609998936916
+        },
+        "summary": {
+          "median_ms": 97.90175000671297,
+          "min_ms": 95.22895902046002,
+          "modules": 378,
+          "stdev_ms": 1.3929313738322793
+        },
+        "version": {
+          "median_ms": 97.3232704855036,
+          "min_ms": 96.12141700927168,
+          "modules": 378,
+          "stdev_ms": 4.9897660350459665
+        }
+      }
+    },
+    "3.15": {
+      "bare interpreter": {
+        "-c pass": {
+          "median_ms": 13.989333994686604,
+          "min_ms": 13.308041990967467,
+          "stdev_ms": 0.7511341014625086
+        }
+      },
+      "eager": {
+        "report": {
+          "median_ms": 119.78681250184309,
+          "min_ms": 91.81225000065751,
+          "modules": 388,
+          "stdev_ms": 30.1227362224649
+        },
+        "summary": {
+          "median_ms": 112.3462704999838,
+          "min_ms": 90.35104198846966,
+          "modules": 381,
+          "stdev_ms": 14.182245573892525
+        },
+        "version": {
+          "median_ms": 99.89825049706269,
+          "min_ms": 85.06512502208352,
+          "modules": 381,
+          "stdev_ms": 15.62405576395918
+        }
+      },
+      "eager + -X lazy_imports=all": {
+        "report": {
+          "median_ms": 116.93929150351323,
+          "min_ms": 78.58149998355657,
+          "modules": 268,
+          "stdev_ms": 15.308755425001097
+        },
+        "summary": {
+          "median_ms": 23.920770501717925,
+          "min_ms": 23.190459003672004,
+          "modules": 73,
+          "stdev_ms": 1.1347681671662682
+        },
+        "version": {
+          "median_ms": 26.334124995628372,
+          "min_ms": 21.069791982881725,
+          "modules": 60,
+          "stdev_ms": 2.5586869970157866
+        }
+      },
+      "lazy_keyword": {
+        "report": {
+          "median_ms": 137.6595420006197,
+          "min_ms": 101.65079100988805,
+          "modules": 386,
+          "stdev_ms": 16.917082173865992
+        },
+        "summary": {
+          "median_ms": 25.82422850537114,
+          "min_ms": 24.364167009480298,
+          "modules": 83,
+          "stdev_ms": 1.835791334388296
+        },
+        "version": {
+          "median_ms": 25.125708503765054,
+          "min_ms": 22.148958989419043,
+          "modules": 64,
+          "stdev_ms": 4.883599568321154
+        }
+      },
+      "lazy_modules": {
+        "report": {
+          "median_ms": 117.24339600186795,
+          "min_ms": 100.89166698162444,
+          "modules": 386,
+          "stdev_ms": 21.12108553735883
+        },
+        "summary": {
+          "median_ms": 28.479728993261233,
+          "min_ms": 24.147666001226753,
+          "modules": 83,
+          "stdev_ms": 4.0856630891433365
+        },
+        "version": {
+          "median_ms": 19.75681299518328,
+          "min_ms": 19.2625829949975,
+          "modules": 64,
+          "stdev_ms": 0.6497911451488665
+        }
+      }
+    },
+    "3.15t": {
+      "bare interpreter": {
+        "-c pass": {
+          "median_ms": 25.242832998628728,
+          "min_ms": 21.247791999485344,
+          "stdev_ms": 1.986044731762359
+        }
+      },
+      "eager": {
+        "report": {
+          "median_ms": 115.13631300476845,
+          "min_ms": 108.6423330125399,
+          "modules": 388,
+          "stdev_ms": 13.911518722056515
+        },
+        "summary": {
+          "median_ms": 109.0297499904409,
+          "min_ms": 102.25679099676199,
+          "modules": 381,
+          "stdev_ms": 15.31153033330121
+        },
+        "version": {
+          "median_ms": 151.43716649618,
+          "min_ms": 108.10966600547545,
+          "modules": 381,
+          "stdev_ms": 16.749754298686266
+        }
+      },
+      "eager + -X lazy_imports=all": {
+        "report": {
+          "median_ms": 93.64312500110827,
+          "min_ms": 85.087499988731,
+          "modules": 268,
+          "stdev_ms": 14.953843059545827
+        },
+        "summary": {
+          "median_ms": 36.46691700851079,
+          "min_ms": 33.60116601106711,
+          "modules": 73,
+          "stdev_ms": 3.896298198322605
+        },
+        "version": {
+          "median_ms": 24.65272950939834,
+          "min_ms": 22.921791998669505,
+          "modules": 60,
+          "stdev_ms": 3.388629029345381
+        }
+      },
+      "lazy_keyword": {
+        "report": {
+          "median_ms": 153.73966701736208,
+          "min_ms": 110.10587500641122,
+          "modules": 386,
+          "stdev_ms": 20.19813546780352
+        },
+        "summary": {
+          "median_ms": 27.708146008080803,
+          "min_ms": 26.777874998515472,
+          "modules": 83,
+          "stdev_ms": 3.3017964102420563
+        },
+        "version": {
+          "median_ms": 23.517687484854832,
+          "min_ms": 22.803666011895984,
+          "modules": 64,
+          "stdev_ms": 1.5976483984738052
+        }
+      },
+      "lazy_modules": {
+        "report": {
+          "median_ms": 155.98206249705981,
+          "min_ms": 109.78150001028553,
+          "modules": 386,
+          "stdev_ms": 35.20257712224238
+        },
+        "summary": {
+          "median_ms": 38.716958501026966,
+          "min_ms": 27.889041986782104,
+          "modules": 83,
+          "stdev_ms": 3.9153343011189214
+        },
+        "version": {
+          "median_ms": 33.13347951916512,
+          "min_ms": 29.87970897811465,
+          "modules": 64,
+          "stdev_ms": 3.7771573066244497
+        }
+      }
+    }
+  },
+  "threads": {
+    "3.14": {
+      "free_threaded_build": false,
+      "gil_enabled": true,
+      "jit_available": true,
+      "jit_enabled": false,
+      "processes": {
+        "4": 3.223645749996649
+      },
+      "python": "3.14.6",
+      "threads": {
+        "1": 12.187922917015385,
+        "2": 11.775473832996795,
+        "4": 13.494897708005738
+      },
+      "work": 2000000
+    },
+    "3.14 (PYTHON_JIT=1)": {
+      "free_threaded_build": false,
+      "gil_enabled": true,
+      "jit_available": true,
+      "jit_enabled": true,
+      "processes": {
+        "4": 3.1008681670064107
+      },
+      "python": "3.14.6",
+      "threads": {
+        "1": 13.17492587500601,
+        "2": 11.768592375010485,
+        "4": 11.471317750023445
+      },
+      "work": 2000000
+    },
+    "3.14t": {
+      "free_threaded_build": true,
+      "gil_enabled": false,
+      "jit_available": false,
+      "jit_enabled": false,
+      "processes": {
+        "4": 2.974432417016942
+      },
+      "python": "3.14.6",
+      "threads": {
+        "1": 10.73845579198678,
+        "2": 5.770918833004544,
+        "4": 3.0105053749866784
+      },
+      "work": 2000000
+    },
+    "3.15": {
+      "free_threaded_build": false,
+      "gil_enabled": true,
+      "jit_available": true,
+      "jit_enabled": false,
+      "processes": {
+        "4": 3.191024334024405
+      },
+      "python": "3.15.0b2",
+      "threads": {
+        "1": 11.6216238749912,
+        "2": 11.55018300001393,
+        "4": 11.52931420900859
+      },
+      "work": 2000000
+    },
+    "3.15 (PYTHON_JIT=1)": {
+      "free_threaded_build": false,
+      "gil_enabled": true,
+      "jit_available": true,
+      "jit_enabled": true,
+      "processes": {
+        "4": 1.5957204590085894
+      },
+      "python": "3.15.0b2",
+      "threads": {
+        "1": 5.448063165997155,
+        "2": 5.423249999992549,
+        "4": 5.506365207984345
+      },
+      "work": 2000000
+    },
+    "3.15t": {
+      "free_threaded_build": true,
+      "gil_enabled": false,
+      "jit_available": false,
+      "jit_enabled": false,
+      "processes": {
+        "4": 3.2649524580047
+      },
+      "python": "3.15.0b2",
+      "threads": {
+        "1": 11.643232290982269,
+        "2": 6.301368124986766,
+        "4": 3.2182561669906136
+      },
+      "work": 2000000
+    }
+  }
+}
