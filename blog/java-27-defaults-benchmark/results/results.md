@@ -1,28 +1,28 @@
 # Java 27 defaults benchmark - results
 
-Docker arch `x86_64`, 4 CPUs visible to Docker, 2 runs per row (medians shown), 20 s load at 16 client threads.
+Docker arch `aarch64`, 2 CPUs visible to Docker, 3 runs per row (medians shown), 30 s load at 16 client threads.
 
 ## `small` - `--cpus 1 --memory 1g`
 
 | Row | Collector | Compact headers | Max heap MiB | Ready s | Live set MiB | Container idle MiB | Container loaded MiB | req/s | p50 ms | p99 ms | GCs | GC ms |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `jdk25` | Serial | false | 248 | 8.23 | 118.5 | 232 | 326 | 393 | 7.0 | 319.1 | 4 | 60 |
-| `jdk25+coh` | Serial | true | 248 | 8.30 | 101.4 | 205 | 307 | 399 | 6.4 | 304.4 | 4 | 70 |
-| `jdk26` | Serial | false | 256 | 8.11 | 118.8 | 249 | 337 | 391 | 6.0 | 310.7 | 4 | 55 |
-| `jdk27` | G1 | true | 256 | 8.17 | 101.4 | 230 | 269 | 299 | 6.7 | 452.4 | 8 | 46 |
-| `jdk27-coh` | G1 | false | 256 | 8.30 | 118.5 | 264 | 284 | 267 | 7.8 | 500.2 | 10 | 116 |
-| `jdk27+serial` | Serial | true | 256 | 8.29 | 101.3 | 217 | 316 | 370 | 6.4 | 392.1 | 4 | 24 |
+| `jdk25` | Serial | false | 248 | 3.74 | 118.4 | 290 | 383 | 1,550 | 1.9 | 94.5 | 22 | 129 |
+| `jdk25+coh` | Serial | true | 248 | 3.45 | 101.2 | 246 | 356 | 1,294 | 2.1 | 103.6 | 20 | 125 |
+| `jdk26` | Serial | false | 256 | 3.39 | 118.6 | 296 | 388 | 1,571 | 1.8 | 94.6 | 19 | 49 |
+| `jdk27` | G1 | true | 256 | 3.72 | 101.4 | 295 | 346 | 1,280 | 2.0 | 107.7 | 29 | 161 |
+| `jdk27-coh` | G1 | false | 256 | 3.51 | 118.5 | 299 | 363 | 1,131 | 2.0 | 123.5 | 30 | 166 |
+| `jdk27+serial` | Serial | true | 256 | 3.57 | 101.3 | 256 | 370 | 1,610 | 1.9 | 91.9 | 19 | 79 |
 
 ## `medium` - `--cpus 2 --memory 2g`
 
 | Row | Collector | Compact headers | Max heap MiB | Ready s | Live set MiB | Container idle MiB | Container loaded MiB | req/s | p50 ms | p99 ms | GCs | GC ms |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `jdk25` | G1 | false | 512 | 4.07 | 118.2 | 267 | 389 | 870 | 5.2 | 184.2 | 8 | 146 |
-| `jdk25+coh` | G1 | true | 512 | 4.19 | 101.1 | 246 | 339 | 956 | 4.0 | 159.2 | 9 | 70 |
-| `jdk26` | G1 | false | 512 | 3.99 | 118.3 | 322 | 373 | 924 | 3.7 | 173.4 | 8 | 70 |
-| `jdk27` | G1 | true | 512 | 4.19 | 101.5 | 287 | 392 | 979 | 4.1 | 148.2 | 5 | 52 |
-| `jdk27-coh` | G1 | false | 512 | 4.11 | 118.6 | 326 | 385 | 923 | 3.9 | 169.9 | 8 | 63 |
-| `jdk27+serial` | Serial | true | 512 | 4.17 | 101.5 | 234 | 365 | 1,223 | 4.1 | 108.1 | 10 | 209 |
+| `jdk25` | G1 | false | 512 | 1.78 | 118.3 | 286 | 447 | 2,203 | 1.4 | 69.1 | 20 | 98 |
+| `jdk25+coh` | G1 | true | 512 | 2.55 | 101.0 | 288 | 376 | 1,769 | 2.2 | 90.7 | 25 | 96 |
+| `jdk26` | G1 | false | 512 | 1.76 | 118.4 | 346 | 450 | 2,217 | 1.6 | 72.6 | 20 | 100 |
+| `jdk27` | G1 | true | 512 | 2.62 | 101.4 | 322 | 393 | 2,152 | 2.0 | 73.2 | 19 | 100 |
+| `jdk27-coh` | G1 | false | 512 | 2.01 | 118.6 | 338 | 438 | 2,435 | 1.5 | 62.7 | 20 | 97 |
+| `jdk27+serial` | Serial | true | 512 | 1.83 | 101.3 | 289 | 417 | 2,939 | 1.3 | 51.2 | 36 | 124 |
 
 ## Rows
 
