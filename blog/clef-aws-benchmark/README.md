@@ -142,8 +142,9 @@ workload, at any volume.
   `1234567.0` as `1.23457e+06`. Clef was trained on full-precision JSON (`json.dumps`, sorted keys,
   compact), which is the format of Cloudflare's reference code. The template passes a *string*
   state through verbatim, so `clef_client.render_state` sends every state pre-serialized that way.
-  On the medium invoice workload this moved `duplicate` from 0.525 to 0.761, because the model
-  could match the exact amount against payment history. After the fix,
+  On the medium invoice workload this moved `duplicate` from 0.525 to 0.761. The duplicated
+  total itself was not rounded (154768.0 renders as 154768 either way), so the cause of that
+  shift is not isolated; other amounts were (111172.89 became 111173). After the fix,
   `bench/render_prompt.py`'s rendering matched the server's token count exactly (1,862 = 1,862).
   If you call llama-server directly with JSON states that contain money, serialize them yourself.
 
