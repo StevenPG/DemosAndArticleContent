@@ -1,0 +1,55 @@
+<|im_start|>system
+Read the complete state and schema. Decide every field jointly. Each answer must be exactly one of that field's allowed options.<|im_end|>
+<|im_start|>user
+STATE:
+{"channel":"email","customer":{"id":"C-4000","tenure_months":18,"tier":"pro"},"message":"I was charged twice for order #471724 last week and nobody has replied to my emails."}
+
+SCHEMA FIELDS:
+
+FIELD 1
+ID: department
+TYPE: choice
+INSTRUCTION: Which team should handle this message?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"Profile and account settings","option_id":"account"}
+OPTION 2: {"description":"Payments, invoices, refunds, plan changes","option_id":"billing"}
+OPTION 3: {"description":"Deliveries, tracking, carriers","option_id":"shipping"}
+OPTION 4: {"description":"Bugs, errors, outages, integrations, login problems","option_id":"technical"}
+END FIELD
+
+FIELD 2
+ID: urgency
+TYPE: score
+INSTRUCTION: How quickly does this need a response?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"Can wait","option_id":"0"}
+OPTION 2: {"description":"This week","option_id":"1"}
+OPTION 3: {"description":"Today","option_id":"2"}
+OPTION 4: {"description":"Right now","option_id":"3"}
+END FIELD
+
+FIELD 3
+ID: outage
+TYPE: noul
+INSTRUCTION: Is a service down for more than one user?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"The proposition is true or the answer is yes.","option_id":"true"}
+OPTION 2: {"description":"The proposition is false or the answer is no.","option_id":"false"}
+END FIELD
+
+FIELD 4
+ID: refund
+TYPE: noul
+INSTRUCTION: Is the customer asking for money back?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"The proposition is true or the answer is yes.","option_id":"true"}
+OPTION 2: {"description":"The proposition is false or the answer is no.","option_id":"false"}
+END FIELD
+
+<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+JOINT SCHEMA DECISIONS:

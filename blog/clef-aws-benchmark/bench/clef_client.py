@@ -14,6 +14,7 @@ and return the same response body:
 
 from __future__ import annotations
 
+import json
 import os
 import time
 from dataclasses import dataclass
@@ -51,9 +52,22 @@ def _unwrap(body: dict[str, Any]) -> dict[str, Any]:
     return body
 
 
+def render_state(state: Any) -> str:
+    """Serialize a state exactly as Clef's reference code does (sorted keys, compact, full precision).
+
+    llama.cpp's template engine prints floats with 6 significant digits (23456.78 -> 23456.8,
+    1250.0 -> 1250, 1234567.0 -> 1.23457e+06). The template passes a string state through
+    verbatim, so sending it pre-serialized gives every runtime the same prompt, with every digit.
+    """
+    if isinstance(state, str):
+        return state
+    return json.dumps(state, ensure_ascii=False, separators=(",", ":"), sort_keys=True)
+
+
 def _request_body(request: dict[str, Any]) -> dict[str, Any]:
     body = {"model": MODEL_NAME}
     body.update({k: v for k, v in request.items() if k in ("model", "state", "questions", "images")})
+    body["state"] = render_state(body["state"])
     return body
 
 

@@ -1,0 +1,56 @@
+<|im_start|>system
+Read the complete state and schema. Decide every field jointly. Each answer must be exactly one of that field's allowed options.<|im_end|>
+<|im_start|>user
+STATE:
+{"invoice":{"currency":"USD","due_days":30,"issued":"2026-09-01","lines":[{"amount":1080.0,"description":"Rack PDU","line":1,"qty":2,"sku":"SKU-86637","unit_price":540.0},{"amount":1800.0,"description":"Support contract","line":2,"qty":1,"sku":"SKU-66520","unit_price":1800.0},{"amount":1560.0,"description":"Conference speakerphone","line":3,"qty":6,"sku":"SKU-42759","unit_price":260.0},{"amount":3300.0,"description":"27in monitor","line":4,"qty":10,"sku":"SKU-67569","unit_price":330.0},{"amount":133.0,"description":"USB-C cable","line":5,"qty":7,"sku":"SKU-89590","unit_price":19.0},{"amount":14400.0,"description":"Cloud hosting, monthly","line":6,"qty":6,"sku":"SKU-90165","unit_price":2400.0},{"amount":19800.0,"description":"Network switch 48p","line":7,"qty":12,"sku":"SKU-15872","unit_price":1650.0},{"amount":4950.0,"description":"Network switch 48p","line":8,"qty":3,"sku":"SKU-39544","unit_price":1650.0},{"amount":1300.0,"description":"Conference speakerphone","line":9,"qty":5,"sku":"SKU-75244","unit_price":260.0},{"amount":1320.0,"description":"27in monitor","line":10,"qty":4,"sku":"SKU-56403","unit_price":330.0},{"amount":350.0,"description":"Consulting hours","line":11,"qty":2,"sku":"SKU-53182","unit_price":175.0},{"amount":9600.0,"description":"Cloud hosting, monthly","line":12,"qty":4,"sku":"SKU-56638","unit_price":2400.0},{"amount":38.0,"description":"USB-C cable","line":13,"qty":2,"sku":"SKU-90226","unit_price":19.0},{"amount":13200.0,"description":"Laptop 14in","line":14,"qty":12,"sku":"SKU-15238","unit_price":1100.0},{"amount":4200.0,"description":"Office chairs","line":15,"qty":10,"sku":"SKU-42615","unit_price":420.0},{"amount":700.0,"description":"Consulting hours","line":16,"qty":4,"sku":"SKU-88341","unit_price":175.0},{"amount":3780.0,"description":"Office chairs","line":17,"qty":9,"sku":"SKU-38092","unit_price":420.0},{"amount":1050.0,"description":"Consulting hours","line":18,"qty":6,"sku":"SKU-92917","unit_price":175.0},{"amount":4200.0,"description":"Office chairs","line":19,"qty":10,"sku":"SKU-82684","unit_price":420.0},{"amount":4400.0,"description":"Laptop 14in","line":20,"qty":4,"sku":"SKU-10768","unit_price":1100.0},{"amount":14400.0,"description":"Cloud hosting, monthly","line":21,"qty":6,"sku":"SKU-46014","unit_price":2400.0},{"amount":343.0,"description":"Software licence seat","line":22,"qty":7,"sku":"SKU-84167","unit_price":49.0},{"amount":7200.0,"description":"Support contract","line":23,"qty":4,"sku":"SKU-45643","unit_price":1800.0},{"amount":264.0,"description":"Printer toner","line":24,"qty":3,"sku":"SKU-29803","unit_price":88.0},{"amount":21600.0,"description":"Cloud hosting, monthly","line":25,"qty":9,"sku":"SKU-98624","unit_price":2400.0},{"amount":19800.0,"description":"Support contract","line":26,"qty":11,"sku":"SKU-41723","unit_price":1800.0}],"number":"INV-20000","total":154768.0,"vendor":"Globex"},"purchase_order":{"approved_total":111172.89,"number":"PO-2181"},"vendor_history":[{"invoice":"INV-32094","status":"paid","total":31256.09},{"invoice":"INV-94036","status":"paid","total":21538.88},{"invoice":"INV-27407","status":"paid","total":2026.83},{"invoice":"INV-25027","status":"paid","total":3026.11},{"invoice":"INV-31005","status":"paid","total":22616.56},{"invoice":"INV-43331","status":"paid","total":4662.46},{"invoice":"INV-20000","status":"paid","total":154768.0}]}
+
+SCHEMA FIELDS:
+
+FIELD 1
+ID: action
+TYPE: choice
+INSTRUCTION: What should accounts payable do with this invoice?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"Matches the purchase order and looks legitimate","option_id":"approve"}
+OPTION 2: {"description":"Exceeds the approved purchase order and needs a manager","option_id":"escalate"}
+OPTION 3: {"description":"Needs clarification from the vendor before paying","option_id":"hold"}
+OPTION 4: {"description":"Duplicate or invalid, do not pay","option_id":"reject"}
+END FIELD
+
+FIELD 2
+ID: duplicate
+TYPE: noul
+INSTRUCTION: Has this exact invoice already been paid?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"The proposition is true or the answer is yes.","option_id":"true"}
+OPTION 2: {"description":"The proposition is false or the answer is no.","option_id":"false"}
+END FIELD
+
+FIELD 3
+ID: po_match
+TYPE: noul
+INSTRUCTION: Is the invoice total within the approved purchase order total?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"The proposition is true or the answer is yes.","option_id":"true"}
+OPTION 2: {"description":"The proposition is false or the answer is no.","option_id":"false"}
+END FIELD
+
+FIELD 4
+ID: risk
+TYPE: score
+INSTRUCTION: How risky is paying this invoice?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"None","option_id":"0"}
+OPTION 2: {"description":"Low","option_id":"1"}
+OPTION 3: {"description":"Medium","option_id":"2"}
+OPTION 4: {"description":"High","option_id":"3"}
+OPTION 5: {"description":"Critical","option_id":"4"}
+END FIELD
+
+<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+JOINT SCHEMA DECISIONS:

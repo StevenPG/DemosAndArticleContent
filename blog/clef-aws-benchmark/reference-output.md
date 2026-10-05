@@ -18,6 +18,18 @@ Raw results: [`results/container-4vcpu/`](results/container-4vcpu/). Generated t
 **These are not EC2 numbers.** They show the pipeline working and what a small CPU does with
 Clef-flash.
 
+## Prompts
+
+`results/container-4vcpu/prompts/` holds the literal prompt for the first request of each
+workload, plus one eval case, rendered with `bench/render_prompt.py`. Each was verified
+token-for-token against `llama-server` (small 508, large 4,322, medium 1,862).
+
+This run predates `clef_client.render_state`. During it, llama.cpp rounded the decimal amounts in
+the medium invoice state to 6 significant digits, which removed 114 tokens from that prompt. The
+small and large states contain no decimals, and the eval cases' amounts (`1250.0`, `84.5`,
+`48200.0`) keep their values either way. Re-running the medium request with the fix changed
+`duplicate` from 0.525 to 0.761; the other medium answers moved by less than 0.02.
+
 ## Configuration
 
 ```

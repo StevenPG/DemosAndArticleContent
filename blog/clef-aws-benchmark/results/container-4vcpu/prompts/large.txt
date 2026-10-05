@@ -1,0 +1,57 @@
+<|im_start|>system
+Read the complete state and schema. Decide every field jointly. Each answer must be exactly one of that field's allowed options.<|im_end|>
+<|im_start|>user
+STATE:
+{"host":"web-34.prod","log":"2026-10-01T03:00:00Z nginx: 10.0.1.116 GET /api/v2/orders 200 1100B\n2026-10-01T03:00:01Z nginx: 10.0.2.76 POST /api/v2/export 200 759B\n2026-10-01T03:00:02Z nginx: 10.0.3.36 GET /api/v2/export 200 1385B\n2026-10-01T03:00:03Z nginx: 10.0.6.99 GET /login 200 6190B\n2026-10-01T03:00:04Z nginx: 10.0.1.192 GET /login 304 6433B\n2026-10-01T03:00:05Z nginx: 10.0.0.60 POST /api/v2/users/me 404 3291B\n2026-10-01T03:00:06Z nginx: 10.0.8.115 GET /api/v2/export 200 5301B\n2026-10-01T03:00:07Z sshd[4202]: Accepted publickey for heidi from 10.0.3.170\n2026-10-01T03:00:08Z nginx: 10.0.1.54 POST / 200 170B\n2026-10-01T03:00:09Z nginx: 10.0.8.65 GET /api/v2/users/me 200 2100B\n2026-10-01T03:00:10Z sshd[2999]: Accepted publickey for carol from 10.0.3.166\n2026-10-01T03:00:11Z nginx: 10.0.4.4 GET /login 200 6946B\n2026-10-01T03:00:12Z nginx: 10.0.9.176 POST /login 200 1627B\n2026-10-01T03:00:13Z nginx: 10.0.9.208 GET /api/v2/users/me 304 4304B\n2026-10-01T03:00:14Z nginx: 10.0.3.62 GET /api/v2/users/me 200 3452B\n2026-10-01T03:00:15Z sshd[1354]: Accepted publickey for dave from 10.0.2.40\n2026-10-01T03:00:16Z nginx: 10.0.9.82 GET /api/v2/export 200 8634B\n2026-10-01T03:00:17Z nginx: 10.0.3.193 POST /login 200 7995B\n2026-10-01T03:00:18Z nginx: 10.0.1.121 POST / 304 6536B\n2026-10-01T03:00:19Z nginx: 10.0.6.199 GET /api/v2/export 200 775B\n2026-10-01T03:00:20Z nginx: 10.0.0.69 POST / 304 4439B\n2026-10-01T03:00:21Z nginx: 10.0.5.163 POST / 200 8506B\n2026-10-01T03:00:22Z sshd[3824]: Accepted publickey for erin from 10.0.0.19\n2026-10-01T03:00:23Z nginx: 10.0.5.204 POST /api/v2/users/me 200 7121B\n2026-10-01T03:00:24Z sshd[4694]: Accepted publickey for carol from 10.0.7.190\n2026-10-01T03:00:25Z nginx: 10.0.3.250 POST /api/v2/export 404 315B\n2026-10-01T03:00:26Z nginx: 10.0.5.145 GET /static/app.js 404 6562B\n2026-10-01T03:00:27Z nginx: 10.0.2.155 GET /login 200 575B\n2026-10-01T03:00:28Z nginx: 10.0.5.22 GET /health 200 2376B\n2026-10-01T03:00:29Z nginx: 10.0.3.84 GET / 200 3515B\n2026-10-01T03:00:30Z nginx: 10.0.1.33 GET /api/v2/orders 200 3376B\n2026-10-01T03:00:31Z nginx: 10.0.7.169 POST / 304 6305B\n2026-10-01T03:00:32Z nginx: 10.0.2.105 GET /static/app.js 404 7129B\n2026-10-01T03:00:33Z nginx: 10.0.2.11 GET / 200 8612B\n2026-10-01T03:00:34Z nginx: 10.0.7.170 GET /login 404 2214B\n2026-10-01T03:00:35Z sshd[5015]: Accepted publickey for dave from 10.0.4.46\n2026-10-01T03:00:36Z nginx: 10.0.0.69 POST /health 200 6311B\n2026-10-01T03:00:37Z nginx: 10.0.5.68 GET /api/v2/orders 404 816B\n2026-10-01T03:00:38Z nginx: 10.0.5.163 GET /api/v2/orders 200 3632B\n2026-10-01T03:00:39Z sshd[4283]: Accepted publickey for dave from 10.0.6.247\n2026-10-01T03:00:40Z nginx: 10.0.2.188 GET / 200 6327B\n2026-10-01T03:00:41Z nginx: 10.0.1.106 GET /api/v2/export 200 6481B\n2026-10-01T03:00:42Z nginx: 10.0.3.224 GET /static/app.js 304 6652B\n2026-10-01T03:00:43Z nginx: 10.0.9.195 GET /static/app.js 304 7726B\n2026-10-01T03:00:44Z nginx: 10.0.5.153 GET /login 200 6089B\n2026-10-01T03:00:45Z nginx: 10.0.6.134 GET /login 200 1013B\n2026-10-01T03:00:46Z nginx: 10.0.7.9 GET /api/v2/export 200 7285B\n2026-10-01T03:00:47Z sshd[8571]: Accepted publickey for frank from 10.0.0.37\n2026-10-01T03:00:48Z sshd[3218]: Accepted publickey for carol from 10.0.7.249\n2026-10-01T03:00:49Z nginx: 10.0.1.82 POST /api/v2/orders 304 7887B\n2026-10-01T03:00:50Z sshd[6471]: Accepted publickey for erin from 10.0.2.211\n2026-10-01T03:00:51Z nginx: 10.0.0.76 POST /health 404 1821B\n2026-10-01T03:00:52Z nginx: 10.0.3.209 GET /login 200 1241B\n2026-10-01T03:00:53Z nginx: 10.0.3.106 POST /login 200 7035B\n2026-10-01T03:00:54Z nginx: 10.0.1.131 GET /api/v2/orders 200 354B\n2026-10-01T03:00:55Z sshd[7215]: Accepted publickey for grace from 10.0.0.53\n2026-10-01T03:00:56Z sshd[4157]: Accepted publickey for carol from 10.0.1.79\n2026-10-01T03:00:57Z nginx: 10.0.6.103 GET /api/v2/export 200 4012B\n2026-10-01T03:00:58Z nginx: 10.0.6.56 GET /api/v2/orders 200 1976B\n2026-10-01T03:00:59Z nginx: 10.0.1.160 GET / 200 2281B\n2026-10-01T03:01:00Z nginx: 10.0.5.96 GET /api/v2/orders 200 4306B\n2026-10-01T03:01:01Z sshd[9952]: Accepted publickey for heidi from 10.0.9.155\n2026-10-01T03:01:02Z nginx: 10.0.8.148 GET /health 200 2242B\n2026-10-01T03:01:03Z sshd[4997]: Accepted publickey for carol from 10.0.8.221\n2026-10-01T03:01:04Z nginx: 10.0.1.117 POST /static/app.js 304 3708B\n2026-10-01T03:01:05Z nginx: 10.0.2.56 POST /login 304 664B\n2026-10-01T03:01:06Z nginx: 10.0.8.117 POST /api/v2/users/me 304 8289B\n2026-10-01T03:01:07Z nginx: 10.0.4.115 POST /api/v2/users/me 304 2406B\n2026-10-01T03:01:08Z nginx: 10.0.6.183 POST /health 200 4612B\n2026-10-01T03:01:09Z nginx: 10.0.4.25 POST /api/v2/orders 200 802B\n2026-10-01T03:01:10Z nginx: 10.0.8.11 POST / 200 2076B\n2026-10-01T03:01:11Z nginx: 10.0.4.82 GET /health 404 4460B\n2026-10-01T03:01:12Z nginx: 10.0.9.34 GET /api/v2/users/me 200 8147B\n2026-10-01T03:01:13Z nginx: 10.0.9.237 GET /login 200 803B\n2026-10-01T03:01:14Z sshd[1518]: Accepted publickey for erin from 10.0.5.21\n2026-10-01T03:01:15Z sshd[5291]: Accepted publickey for grace from 10.0.2.182\n2026-10-01T03:01:16Z nginx: 10.0.3.75 GET /health 200 4831B\n2026-10-01T03:01:17Z sshd[2920]: Accepted publickey for frank from 10.0.3.112\n2026-10-01T03:01:18Z nginx: 10.0.4.208 GET /api/v2/export 200 1023B\n2026-10-01T03:01:19Z nginx: 10.0.4.113 POST /login 404 351B","window":"03:00-03:02 UTC"}
+
+SCHEMA FIELDS:
+
+FIELD 1
+ID: incident
+TYPE: choice
+INSTRUCTION: What best describes the activity in this log window?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"Normal traffic, nothing suspicious","option_id":"benign"}
+OPTION 2: {"description":"Repeated failed logins from external addresses","option_id":"brute_force"}
+OPTION 3: {"description":"Unusual bulk export of data","option_id":"data_exfiltration"}
+OPTION 4: {"description":"Signs of malicious code running on the host","option_id":"malware"}
+OPTION 5: {"description":"Errors caused by a configuration change","option_id":"misconfiguration"}
+END FIELD
+
+FIELD 2
+ID: severity
+TYPE: score
+INSTRUCTION: How severe is this?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"Informational","option_id":"0"}
+OPTION 2: {"description":"Low","option_id":"1"}
+OPTION 3: {"description":"Medium","option_id":"2"}
+OPTION 4: {"description":"High","option_id":"3"}
+OPTION 5: {"description":"Critical","option_id":"4"}
+END FIELD
+
+FIELD 3
+ID: page_oncall
+TYPE: noul
+INSTRUCTION: Should the on-call engineer be paged now?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"The proposition is true or the answer is yes.","option_id":"true"}
+OPTION 2: {"description":"The proposition is false or the answer is no.","option_id":"false"}
+END FIELD
+
+FIELD 4
+ID: external_source
+TYPE: noul
+INSTRUCTION: Does the suspicious activity come from outside the network?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"The proposition is true or the answer is yes.","option_id":"true"}
+OPTION 2: {"description":"The proposition is false or the answer is no.","option_id":"false"}
+END FIELD
+
+<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+JOINT SCHEMA DECISIONS:

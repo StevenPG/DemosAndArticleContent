@@ -1,0 +1,36 @@
+<|im_start|>system
+Read the complete state and schema. Decide every field jointly. Each answer must be exactly one of that field's allowed options.<|im_end|>
+<|im_start|>user
+STATE:
+Aircraft N512CL, A320. Post-flight walkaround: hydraulic fluid dripping from the left main landing gear brake assembly, approx 1 drop every 5 seconds. Next departure in 50 minutes.
+
+SCHEMA FIELDS:
+
+FIELD 1
+ID: ata
+TYPE: choice
+INSTRUCTION: Which ATA chapter does this write-up belong to?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"Air conditioning","option_id":"ata21"}
+OPTION 2: {"description":"Electrical power","option_id":"ata24"}
+OPTION 3: {"description":"Landing gear, including wheels and brakes","option_id":"ata32"}
+OPTION 4: {"description":"Navigation","option_id":"ata34"}
+OPTION 5: {"description":"Pneumatic","option_id":"ata36"}
+END FIELD
+
+FIELD 2
+ID: aog
+TYPE: noul
+INSTRUCTION: Should the aircraft be held on the ground until this is fixed?
+ALLOWED OPTIONS:
+OPTION 1: {"description":"The proposition is true or the answer is yes.","option_id":"true"}
+OPTION 2: {"description":"The proposition is false or the answer is no.","option_id":"false"}
+END FIELD
+
+<|im_end|>
+<|im_start|>assistant
+<think>
+
+</think>
+
+JOINT SCHEMA DECISIONS:

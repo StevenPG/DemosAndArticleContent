@@ -87,6 +87,7 @@ scripts/                   runs on your laptop
 bench/
   clef_client.py           /v1/systemone client for llama.cpp and Workers AI
   quickstart.py            one request, every probability printed
+  render_prompt.py         the literal prompt Clef reads for a request (llama.cpp's systemone template)
   workloads.py             deterministic small / medium / large workloads
   clef_bench.py            closed-loop load steps + psutil / nvidia-smi sampling + labeled eval
   analyze.py               speed, cost, resources, quality and setup tables
@@ -135,6 +136,16 @@ If the break-even volume is above the capacity, that box can never undercut Work
 workload, at any volume.
 
 ## Gotchas found while building this
+
+- **llama.cpp rounds numbers in a JSON state to 6 significant digits.** Its Jinja engine prints
+  floats with `oss << double`, so the model sees `1080.0` as `1080`, `23456.78` as `23456.8`, and
+  `1234567.0` as `1.23457e+06`. Clef was trained on full-precision JSON (`json.dumps`, sorted keys,
+  compact), which is the format of Cloudflare's reference code. The template passes a *string*
+  state through verbatim, so `clef_client.render_state` sends every state pre-serialized that way.
+  On the medium invoice workload this moved `duplicate` from 0.525 to 0.761, because the model
+  could match the exact amount against payment history. After the fix,
+  `bench/render_prompt.py`'s rendering matched the server's token count exactly (1,862 = 1,862).
+  If you call llama-server directly with JSON states that contain money, serialize them yourself.
 
 - **Only one GGUF actually is Clef.** Reading the GGUF headers:
   - `ggml-org/Clef-Flash-GGUF` has `general.architecture = clef` and 587 tensors, including the
