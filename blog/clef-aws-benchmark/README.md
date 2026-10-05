@@ -154,9 +154,12 @@ workload, at any volume.
   the 4-vCPU test container, concurrency 2 doubled p50 latency (24.8 s → 47.7 s) at the same
   ~0.04 req/s. The benchmark keeps the concurrency-4 step to show the queueing. Scaling out means
   more boxes, not more slots.
-- **RSS is about 1.5× the GGUF on CPU.** Q4_K_M is 6.5 GB on disk and the server sat at 9.5 GB
-  RSS. The cause is that the CPU backend repacks weights for its SIMD kernels while the mmapped
-  originals stay resident. Ubatch size barely moved it (2048 vs 8192: 9.0 vs 9.8 GB).
+- **Memory is the model plus a buffer that grows with the prompt.** On CPU the Q4_K_M GGUF is
+  6.5 GB on disk. The server reached 9.8 GB RSS at a ~500-token prompt, 11.2 GB at ~1.7k and
+  13.6 GB at ~4.4k. The CPU backend repacks weights for its SIMD kernels while the mmapped
+  originals stay resident, and Clef evaluates the whole prompt in one micro-batch, so activation
+  memory scales with prompt length. Plan headroom for BF16 on the 24 GB L4: 18.2 GB of weights
+  leaves little room for a long prompt.
 - **A shallow clone reports `build 1`.** `llama-server --version` on a `--depth 1` checkout says
   `0.5.0-dev (build 1, commit …)`, not the tag. The installer records the tag in
   `/opt/llama.cpp/TAG` instead.
@@ -172,12 +175,20 @@ The pipeline was verified end to end on a 4-vCPU x86_64 cloud container (Intel X
 15 GB RAM, no GPU) with llama.cpp `b11401` and Clef-Flash Q4_K_M. These numbers show what to expect
 from a small CPU. **They are not EC2 results**; those come from running this project.
 
-| Workload | Concurrency | Prompt tokens | p50 latency | Throughput | llama-server CPU | RSS |
-|---|---|---|---|---|---|---|
-| small | 1 | 509 | 24.8 s | 0.040 req/s, 20.5 tok/s | 90% | 9.6 GB |
-| small | 2 | 508 | 47.7 s | 0.042 req/s, 21.3 tok/s | 92% | 9.6 GB |
+Concurrency 1, measured with the instance scripts themselves (`install-llama-cpp.sh`, then
+`run-benchmark.sh`):
 
-- **Cold start:** 15 s from launch to `/health` 200, with a warm page cache.
+| Workload | Prompt tokens | p50 latency | Throughput | llama-server CPU | Peak RSS |
+|---|---|---|---|---|---|
+| small | 509 | 25.3 s | 0.039 req/s, 20.1 tok/s | 88% | 9.8 GB |
+| medium | 1,690 | 83.6 s | 0.012 req/s, 20.2 tok/s | 89% | 11.2 GB |
+| large | 4,439 | 233.9 s | 0.004 req/s, 19.0 tok/s | 89% | 13.6 GB |
+
+- **Concurrency 2** on the small workload doubled p50 latency (24.8 s → 47.7 s) at the same
+  ~0.04 req/s.
+- **Build:** the static CPU build of `llama-server` took 212 s on 4 cores.
+- **Cold start:** 13 s from launch to `/health` 200. The container may not have honored the
+  page-cache drop, so treat this as a warm number.
 - **Labeled eval:** 36/38 correct with Q4_K_M. One miss was a real arithmetic error: 48 × 20 = 960
   < 1,000, yet the model gave P(fits) = 0.81. The other was an ambiguous label, since fixed.
 
