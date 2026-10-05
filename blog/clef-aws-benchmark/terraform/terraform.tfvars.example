@@ -1,0 +1,24 @@
+# Copy to terraform.tfvars and edit. Every value here is optional; the defaults run the full
+# five-machine matrix with Q4_K_M, Q8_0 and BF16 in us-east-1.
+
+# region = "us-east-1"
+
+# Start small: one CPU box and one GPU box.
+# only = ["c8g-4xlarge", "g6-xlarge"]
+
+# Add or swap machines (any EC2 type; arch and GPU are detected).
+# instances = {
+#   "c7i-4xlarge" = "c7i.4xlarge"
+#   "c8g-8xlarge" = "c8g.8xlarge"
+#   "g6-xlarge"   = "g6.xlarge"
+#   "g5-xlarge"   = "g5.xlarge"
+# }
+
+# Faster, cheaper smoke run: one quant, short steps.
+# quants     = ["Q4_K_M"]
+# bench_args = "--concurrency 1 --duration 20 --min-requests 3 --max-step-seconds 120"
+
+# Install everything but don't benchmark; drive it yourself over SSM.
+# auto_run = false
+
+# use_spot = true

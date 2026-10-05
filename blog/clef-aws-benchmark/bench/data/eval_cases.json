@@ -1,0 +1,209 @@
+[
+  {
+    "id": "ticket-double-charge",
+    "state": "I was charged twice for my order last week. Please refund the duplicate charge.",
+    "questions": {
+      "route": {"type": "choice", "instructions": "Which team should handle this?", "criteria": {"billing": "Payments and refunds", "shipping": "Deliveries", "technical": "Bugs and outages"}},
+      "refund": {"type": "noul", "instructions": "Is the customer asking for money back?"}
+    },
+    "expected": {"route": "billing", "refund": true}
+  },
+  {
+    "id": "ticket-checkout-down",
+    "state": "Checkout has returned HTTP 502 for every customer for the last 30 minutes. We are losing orders.",
+    "questions": {
+      "route": {"type": "choice", "instructions": "Which team should handle this?", "criteria": {"billing": "Payments and refunds", "shipping": "Deliveries", "technical": "Bugs and outages"}},
+      "outage": {"type": "noul", "instructions": "Is a service down?"},
+      "urgency": {"type": "score", "instructions": "How urgent is this?", "criteria": ["Can wait", "This week", "Today", "Right now"]}
+    },
+    "expected": {"route": "technical", "outage": true, "urgency": 3}
+  },
+  {
+    "id": "ticket-lost-parcel",
+    "state": "Tracking says my parcel was delivered on Monday but it never arrived. Could you check with the courier?",
+    "questions": {
+      "route": {"type": "choice", "instructions": "Which team should handle this?", "criteria": {"billing": "Payments and refunds", "shipping": "Deliveries", "technical": "Bugs and outages"}},
+      "outage": {"type": "noul", "instructions": "Is a service down?"}
+    },
+    "expected": {"route": "shipping", "outage": false}
+  },
+  {
+    "id": "ticket-feature-question",
+    "state": "Hi! Just curious whether you plan to add dark mode at some point. No rush, love the product.",
+    "questions": {
+      "urgency": {"type": "score", "instructions": "How urgent is this?", "criteria": ["Can wait", "This week", "Today", "Right now"]},
+      "complaint": {"type": "noul", "instructions": "Is the customer complaining?"}
+    },
+    "expected": {"urgency": 0, "complaint": false}
+  },
+  {
+    "id": "invoice-overdue",
+    "state": {"invoice": {"vendor": "Acme", "total": 1250.0, "currency": "USD", "due": "2026-08-01", "status": "unpaid"}, "today": "2026-10-01"},
+    "questions": {
+      "status": {"type": "choice", "instructions": "What is the invoice status?", "criteria": {"paid": "Invoice is paid.", "overdue": "Invoice is past due.", "draft": "Not sent yet."}},
+      "large": {"type": "noul", "instructions": "Is the total above 1000 USD?"}
+    },
+    "expected": {"status": "overdue", "large": true}
+  },
+  {
+    "id": "invoice-small-paid",
+    "state": {"invoice": {"vendor": "Globex", "total": 84.5, "currency": "USD", "status": "paid", "paid_on": "2026-09-12"}},
+    "questions": {
+      "status": {"type": "choice", "instructions": "What is the invoice status?", "criteria": {"paid": "Invoice is paid.", "overdue": "Invoice is past due.", "draft": "Not sent yet."}},
+      "large": {"type": "noul", "instructions": "Is the total above 1000 USD?"}
+    },
+    "expected": {"status": "paid", "large": false}
+  },
+  {
+    "id": "invoice-over-po",
+    "state": {"invoice": {"vendor": "Initech", "total": 48200.0}, "purchase_order": {"approved_total": 30000.0}},
+    "questions": {
+      "within_po": {"type": "noul", "instructions": "Is the invoice total within the approved purchase order?"},
+      "action": {"type": "choice", "instructions": "What should accounts payable do?", "criteria": {"approve": "Pay it", "escalate": "Send to a manager for approval", "reject": "Do not pay"}}
+    },
+    "expected": {"within_po": false, "action": "escalate"}
+  },
+  {
+    "id": "mx-hydraulic-leak",
+    "state": "Aircraft N512CL, A320. Post-flight walkaround: hydraulic fluid dripping from the left main landing gear brake assembly, approx 1 drop every 5 seconds. Next departure in 50 minutes.",
+    "questions": {
+      "ata": {"type": "choice", "instructions": "Which ATA chapter does this write-up belong to?", "criteria": {"ata21": "Air conditioning", "ata24": "Electrical power", "ata32": "Landing gear, including wheels and brakes", "ata34": "Navigation", "ata36": "Pneumatic"}},
+      "aog": {"type": "noul", "instructions": "Should the aircraft be held on the ground until this is fixed?"}
+    },
+    "expected": {"ata": "ata32", "aog": true}
+  },
+  {
+    "id": "mx-cabin-light",
+    "state": "Aircraft N733SP, B737-800. Cabin reading light at seat 23C inoperative. Passenger moved to 24C. All other lights normal.",
+    "questions": {
+      "ata": {"type": "choice", "instructions": "Which ATA chapter does this write-up belong to?", "criteria": {"ata25": "Equipment and furnishings", "ata32": "Landing gear", "ata33": "Lights", "ata34": "Navigation", "ata72": "Engine"}},
+      "aog": {"type": "noul", "instructions": "Should the aircraft be held on the ground until this is fixed?"},
+      "severity": {"type": "score", "instructions": "How severe is this defect?", "criteria": ["Cosmetic", "Minor", "Major", "Critical"]}
+    },
+    "expected": {"ata": "ata33", "aog": false, "severity": 1}
+  },
+  {
+    "id": "mx-egt-exceedance",
+    "state": "Aircraft N220FX, engine 2. During takeoff the EGT reached 1,068 C for 40 seconds, exceeding the 1,060 C redline. Crew reduced thrust and continued to destination.",
+    "questions": {
+      "ata": {"type": "choice", "instructions": "Which ATA chapter does this write-up belong to?", "criteria": {"ata21": "Air conditioning", "ata33": "Lights", "ata72": "Engine", "ata32": "Landing gear"}},
+      "inspection_required": {"type": "noul", "instructions": "Is an engine inspection required before the next flight?"}
+    },
+    "expected": {"ata": "ata72", "inspection_required": true}
+  },
+  {
+    "id": "notam-runway-closed",
+    "state": "KSEA NOTAM: RWY 16L/34R CLSD 0600-1400 UTC DAILY FOR CONSTRUCTION. Flight plan: departure KSEA RWY 16C at 1530 UTC.",
+    "questions": {
+      "affects_flight": {"type": "noul", "instructions": "Does this NOTAM affect the planned departure?"}
+    },
+    "expected": {"affects_flight": false}
+  },
+  {
+    "id": "notam-ils-out",
+    "state": "KDEN NOTAM: ILS RWY 16R U/S. Flight plan: arrival KDEN, planned approach ILS RWY 16R, forecast ceiling 300 ft overcast.",
+    "questions": {
+      "affects_flight": {"type": "noul", "instructions": "Does this NOTAM affect the planned arrival?"},
+      "severity": {"type": "score", "instructions": "How much does this affect the flight?", "criteria": ["Not at all", "Minor", "Significant", "Flight cannot proceed as planned"]}
+    },
+    "expected": {"affects_flight": true}
+  },
+  {
+    "id": "sentiment-positive",
+    "state": "The new release fixed every issue I reported. Setup took five minutes. Fantastic work, team.",
+    "questions": {
+      "sentiment": {"type": "choice", "instructions": "What is the sentiment of the review?", "criteria": {"positive": "Happy with the product", "neutral": "Neither happy nor unhappy", "negative": "Unhappy with the product"}}
+    },
+    "expected": {"sentiment": "positive"}
+  },
+  {
+    "id": "sentiment-negative",
+    "state": "Third outage this month. Support closed my ticket without reading it. Cancelling at renewal.",
+    "questions": {
+      "sentiment": {"type": "choice", "instructions": "What is the sentiment of the review?", "criteria": {"positive": "Happy with the product", "neutral": "Neither happy nor unhappy", "negative": "Unhappy with the product"}},
+      "churn_risk": {"type": "noul", "instructions": "Is the customer likely to leave?"}
+    },
+    "expected": {"sentiment": "negative", "churn_risk": true}
+  },
+  {
+    "id": "phishing-obvious",
+    "state": {"from": "security@paypa1-support.com", "subject": "URGENT: your account will be suspended", "body": "Verify your identity within 24 hours at http://paypa1-support.com/verify or lose access permanently."},
+    "questions": {
+      "phishing": {"type": "noul", "instructions": "Is this email a phishing attempt?"}
+    },
+    "expected": {"phishing": true}
+  },
+  {
+    "id": "phishing-legit",
+    "state": {"from": "noreply@github.com", "subject": "[StevenPG/DemosAndArticleContent] Pull request merged", "body": "Your pull request was merged into main by a maintainer."},
+    "questions": {
+      "phishing": {"type": "noul", "instructions": "Is this email a phishing attempt?"}
+    },
+    "expected": {"phishing": false}
+  },
+  {
+    "id": "tool-routing-weather",
+    "state": "User: what's the weather going to be in Denver tomorrow afternoon?",
+    "questions": {
+      "tool": {"type": "choice", "instructions": "Which tool should the agent call?", "criteria": {"get_weather": "Weather forecast for a location", "search_flights": "Find flights between airports", "create_ticket": "Open a support ticket", "none": "No tool needed"}}
+    },
+    "expected": {"tool": "get_weather"}
+  },
+  {
+    "id": "tool-routing-flights",
+    "state": "User: find me something from SEA to DEN next Friday morning, aisle seat if possible.",
+    "questions": {
+      "tool": {"type": "choice", "instructions": "Which tool should the agent call?", "criteria": {"get_weather": "Weather forecast for a location", "search_flights": "Find flights between airports", "create_ticket": "Open a support ticket", "none": "No tool needed"}}
+    },
+    "expected": {"tool": "search_flights"}
+  },
+  {
+    "id": "tool-routing-none",
+    "state": "User: thanks, that's all I needed!",
+    "questions": {
+      "tool": {"type": "choice", "instructions": "Which tool should the agent call?", "criteria": {"get_weather": "Weather forecast for a location", "search_flights": "Find flights between airports", "create_ticket": "Open a support ticket", "none": "No tool needed"}}
+    },
+    "expected": {"tool": "none"}
+  },
+  {
+    "id": "fact-arithmetic",
+    "state": "A pallet holds 48 boxes. A truck carries 22 pallets. The order is for 1,000 boxes.",
+    "questions": {
+      "fits": {"type": "noul", "instructions": "Does the order fit on one truck?"}
+    },
+    "expected": {"fits": true}
+  },
+  {
+    "id": "fact-arithmetic-no",
+    "state": "A pallet holds 48 boxes. A truck carries 20 pallets. The order is for 1,000 boxes.",
+    "questions": {
+      "fits": {"type": "noul", "instructions": "Does the order fit on one truck?"}
+    },
+    "expected": {"fits": false}
+  },
+  {
+    "id": "pii-present",
+    "state": "Customer note: call me back at 555-201-7788, my SSN for verification is 123-45-6789.",
+    "questions": {
+      "contains_pii": {"type": "noul", "instructions": "Does the text contain sensitive personal information?"}
+    },
+    "expected": {"contains_pii": true}
+  },
+  {
+    "id": "pii-absent",
+    "state": "Customer note: the blue model arrived scratched, please send the replacement to the same address on file.",
+    "questions": {
+      "contains_pii": {"type": "noul", "instructions": "Does the text contain sensitive personal information?"}
+    },
+    "expected": {"contains_pii": false}
+  },
+  {
+    "id": "log-brute-force",
+    "state": "sshd: Failed password for root from 198.51.100.7 (x412 in 60s)\nsshd: Failed password for admin from 198.51.100.7 (x388 in 60s)\nsshd: Accepted publickey for deploy from 10.0.1.4",
+    "questions": {
+      "incident": {"type": "choice", "instructions": "What best describes this activity?", "criteria": {"benign": "Normal activity", "brute_force": "Repeated failed logins", "data_exfiltration": "Bulk data export", "malware": "Malicious code"}},
+      "external_source": {"type": "noul", "instructions": "Does the suspicious activity come from outside the network?"}
+    },
+    "expected": {"incident": "brute_force", "external_source": true}
+  }
+]

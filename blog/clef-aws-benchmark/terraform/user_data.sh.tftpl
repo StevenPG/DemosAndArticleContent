@@ -1,0 +1,30 @@
+#!/bin/bash
+# Rendered by Terraform. Writes the run configuration, pulls the benchmark code from S3 and starts
+# scripts/remote/bootstrap.sh in the background. Progress: /var/log/clef-bench.log
+set -euxo pipefail
+
+cat > /etc/clef-bench.env <<'EOF'
+BUCKET=${bucket}
+AWS_REGION=${region}
+AWS_DEFAULT_REGION=${region}
+INSTANCE_NAME=${name}
+INSTANCE_TYPE=${instance_type}
+QUANTS="${quants}"
+SERVE_QUANT=${serve_quant}
+LLAMA_CPP_TAG=${llama_cpp_tag}
+AUTO_RUN=${auto_run}
+SHUTDOWN_MINUTES=${shutdown_minutes}
+BENCH_ARGS="${bench_args}"
+EOF
+
+# Canonical Ubuntu AMIs don't ship the AWS CLI; the Deep Learning AMI does. Snap puts it in
+# /snap/bin, which is not on PATH for cloud-init or systemd units.
+export PATH="$PATH:/snap/bin"
+command -v aws >/dev/null || snap install aws-cli --classic
+
+mkdir -p /opt/clef-bench
+aws s3 sync --only-show-errors --region ${region} s3://${bucket}/project/ /opt/clef-bench/
+chmod +x /opt/clef-bench/scripts/*.sh /opt/clef-bench/scripts/remote/*.sh /opt/clef-bench/bench/*.py
+
+# Run outside cloud-init so a multi-hour benchmark doesn't hold up boot or SSM registration.
+systemd-run --unit=clef-bootstrap --collect /opt/clef-bench/scripts/remote/bootstrap.sh
