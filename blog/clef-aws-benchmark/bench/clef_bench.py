@@ -70,7 +70,7 @@ class ResourceSampler:
                     "nvidia-smi",
                     "--query-gpu=utilization.gpu,memory.used,power.draw",
                     "--format=csv,noheader,nounits",
-                    f"-lms={int(self.interval_s * 1000)}",
+                    f"--loop-ms={int(self.interval_s * 1000)}",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,

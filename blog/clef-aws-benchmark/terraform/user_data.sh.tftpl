@@ -20,7 +20,10 @@ EOF
 # Canonical Ubuntu AMIs don't ship the AWS CLI; the Deep Learning AMI does. Snap puts it in
 # /snap/bin, which is not on PATH for cloud-init or systemd units.
 export PATH="$PATH:/snap/bin"
-command -v aws >/dev/null || snap install aws-cli --classic
+if ! command -v aws >/dev/null; then
+  snap wait system seed.loaded # snapd refuses installs until first-boot seeding is done
+  snap install aws-cli --classic
+fi
 
 mkdir -p /opt/clef-bench
 aws s3 sync --only-show-errors --region ${region} s3://${bucket}/project/ /opt/clef-bench/

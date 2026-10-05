@@ -11,6 +11,7 @@
 #   BENCH_ARGS      extra clef_bench.py args, e.g. "--concurrency 1,4 --duration 45"
 #   RUN_EVAL        "true" (default) also answers the labeled cases in bench/data/eval_cases.json
 #   RESULTS_DIR     default /opt/clef-bench/results/$INSTANCE_NAME
+#   BUCKET          if set, results are synced to s3://$BUCKET/results/$INSTANCE_NAME after each quant
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -74,6 +75,10 @@ for quant in ${QUANTS}; do
 
   kill "${pid}" 2>/dev/null
   wait "${pid}" 2>/dev/null
+
+  if [[ -n "${BUCKET:-}" ]] && command -v aws >/dev/null; then
+    aws s3 sync --only-show-errors "${RESULTS_DIR}" "s3://${BUCKET}/results/${INSTANCE_NAME}" || true
+  fi
 done
 
 echo "results in ${RESULTS_DIR}"

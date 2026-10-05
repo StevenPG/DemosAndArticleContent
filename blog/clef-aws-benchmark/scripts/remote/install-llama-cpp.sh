@@ -32,6 +32,10 @@ cmake_args=(
 if command -v nvidia-smi >/dev/null && nvidia-smi -L >/dev/null 2>&1; then
   # Deep Learning Base AMIs ship the toolkit under /usr/local/cuda
   export PATH="/usr/local/cuda/bin:${PATH}"
+  if ! command -v nvcc >/dev/null; then
+    echo "NVIDIA GPU found but no nvcc: use the Deep Learning Base AMI or install the CUDA toolkit" >&2
+    exit 1
+  fi
   arch="$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader | head -1 | tr -d '.')"
   echo "NVIDIA GPU detected: $(nvidia-smi --query-gpu=name --format=csv,noheader | head -1), sm_${arch}"
   cmake_args+=(-DGGML_CUDA=ON "-DCMAKE_CUDA_ARCHITECTURES=${arch}")

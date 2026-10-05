@@ -69,13 +69,10 @@ status RUNNING
 # --- 2. setup --------------------------------------------------------------------------------
 install_packages() {
   export DEBIAN_FRONTEND=noninteractive
-  # cloud-init and unattended-upgrades race for the dpkg lock on first boot
-  for _ in $(seq 1 60); do
-    fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 || break
-    sleep 5
-  done
-  apt-get update -q
-  apt-get install -y -q build-essential cmake git curl jq python3-venv python3-pip libssl-dev psmisc
+  # cloud-init and unattended-upgrades hold the dpkg lock on first boot; wait up to 10 min for it
+  local apt=(apt-get -q -o DPkg::Lock::Timeout=600)
+  "${apt[@]}" update
+  "${apt[@]}" install -y build-essential cmake git curl jq python3-venv python3-pip libssl-dev
 }
 
 python_env() {
