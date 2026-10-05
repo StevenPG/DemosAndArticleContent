@@ -110,6 +110,8 @@ def fmt(value: Any, digits: int = 1) -> str:
         if 0 < abs(value) < 1:
             return f"{value:.3g}"  # 0.0412 req/s, not 0.0
         return f"{value:,.{digits}f}"
+    if isinstance(value, int) and not isinstance(value, bool):
+        return f"{value:,}"
     return str(value)
 
 
@@ -282,7 +284,11 @@ def main() -> None:
         ),
         "",
     ]
-    out += ["Prices: " + ", ".join(f"{k} ${v[0]}/hr ({v[1]})" for k, v in prices.items()), ""]
+    out += [
+        "Prices: "
+        + ", ".join(f"{k} ${v[0]}/hr ({v[1]})" if v[0] else f"{k} unknown (no cost rows)" for k, v in prices.items()),
+        "",
+    ]
 
     # ---- resources -------------------------------------------------------------------------
     res_rows = [

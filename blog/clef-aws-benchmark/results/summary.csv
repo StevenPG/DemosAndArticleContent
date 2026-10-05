@@ -1,0 +1,4 @@
+best_concurrency,cpu_pct,gpu_pct,input_tokens,instance_type,machine,max_req_s,max_tok_s,p50_ms,p90_ms,p99_ms,power_w,quant,rss_mb,startup_s,usd_per_hr,vram_mb,workload
+2,92.48,,508.0,container,container-4vcpu,0.043,21.9,23746.6,24102.5,24182.6,,Q4_K_M,9829.63,482.32,,,small
+1,93.13,,1604.7,container,container-4vcpu,0.013,21.6,75287.9,79913.6,80954.4,,Q4_K_M,11233.31,482.32,,,medium
+1,91.46,,4449.3,container,container-4vcpu,0.005,20.4,214081.9,224649.8,227027.6,,Q4_K_M,13594.88,482.32,,,large

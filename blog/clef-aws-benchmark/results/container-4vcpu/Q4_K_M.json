@@ -1,0 +1,928 @@
+{
+  "label": "container-4vcpu/Q4_K_M",
+  "target": "llama.cpp",
+  "instance_type": "container",
+  "quant": "Q4_K_M",
+  "started_at": "2026-10-05T03:32:48+00:00",
+  "startup_seconds": 482.32,
+  "host": {
+    "hostname": "vm",
+    "machine": "x86_64",
+    "python": "3.11.15",
+    "logical_cpus": 4,
+    "physical_cpus": 4,
+    "mem_total_gb": 15.7,
+    "cpu_model": "Intel(R) Xeon(R) Processor @ 2.80GHz"
+  },
+  "steps": [
+    {
+      "concurrency": 1,
+      "wall_s": 70.696,
+      "requests": 3,
+      "errors": 0,
+      "error_samples": [],
+      "latency_ms": {
+        "mean": 23549.8,
+        "p50": 23746.6,
+        "p90": 24102.5,
+        "p99": 24182.6,
+        "min": 22711.3,
+        "max": 24191.5
+      },
+      "input_tokens_mean": 508.0,
+      "requests_per_s": 0.042,
+      "input_tokens_per_s": 21.6,
+      "workload": "small",
+      "resources": {
+        "host_cpu_pct_avg": 93.19,
+        "host_cpu_pct_max": 100.0,
+        "proc_cpu_pct_avg": 92.48,
+        "proc_rss_mb_max": 9829.63,
+        "host_mem_used_mb_max": 4200.02,
+        "gpu_util_pct_avg": null,
+        "gpu_util_pct_max": null,
+        "gpu_mem_used_mb_max": null,
+        "gpu_power_w_avg": null
+      }
+    },
+    {
+      "concurrency": 2,
+      "wall_s": 92.794,
+      "requests": 4,
+      "errors": 0,
+      "error_samples": [],
+      "latency_ms": {
+        "mean": 40535.9,
+        "p50": 46301.4,
+        "p90": 46391.4,
+        "p99": 46415.3,
+        "min": 23123.0,
+        "max": 46417.9
+      },
+      "input_tokens_mean": 507.8,
+      "requests_per_s": 0.043,
+      "input_tokens_per_s": 21.9,
+      "workload": "small",
+      "resources": {
+        "host_cpu_pct_avg": 94.75,
+        "host_cpu_pct_max": 100.0,
+        "proc_cpu_pct_avg": 93.06,
+        "proc_rss_mb_max": 9829.97,
+        "host_mem_used_mb_max": 4230.05,
+        "gpu_util_pct_avg": null,
+        "gpu_util_pct_max": null,
+        "gpu_mem_used_mb_max": null,
+        "gpu_power_w_avg": null
+      }
+    },
+    {
+      "concurrency": 1,
+      "wall_s": 222.676,
+      "requests": 3,
+      "errors": 0,
+      "error_samples": [],
+      "latency_ms": {
+        "mean": 74210.2,
+        "p50": 75287.9,
+        "p90": 79913.6,
+        "p99": 80954.4,
+        "min": 66272.7,
+        "max": 81070.0
+      },
+      "input_tokens_mean": 1604.7,
+      "requests_per_s": 0.013,
+      "input_tokens_per_s": 21.6,
+      "workload": "medium",
+      "resources": {
+        "host_cpu_pct_avg": 94.43,
+        "host_cpu_pct_max": 100.0,
+        "proc_cpu_pct_avg": 93.13,
+        "proc_rss_mb_max": 11233.31,
+        "host_mem_used_mb_max": 5637.02,
+        "gpu_util_pct_avg": null,
+        "gpu_util_pct_max": null,
+        "gpu_mem_used_mb_max": null,
+        "gpu_power_w_avg": null
+      }
+    },
+    {
+      "concurrency": 2,
+      "wall_s": 304.336,
+      "requests": 4,
+      "errors": 0,
+      "error_samples": [],
+      "latency_ms": {
+        "mean": 132167.8,
+        "p50": 145608.5,
+        "p90": 154006.8,
+        "p99": 156519.7,
+        "min": 80655.2,
+        "max": 156798.9
+      },
+      "input_tokens_mean": 1636.8,
+      "requests_per_s": 0.013,
+      "input_tokens_per_s": 21.5,
+      "workload": "medium",
+      "resources": {
+        "host_cpu_pct_avg": 94.44,
+        "host_cpu_pct_max": 100.0,
+        "proc_cpu_pct_avg": 92.96,
+        "proc_rss_mb_max": 11234.11,
+        "host_mem_used_mb_max": 5673.12,
+        "gpu_util_pct_avg": null,
+        "gpu_util_pct_max": null,
+        "gpu_mem_used_mb_max": null,
+        "gpu_power_w_avg": null
+      }
+    },
+    {
+      "concurrency": 1,
+      "wall_s": 653.433,
+      "requests": 3,
+      "errors": 0,
+      "error_samples": [],
+      "latency_ms": {
+        "mean": 217794.0,
+        "p50": 214081.9,
+        "p90": 224649.8,
+        "p99": 227027.6,
+        "min": 212008.2,
+        "max": 227291.8
+      },
+      "input_tokens_mean": 4449.3,
+      "requests_per_s": 0.005,
+      "input_tokens_per_s": 20.4,
+      "workload": "large",
+      "resources": {
+        "host_cpu_pct_avg": 92.75,
+        "host_cpu_pct_max": 100.0,
+        "proc_cpu_pct_avg": 91.46,
+        "proc_rss_mb_max": 13594.88,
+        "host_mem_used_mb_max": 8985.13,
+        "gpu_util_pct_avg": null,
+        "gpu_util_pct_max": null,
+        "gpu_mem_used_mb_max": null,
+        "gpu_power_w_avg": null
+      }
+    },
+    {
+      "concurrency": 2,
+      "wall_s": 862.189,
+      "requests": 4,
+      "errors": 0,
+      "error_samples": [],
+      "latency_ms": {
+        "mean": 378676.0,
+        "p50": 427383.4,
+        "p90": 433248.6,
+        "p99": 435239.4,
+        "min": 224476.7,
+        "max": 435460.6
+      },
+      "input_tokens_mean": 4422.5,
+      "requests_per_s": 0.005,
+      "input_tokens_per_s": 20.5,
+      "workload": "large",
+      "resources": {
+        "host_cpu_pct_avg": 93.23,
+        "host_cpu_pct_max": 100.0,
+        "proc_cpu_pct_avg": 91.82,
+        "proc_rss_mb_max": 13593.96,
+        "host_mem_used_mb_max": 9011.86,
+        "gpu_util_pct_avg": null,
+        "gpu_util_pct_max": null,
+        "gpu_mem_used_mb_max": null,
+        "gpu_power_w_avg": null
+      }
+    }
+  ],
+  "instance_name": "container-4vcpu",
+  "llama_cpp_tag": "b11401",
+  "server_props": {
+    "total_slots": 1,
+    "model_path": "/opt/models/Clef-Flash-Q4_K_M.gguf",
+    "build_info": "b1-a7fb71f"
+  },
+  "eval": {
+    "cases": 24,
+    "graded_questions": 38,
+    "correct": 37,
+    "accuracy": 0.9737,
+    "rows": [
+      {
+        "id": "ticket-double-charge",
+        "latency_ms": 12047.3,
+        "input_tokens": 248,
+        "answers": {
+          "route": {
+            "type": "choice",
+            "choice": "billing",
+            "probabilities": {
+              "billing": 0.9871272292389062,
+              "shipping": 0.004215175888249902,
+              "technical": 0.00865759487284385
+            },
+            "confidence": 0.9806908438583593
+          },
+          "refund": {
+            "type": "noul",
+            "noul": 0.9317719939721415
+          }
+        },
+        "graded": {
+          "route": {
+            "expected": "billing",
+            "got": "billing",
+            "ok": true
+          },
+          "refund": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "ticket-checkout-down",
+        "latency_ms": 15846.5,
+        "input_tokens": 351,
+        "answers": {
+          "route": {
+            "type": "choice",
+            "choice": "technical",
+            "probabilities": {
+              "billing": 0.02852652049245036,
+              "shipping": 0.00536713423363196,
+              "technical": 0.9661063452739176
+            },
+            "confidence": 0.9491595179108764
+          },
+          "outage": {
+            "type": "noul",
+            "noul": 0.8590103171750841
+          },
+          "urgency": {
+            "type": "score",
+            "score": 2.916988287891899,
+            "legend": {
+              "0": "Can wait",
+              "1": "This week",
+              "2": "Today",
+              "3": "Right now"
+            },
+            "probabilities": {
+              "0": 0.008579778644168699,
+              "1": 0.007777848794030436,
+              "2": 0.04171667858753325,
+              "3": 0.9419256939742675
+            },
+            "confidence": 0.9169882878918998
+          }
+        },
+        "graded": {
+          "route": {
+            "expected": "technical",
+            "got": "technical",
+            "ok": true
+          },
+          "outage": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          },
+          "urgency": {
+            "expected": 3,
+            "got": 3,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "ticket-lost-parcel",
+        "latency_ms": 11524.1,
+        "input_tokens": 249,
+        "answers": {
+          "route": {
+            "type": "choice",
+            "choice": "shipping",
+            "probabilities": {
+              "billing": 0.016619848770146238,
+              "shipping": 0.9737854938518483,
+              "technical": 0.009594657378005458
+            },
+            "confidence": 0.9606782407777723
+          },
+          "outage": {
+            "type": "noul",
+            "noul": 0.01384107124834222
+          }
+        },
+        "graded": {
+          "route": {
+            "expected": "shipping",
+            "got": "shipping",
+            "ok": true
+          },
+          "outage": {
+            "expected": false,
+            "got": false,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "ticket-feature-question",
+        "latency_ms": 11687.4,
+        "input_tokens": 261,
+        "answers": {
+          "urgency": {
+            "type": "score",
+            "score": 0.011788033470082213,
+            "legend": {
+              "0": "Can wait",
+              "1": "This week",
+              "2": "Today",
+              "3": "Right now"
+            },
+            "probabilities": {
+              "0": 0.9932415363582001,
+              "1": 0.003318161923216238,
+              "2": 0.0018510336088844483,
+              "3": 0.0015892681096990261
+            },
+            "confidence": 0.9882119665299178
+          },
+          "complaint": {
+            "type": "noul",
+            "noul": 0.008105594533935818
+          }
+        },
+        "graded": {
+          "urgency": {
+            "expected": 0,
+            "got": 0,
+            "ok": true
+          },
+          "complaint": {
+            "expected": false,
+            "got": false,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "invoice-overdue",
+        "latency_ms": 12884.1,
+        "input_tokens": 285,
+        "answers": {
+          "status": {
+            "type": "choice",
+            "choice": "overdue",
+            "probabilities": {
+              "draft": 0.01771720365498293,
+              "overdue": 0.9552279553057113,
+              "paid": 0.027054841039305853
+            },
+            "confidence": 0.9328419329585669
+          },
+          "large": {
+            "type": "noul",
+            "noul": 0.973226419549631
+          }
+        },
+        "graded": {
+          "status": {
+            "expected": "overdue",
+            "got": "overdue",
+            "ok": true
+          },
+          "large": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "invoice-small-paid",
+        "latency_ms": 12393.0,
+        "input_tokens": 272,
+        "answers": {
+          "status": {
+            "type": "choice",
+            "choice": "paid",
+            "probabilities": {
+              "draft": 0.0037885047454123645,
+              "overdue": 0.004926256979244603,
+              "paid": 0.991285238275343
+            },
+            "confidence": 0.9869278574130145
+          },
+          "large": {
+            "type": "noul",
+            "noul": 0.0033724813043458065
+          }
+        },
+        "graded": {
+          "status": {
+            "expected": "paid",
+            "got": "paid",
+            "ok": true
+          },
+          "large": {
+            "expected": false,
+            "got": false,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "invoice-over-po",
+        "latency_ms": 11618.7,
+        "input_tokens": 264,
+        "answers": {
+          "within_po": {
+            "type": "noul",
+            "noul": 0.01374768565044003
+          },
+          "action": {
+            "type": "choice",
+            "choice": "escalate",
+            "probabilities": {
+              "approve": 0.021647407436874055,
+              "escalate": 0.8607825497946517,
+              "reject": 0.11757004276847434
+            },
+            "confidence": 0.7911738246919776
+          }
+        },
+        "graded": {
+          "within_po": {
+            "expected": false,
+            "got": false,
+            "ok": true
+          },
+          "action": {
+            "expected": "escalate",
+            "got": "escalate",
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "mx-hydraulic-leak",
+        "latency_ms": 15270.2,
+        "input_tokens": 335,
+        "answers": {
+          "ata": {
+            "type": "choice",
+            "choice": "ata32",
+            "probabilities": {
+              "ata21": 0.004079143077446744,
+              "ata24": 0.0037712452883300607,
+              "ata32": 0.979751404118251,
+              "ata34": 0.0047006696763173894,
+              "ata36": 0.007697537839654848
+            },
+            "confidence": 0.9746892551478137
+          },
+          "aog": {
+            "type": "noul",
+            "noul": 0.6339112211545437
+          }
+        },
+        "graded": {
+          "ata": {
+            "expected": "ata32",
+            "got": "ata32",
+            "ok": true
+          },
+          "aog": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "mx-cabin-light",
+        "latency_ms": 19069.6,
+        "input_tokens": 419,
+        "answers": {
+          "ata": {
+            "type": "choice",
+            "choice": "ata33",
+            "probabilities": {
+              "ata25": 0.061675646310324274,
+              "ata32": 0.013750932663373357,
+              "ata33": 0.9018718832931215,
+              "ata34": 0.012498463363489875,
+              "ata72": 0.010203074369690996
+            },
+            "confidence": 0.8773398541164018
+          },
+          "aog": {
+            "type": "noul",
+            "noul": 0.029070723323559994
+          },
+          "severity": {
+            "type": "score",
+            "score": 0.8950785501202241,
+            "legend": {
+              "0": "Cosmetic",
+              "1": "Minor",
+              "2": "Major",
+              "3": "Critical"
+            },
+            "probabilities": {
+              "0": 0.15316892060919488,
+              "1": 0.814372397703135,
+              "2": 0.01666989264592119,
+              "3": 0.015788789041748928
+            },
+            "confidence": 0.798583608661386
+          }
+        },
+        "graded": {
+          "ata": {
+            "expected": "ata33",
+            "got": "ata33",
+            "ok": true
+          },
+          "aog": {
+            "expected": false,
+            "got": false,
+            "ok": true
+          },
+          "severity": {
+            "expected": 1,
+            "got": 1,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "mx-egt-exceedance",
+        "latency_ms": 14654.6,
+        "input_tokens": 310,
+        "answers": {
+          "ata": {
+            "type": "choice",
+            "choice": "ata72",
+            "probabilities": {
+              "ata21": 0.006738359280143699,
+              "ata32": 0.005903588781297219,
+              "ata33": 0.0029403298928128816,
+              "ata72": 0.9844177220457461
+            },
+            "confidence": 0.979223629394328
+          },
+          "inspection_required": {
+            "type": "noul",
+            "noul": 0.648898077913656
+          }
+        },
+        "graded": {
+          "ata": {
+            "expected": "ata72",
+            "got": "ata72",
+            "ok": true
+          },
+          "inspection_required": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "notam-runway-closed",
+        "latency_ms": 9209.4,
+        "input_tokens": 200,
+        "answers": {
+          "affects_flight": {
+            "type": "noul",
+            "noul": 0.07068406398699445
+          }
+        },
+        "graded": {
+          "affects_flight": {
+            "expected": false,
+            "got": false,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "notam-ils-out",
+        "latency_ms": 13423.5,
+        "input_tokens": 295,
+        "answers": {
+          "affects_flight": {
+            "type": "noul",
+            "noul": 0.8851399934763224
+          },
+          "severity": {
+            "type": "score",
+            "score": 2.745986531213303,
+            "legend": {
+              "0": "Not at all",
+              "1": "Minor",
+              "2": "Significant",
+              "3": "Flight cannot proceed as planned"
+            },
+            "probabilities": {
+              "0": 0.026701024848454765,
+              "1": 0.025200059167410062,
+              "2": 0.12351027590651253,
+              "3": 0.8245886400776226
+            },
+            "confidence": 0.745986531213303
+          }
+        },
+        "graded": {
+          "affects_flight": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "sentiment-positive",
+        "latency_ms": 7976.4,
+        "input_tokens": 172,
+        "answers": {
+          "sentiment": {
+            "type": "choice",
+            "choice": "positive",
+            "probabilities": {
+              "negative": 0.017699702430944108,
+              "neutral": 0.020947247281623203,
+              "positive": 0.9613530502874328
+            },
+            "confidence": 0.9420295754311492
+          }
+        },
+        "graded": {
+          "sentiment": {
+            "expected": "positive",
+            "got": "positive",
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "sentiment-negative",
+        "latency_ms": 11458.9,
+        "input_tokens": 255,
+        "answers": {
+          "sentiment": {
+            "type": "choice",
+            "choice": "negative",
+            "probabilities": {
+              "negative": 0.9035326310183082,
+              "neutral": 0.06704764387967642,
+              "positive": 0.02941972510201541
+            },
+            "confidence": 0.8552989465274621
+          },
+          "churn_risk": {
+            "type": "noul",
+            "noul": 0.9706796955323781
+          }
+        },
+        "graded": {
+          "sentiment": {
+            "expected": "negative",
+            "got": "negative",
+            "ok": true
+          },
+          "churn_risk": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "phishing-obvious",
+        "latency_ms": 8836.8,
+        "input_tokens": 190,
+        "answers": {
+          "phishing": {
+            "type": "noul",
+            "noul": 0.9654917621253777
+          }
+        },
+        "graded": {
+          "phishing": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "phishing-legit",
+        "latency_ms": 8234.2,
+        "input_tokens": 181,
+        "answers": {
+          "phishing": {
+            "type": "noul",
+            "noul": 0.017687725265447322
+          }
+        },
+        "graded": {
+          "phishing": {
+            "expected": false,
+            "got": false,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "tool-routing-weather",
+        "latency_ms": 8838.4,
+        "input_tokens": 188,
+        "answers": {
+          "tool": {
+            "type": "choice",
+            "choice": "get_weather",
+            "probabilities": {
+              "create_ticket": 0.0012852878689636512,
+              "get_weather": 0.9964396614866605,
+              "none": 0.0011504030445202774,
+              "search_flights": 0.0011246475998556366
+            },
+            "confidence": 0.9952528819822141
+          }
+        },
+        "graded": {
+          "tool": {
+            "expected": "get_weather",
+            "got": "get_weather",
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "tool-routing-flights",
+        "latency_ms": 9117.8,
+        "input_tokens": 192,
+        "answers": {
+          "tool": {
+            "type": "choice",
+            "choice": "search_flights",
+            "probabilities": {
+              "create_ticket": 0.0034596886355050967,
+              "get_weather": 0.0028709835773694714,
+              "none": 0.0024594053488076703,
+              "search_flights": 0.9912099224383177
+            },
+            "confidence": 0.9882798965844236
+          }
+        },
+        "graded": {
+          "tool": {
+            "expected": "search_flights",
+            "got": "search_flights",
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "tool-routing-none",
+        "latency_ms": 8113.8,
+        "input_tokens": 184,
+        "answers": {
+          "tool": {
+            "type": "choice",
+            "choice": "none",
+            "probabilities": {
+              "create_ticket": 0.011214791683564443,
+              "get_weather": 0.012849419037773735,
+              "none": 0.9674520500896652,
+              "search_flights": 0.008483739188996647
+            },
+            "confidence": 0.9566027334528869
+          }
+        },
+        "graded": {
+          "tool": {
+            "expected": "none",
+            "got": "none",
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "fact-arithmetic",
+        "latency_ms": 7638.1,
+        "input_tokens": 173,
+        "answers": {
+          "fits": {
+            "type": "noul",
+            "noul": 0.7090783530360811
+          }
+        },
+        "graded": {
+          "fits": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "fact-arithmetic-no",
+        "latency_ms": 7942.6,
+        "input_tokens": 173,
+        "answers": {
+          "fits": {
+            "type": "noul",
+            "noul": 0.8146529122862272
+          }
+        },
+        "graded": {
+          "fits": {
+            "expected": false,
+            "got": true,
+            "ok": false
+          }
+        }
+      },
+      {
+        "id": "pii-present",
+        "latency_ms": 8515.7,
+        "input_tokens": 186,
+        "answers": {
+          "contains_pii": {
+            "type": "noul",
+            "noul": 0.9699662447143298
+          }
+        },
+        "graded": {
+          "contains_pii": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "pii-absent",
+        "latency_ms": 7547.1,
+        "input_tokens": 166,
+        "answers": {
+          "contains_pii": {
+            "type": "noul",
+            "noul": 0.024206157217158953
+          }
+        },
+        "graded": {
+          "contains_pii": {
+            "expected": false,
+            "got": false,
+            "ok": true
+          }
+        }
+      },
+      {
+        "id": "log-brute-force",
+        "latency_ms": 15470.8,
+        "input_tokens": 342,
+        "answers": {
+          "incident": {
+            "type": "choice",
+            "choice": "brute_force",
+            "probabilities": {
+              "benign": 0.06508951215418814,
+              "brute_force": 0.901791071390934,
+              "data_exfiltration": 0.013314376127742883,
+              "malware": 0.019805040327135103
+            },
+            "confidence": 0.8690547618545786
+          },
+          "external_source": {
+            "type": "noul",
+            "noul": 0.8475503476809636
+          }
+        },
+        "graded": {
+          "incident": {
+            "expected": "brute_force",
+            "got": "brute_force",
+            "ok": true
+          },
+          "external_source": {
+            "expected": true,
+            "got": true,
+            "ok": true
+          }
+        }
+      }
+    ]
+  },
+  "finished_at": "2026-10-05T04:19:54+00:00"
+}

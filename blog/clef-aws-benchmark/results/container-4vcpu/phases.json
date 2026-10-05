@@ -1,0 +1,8 @@
+{
+  "instance_name": "container-4vcpu", "instance_type": "container",
+  "benchmark": 3309,
+  "python_env": 8,
+  "packages": 13,
+  "model_download": 0,
+  "llama_cpp_build": 210
+}

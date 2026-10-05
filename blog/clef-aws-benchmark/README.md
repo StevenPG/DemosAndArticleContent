@@ -91,7 +91,7 @@ bench/
   clef_bench.py            closed-loop load steps + psutil / nvidia-smi sampling + labeled eval
   analyze.py               speed, cost, resources, quality and setup tables
   data/eval_cases.json     24 labeled cases (support, invoices, aircraft maintenance, NOTAMs, phishing, ...)
-results/                   fetched results land here
+results/                   fetched results land here (container-4vcpu/ is the reference run)
 ```
 
 ## What gets measured
@@ -195,6 +195,10 @@ Concurrency 1, measured with the instance scripts themselves (`install-llama-cpp
 About 20 prompt tokens/s on 4 vCPUs means a 4.4k-token prompt takes minutes on a small CPU. That
 is why the benchmark steps have a minimum request count and a hard time cap, not a fixed request
 count.
+
+The full first-boot script (`bootstrap.sh`) was also run end to end here, with stand-ins for
+`aws`, `systemctl` and `shutdown`. It completed in 59 minutes with 37/38 eval answers correct; see
+[reference-output.md](reference-output.md).
 
 Sample output from `bench/quickstart.py`:
 
