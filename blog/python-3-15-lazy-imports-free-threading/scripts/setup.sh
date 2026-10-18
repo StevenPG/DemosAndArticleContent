@@ -6,7 +6,8 @@
 #   ./scripts/setup.sh                 # 3.14, 3.14t, 3.15, 3.15t
 #   PYTHONS="3.15 3.15t" ./scripts/setup.sh
 #
-# Needs a recent uv: 0.8.17 does not list the 3.15 builds, 0.12.19 does.
+# Needs a recent uv: 0.8.17 does not list the 3.15 builds. 0.13.1 resolves 3.15 to the
+# 3.15.0 final release and 3.14 to 3.14.8.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

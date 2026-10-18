@@ -7,6 +7,8 @@ Benchmark driver. Runs every interpreter in .venvs/ (see scripts/setup.sh).
     python3 scripts/bench.py all
     python3 scripts/bench.py report      # re-render results/results.md from results/raw.json
 
+Pass --results-dir to write a run somewhere other than results/ (e.g. a second machine).
+
 The driver itself runs on any Python 3.11+; it only launches the interpreters under test.
 """
 from __future__ import annotations
@@ -14,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import re
 import statistics
 import subprocess
@@ -51,6 +54,23 @@ def interpreters() -> dict[str, Path]:
     if not found:
         sys.exit("no interpreters in .venvs/ - run scripts/setup.sh first")
     return found
+
+
+def use_results_dir(path: Path) -> None:
+    global RESULTS, RAW
+    RESULTS = path.resolve()
+    RAW = RESULTS / "raw.json"
+
+
+def record_meta(raw: dict) -> None:
+    """Note the machine and the exact interpreter builds, so a results file can't be misattributed."""
+    versions = {}
+    for name, python in interpreters().items():
+        out = subprocess.run([str(python), "-c", "import sys; print(sys.version.split()[0])"],
+                             capture_output=True, text=True)
+        versions[name] = out.stdout.strip()
+    raw["meta"] = {"machine": f"{platform.system()} {platform.machine()}, {os.cpu_count()} CPUs",
+                   "versions": versions}
 
 
 def load_raw() -> dict:
@@ -97,6 +117,7 @@ def modules_loaded(python: Path, args: list[str], cwd: Path) -> int | None:
 
 def cmd_startup(args: argparse.Namespace) -> None:
     raw = load_raw()
+    record_meta(raw)
     startup = raw.setdefault("startup", {})
     with tempfile.TemporaryDirectory() as tmp:
         cwd = Path(tmp)
@@ -121,6 +142,7 @@ def cmd_startup(args: argparse.Namespace) -> None:
 
 def cmd_threads(args: argparse.Namespace) -> None:
     raw = load_raw()
+    record_meta(raw)
     threads = raw.setdefault("threads", {})
     counts = [str(n) for n in args.thread_counts]
     for name, python in interpreters().items():
@@ -154,6 +176,10 @@ def fmt(value: float | None, digits: int = 1) -> str:
 def cmd_report(_: argparse.Namespace) -> None:
     raw = load_raw()
     lines = ["# Python 3.15 lazy imports and free-threading - results", ""]
+    if "meta" in raw:
+        meta = raw["meta"]
+        lines += [f"Machine: {meta['machine']}. Interpreters: "
+                  + ", ".join(f"{n} = {v}" for n, v in meta["versions"].items()) + ".", ""]
     if "startup" in raw:
         lines += ["## CLI wall time (median ms) and modules imported", ""]
         for name, variants in raw["startup"].items():
@@ -195,7 +221,9 @@ def main() -> int:
     parser.add_argument("--work", type=int, default=2_000_000, help="Collatz range for the threads test")
     parser.add_argument("--repeat", type=int, default=3, help="repeats per thread count (best is kept)")
     parser.add_argument("--thread-counts", type=int, nargs="+", default=[1, 2, 4])
+    parser.add_argument("--results-dir", type=Path, default=RESULTS, help="where raw.json and results.md go")
     args = parser.parse_args()
+    use_results_dir(args.results_dir)
     if args.command in ("startup", "all"):
         cmd_startup(args)
     if args.command in ("threads", "all"):
