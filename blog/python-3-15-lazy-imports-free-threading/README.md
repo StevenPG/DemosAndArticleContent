@@ -23,12 +23,13 @@ scripts/setup.sh               uv: installs 3.14, 3.14t, 3.15, 3.15t and a venv 
 scripts/make_variants.py       regenerates the two lazy variants (--check to verify)
 scripts/bench.py               the driver: startup, threads, report
 data/flights.csv               500 deterministic rows for fleetctl to chew on
-results/                       raw.json + results.md from the container run
+results/                       raw.json + results.md from the M3 run (3.15.0b2)
+results/linux-container-3.15.0/  the same, re-run on 3.15.0 final in a Linux container
 ```
 
 ## Quick start
 
-Requires a recent [uv](https://docs.astral.sh/uv/). uv 0.8.17 doesn't list the 3.15 builds, and 0.12.19 does.
+Requires a recent [uv](https://docs.astral.sh/uv/). uv 0.8.17 doesn't list the 3.15 builds; 0.13.1 installs 3.15.0 final.
 
 ```bash
 ./scripts/setup.sh                    # ~4 interpreters + rich/requests in each venv
@@ -36,6 +37,9 @@ python3 scripts/bench.py startup      # lazy imports
 python3 scripts/bench.py threads      # free-threading and JIT
 python3 scripts/bench.py report       # re-render results/results.md
 ```
+
+Add `--results-dir results/<name>` to keep a second machine's run alongside the first. Each run records the
+machine and the exact interpreter versions at the top of its `results.md`.
 
 ## Lazy imports: fleetctl
 
@@ -83,23 +87,27 @@ don't have one.
 
 ## Results
 
-`results/results.md` and `raw.json` are the published run: an M3 Pro MacBook (12 cores) on **3.14.6, 3.14.6t,
-3.15.0b2 and 3.15.0b2t**. Note that 3.15 is a pre-release beta there; 3.15.0 final is due October 1. An earlier run in
-a shared 4-core Linux container on 3.15.0rc2 showed the same shape.
+There are two runs. Absolute times don't compare across them, so read each against itself.
 
-- `fleetctl version` on 3.15: **~100 ms eager vs 20–26 ms lazy** (381 vs 64 modules), within about 12 ms of the bare
-  interpreter. All three ways of enabling laziness land in the same place.
-- Module counts are deterministic per platform. macOS loads one more module than Linux for `report` (388/386 against
-  387/385).
-- macOS startup timings were noisy for the eager rows (standard deviation 13–30 ms, and 111 ms on one row). The lazy
-  rows varied by 1–5 ms.
-- `-X lazy_imports=all` on `report` loads 268 modules instead of 388. The wall-time gain was within noise on 3.15, 19%
-  on 3.15t, and ~23% in the container run.
-- Free-threaded builds: 3.6× at 4 threads, the same as 4 processes. There's no measurable single-thread tax on the M3
-  (11.64 s vs 11.62 s on 3.15), about 5% in the container, and about 11 ms more startup.
-- `PYTHON_JIT=1` on 3.15: the single-threaded loop went from 11.62 s to 5.45 s (-53%). On 3.14 there was no gain.
-  The JIT isn't available in the free-threaded builds, so **JIT + 4 processes (1.60 s) beat free-threaded 4 threads
-  (3.22 s)**.
+- `results/`: an M3 Pro MacBook (12 cores) on **3.14.6, 3.14.6t, 3.15.0b2 and 3.15.0b2t**, run before 3.15.0 shipped.
+- `results/linux-container-3.15.0/`: a shared 4-core x86_64 Linux container on **3.14.8, 3.14.8t, 3.15.0 and
+  3.15.0t**, after the final release (October 9, 2026). It's 1.5–2.5× slower than the M3 across the board.
+
+What they show:
+
+- `fleetctl version` on 3.15: **249 ms eager vs 36–38 ms lazy** in the container on 3.15.0 (379 vs 61 modules), and
+  **~100 ms vs 20–26 ms** on the M3 (b2). All three ways of enabling laziness land in the same place.
+- Module counts are deterministic for a given platform, build and dependency set, and shift by a few between them
+  (381/64 on macOS b2, 379/61 on Linux 3.15.0). The pattern doesn't change.
+- Eager rows are noisy on both machines (standard deviation 13–35 ms). Lazy rows vary by 1–8 ms.
+- `-X lazy_imports=all` on `report` loads 266 modules instead of 385. On 3.15.0 in the container it cut wall time by
+  **27% (3.15) and 28% (3.15t)**, well outside the noise. On the M3's b2 run it was within noise on 3.15 and 19%
+  faster on 3.15t.
+- Free-threaded builds: 3.5–3.7× at 4 threads on both machines, the same as 4 processes. The single-thread tax was
+  about 5% on 3.15.0 in the container and unmeasurable on the M3. Startup costs 8–11 ms more.
+- `PYTHON_JIT=1` on 3.15.0: the single-threaded loop went from 18.41 s to 10.30 s (-44%) in the container. The M3's
+  b2 run got -53%. On 3.14 the JIT was slightly slower. It isn't available in the free-threaded builds, so **JIT + 4
+  processes beat free-threaded 4 threads by about 2×** (2.88 s vs 5.48 s in the container, 1.60 s vs 3.22 s on the M3).
 
 ## Gotchas found while building this
 
@@ -109,9 +117,10 @@ a shared 4-core Linux container on 3.15.0rc2 showed the same shape.
   base class, or a module-level constant is imported at import time anyway. Laziness only pays when the
   first use is inside a function.
 - **A missing module fails at first use, not at the import.** `lazy import does_not_exist` succeeds, and the
-  `ModuleNotFoundError` is raised when the name is first touched. The traceback does still point at the
-  import line. The optional-dependency idiom `try: import x / except ImportError:` can't be lazy anyway:
+  `ModuleNotFoundError` is raised when the name is first touched. On 3.15.0 it's chained from an `ImportError`
+  whose traceback points at the import line, and `except ModuleNotFoundError` still catches it. The optional-dependency idiom `try: import x / except ImportError:` can't be lazy anyway:
   `lazy import` inside `try` is a `SyntaxError`.
 - **`-X importtime` is the tool for checking.** A lazily imported module only shows up once something
   touches it.
-- **An older uv can't see 3.15.** uv 0.8.17 didn't list 3.15.0rc2 at all. Upgrading (to 0.12.19 here) fixed it.
+- **An older uv can't see 3.15.** uv 0.8.17 didn't list 3.15.0rc2 at all. Upgrading (to 0.12.19, and later
+  0.13.1 for 3.15.0 final) fixed it.
