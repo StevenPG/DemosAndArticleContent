@@ -234,10 +234,12 @@ def gc_matrix():
     gcs = [("serial", "Serial"), ("g1", "G1"), ("z", "ZGC"), ("shen", "Shenandoah")]
     rows = []
     for n in (1, 2):
-        p = os.path.join(RAW, f"startup-gc-{n}cpu-spring-rest.json")
-        if not os.path.exists(p):
+        res = {}
+        for p in glob.glob(os.path.join(RAW, f"startup-gc-{n}cpu-*-spring-rest.json")):
+            res.update({r["name"]: r["summary"]["time_wall_clock"]["median"] * 1000
+                        for r in json.load(open(p))["results"]})
+        if not res:
             continue
-        res = {r["name"]: r["summary"]["time_wall_clock"]["median"] * 1000 for r in json.load(open(p))["results"]}
         curves = curve_series(f"gc-{n}cpu")
         for gc, gname in gcs:
             none, cache, code = (res.get(f"28:{gc}:{v}") for v in ("none", "cache", "code"))

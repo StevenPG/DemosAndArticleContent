@@ -24,6 +24,12 @@ JDK_HOME_26="${JDK_HOME_26:-/opt/jdks/jdk26}"
 JDK_HOME_27="${JDK_HOME_27:-/opt/jdks/jdk27}"
 JDK_HOME_28="${JDK_HOME_28:-/opt/jdks/jdk28}"
 GRAALVM_HOME="${GRAALVM_HOME:-/opt/jdks/graal25}"
+# Oracle's OpenJDK builds (jdk.java.net) don't include Shenandoah. The Shenandoah rows use
+# Temurin's build of the same JDK 28 EA source tag instead.
+JDK_HOME_28_SHENANDOAH="${JDK_HOME_28_SHENANDOAH:-/opt/jdks/jdk28t}"
+
+# Extra JVM flags for production runs (e.g. a fixed heap). Not used for training.
+EXTRA_JVM="${EXTRA_JVM:-}"
 
 # Server under test on APP_CPUS, load generator on LOAD_CPUS - they never share a core.
 APP_CPUS="${APP_CPUS:-0-1}"
@@ -41,7 +47,11 @@ unset JAVA_TOOL_OPTIONS JDK_JAVA_OPTIONS _JAVA_OPTIONS
 
 field() { echo "$1" | cut -d: -f"$2"; }
 
-java_bin() { local v; v=$(field "$1" 1); eval echo "\$JDK_HOME_$v/bin/java"; }
+java_bin() {
+  local v; v=$(field "$1" 1)
+  if [[ $v == 28 && $(field "$1" 2) == shen ]]; then echo "$JDK_HOME_28_SHENANDOAH/bin/java"; return; fi
+  eval echo "\$JDK_HOME_$v/bin/java"
+}
 
 gc_flag() {
   case "$(field "$1" 2)" in
@@ -113,7 +123,7 @@ jvm_cmd() {
     esac
     return
   fi
-  echo "$(java_bin "$cfg") $(gc_flag "$cfg") $(cache_flags "$app" "$cfg" | tr '\n' ' ') $(app_args "$app" "$workload")"
+  echo "$(java_bin "$cfg") $(gc_flag "$cfg") $EXTRA_JVM $(cache_flags "$app" "$cfg" | tr '\n' ' ') $(app_args "$app" "$workload")"
 }
 
 # Wait until the Spring app answers, or die trying.
@@ -141,9 +151,9 @@ verify_config() {
   log=$(mktemp)
   # shellcheck disable=SC2046
   case "$app" in
-    spring-rest) taskset -c "$APP_CPUS" $(java_bin "$cfg") $(gc_flag "$cfg") $(cache_flags "$app" "$cfg") \
+    spring-rest) taskset -c "$APP_CPUS" $(java_bin "$cfg") $(gc_flag "$cfg") $EXTRA_JVM $(cache_flags "$app" "$cfg") \
                    -Xlog:aot -XX:+PrintCompilation -Dbench.exitOnReady=true $(app_args "$app") >"$log" 2>&1 ;;
-    *) taskset -c "$APP_CPUS" $(java_bin "$cfg") $(gc_flag "$cfg") $(cache_flags "$app" "$cfg") \
+    *) taskset -c "$APP_CPUS" $(java_bin "$cfg") $(gc_flag "$cfg") $EXTRA_JVM $(cache_flags "$app" "$cfg") \
                    -Xlog:aot -XX:+PrintCompilation $(ITERATIONS=1 app_args "$app") >"$log" 2>&1 ;;
   esac
   if ! grep -q "Mapped static  *region" "$log" || grep -q "\[error *\]\[aot\]" "$log"; then
@@ -172,6 +182,7 @@ fingerprint() {
     echo "cpu: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | xargs) x$(nproc)"
     echo "mem: $(free -g | awk '/Mem/{print $2}') GB"
     for v in 25 26 27 28; do echo "jdk$v: $(eval "\$JDK_HOME_$v/bin/java" -version 2>&1 | sed -n 2p)"; done
+    echo "jdk28 (Shenandoah rows): $("$JDK_HOME_28_SHENANDOAH/bin/java" -version 2>&1 | sed -n 2p)"
     echo "graalvm: $("$GRAALVM_HOME/bin/native-image" --version 2>&1 | head -1)"
     echo "hyperfine: $(hyperfine --version)"
   } >"$RESULTS/../environment.txt"

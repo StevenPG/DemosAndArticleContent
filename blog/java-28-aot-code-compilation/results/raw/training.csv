@@ -14,3 +14,11 @@ warmup-cpu,28:g1:code:javac,javac,67189,67989504
 spring-rest,28:g1:code:fleet,fleet,109703,186269696
 spring-rest,28:serial,full,114848,187416576
 warmup-cpu,28:serial,adsb,9795,17629184
+spring-rest,28:z,full,117928,195686400
+warmup-cpu,28:z,adsb,9698,18370560
+spring-rest,28:serial,full,111563,188084224
+warmup-cpu,28:serial,adsb,9069,17592320
+spring-rest,28:z,full,118664,195923968
+warmup-cpu,28:z,adsb,9409,18481152
+spring-rest,28:shen,full,122396,196489216
+warmup-cpu,28:shen,adsb,8479,18374656

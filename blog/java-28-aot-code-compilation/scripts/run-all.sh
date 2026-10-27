@@ -5,7 +5,7 @@
 # Prerequisites: ./gradlew build, ./scripts/prepare.sh, ./scripts/native-build.sh
 source "$(dirname "$0")/lib.sh"
 phases=("$@")
-[[ ${#phases[@]} -eq 0 ]] && phases=(train ladder batch curves mismatch gcmatrix)
+[[ ${#phases[@]} -eq 0 ]] && phases=(train ladder batch curves mismatch gcmatrix fixedheap)
 here="$(dirname "$0")"
 fingerprint
 
@@ -51,11 +51,16 @@ for phase in "${phases[@]}"; do
         n=$([[ $cpus == 0 ]] && echo 1 || echo 2)
         for gc in serial g1 z shen; do
           c=(28:$gc:none 28:$gc:cache 28:$gc:code)
-          APP_CPUS=$cpus TAG=gc-${n}cpu RUNS=10 "$here/startup.sh" spring-rest "${c[@]}"
+          APP_CPUS=$cpus TAG=gc-${n}cpu-$gc RUNS=10 "$here/startup.sh" spring-rest "${c[@]}"
           APP_CPUS=$cpus TAG=gc-${n}cpu-$gc REPS=3 "$here/batch.sh" "${c[@]}"
           APP_CPUS=$cpus TAG=gc-${n}cpu REPS=2 DURATION=60 "$here/curve.sh" "${c[@]}"
         done
       done
+      ;;
+
+    fixedheap)  # the adsb batch again with a fixed 1 GB heap and more repetitions, to cut GC noise
+      TAG=fixedheap MODE=adsb REPS=10 EXTRA_JVM="-Xms1g -Xmx1g" \
+        "$here/batch.sh" 28:g1:none 25:g1:cache 26:g1:cache 27:g1:cache 28:g1:cache 28:g1:code
       ;;
 
     *) echo "unknown phase $phase"; exit 1 ;;
