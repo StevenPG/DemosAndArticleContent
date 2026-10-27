@@ -56,5 +56,5 @@ void main() {
               "interval": 5
             }""";
     JsonValue config = Json.parse(jsonc.replaceAll("(?m)^\\s*#.*$", ""));
-    IO.println("%nStripped '#' comments then parsed: " + config);
+    IO.println("\nStripped '#' comments then parsed: " + config);
 }

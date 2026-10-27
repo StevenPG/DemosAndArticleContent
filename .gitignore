@@ -9,3 +9,4 @@
 .idea/go.imports.xml
 /.idea
 /blog/java-28-json-api/out
+/blog/java-28-json-api/jackson-comparison/lib

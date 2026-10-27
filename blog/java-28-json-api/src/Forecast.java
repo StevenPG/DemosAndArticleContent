@@ -23,7 +23,7 @@ void main(String[] args) throws Exception {
     root.get("properties").get("periods").asList().stream()
             .mapToInt(p -> p.get("temperature").asInt())
             .average()
-            .ifPresent(avg -> IO.println("Average forecast temperature: %.1f°F%n".formatted(avg)));
+            .ifPresent(avg -> IO.println("Average forecast temperature: %.1f F%n".formatted(avg)));
 
     // Navigate once, then reuse the List<JsonValue>.
     List<JsonValue> periods = root.get("properties").get("periods").asList();
@@ -38,7 +38,7 @@ void main(String[] args) throws Exception {
                 .map(v -> v.asInt() + "%")
                 .orElse("-");
 
-        IO.println("%-16s %3d°%s  %-6s %-8s %s".formatted(
+        IO.println("%-16s %3d %s  %-6s %-8s %s".formatted(
                 p.get("name").asString(),
                 p.get("temperature").asInt(),
                 p.get("temperatureUnit").asString(),

@@ -39,6 +39,24 @@ java --add-modules jdk.incubator.json src/Forecast.java --live   # hit api.weath
 | `src/Numbers.java` | Exact `asInt`/`asLong`, rounding `asDouble`, lossless `BigDecimal` | `JsonNumber`, `JsonValueException` |
 | `src/RecordBinding.java` | No data binding is built in, so here is about 60 lines of reflection that binds JSON to records and back | Everything above, plus `java.lang.reflect.RecordComponent` |
 
+Captured output from every demo is in `results/output.txt` (JDK `28-ea+21-1707`, Linux x64).
+
+## Jackson side by side
+
+`jackson-comparison/SideBySide.java` does five jobs both ways: averaging a
+nested array, reading an optional member and a nullable value, building a
+small document, binding to records, and handling duplicate names. Both
+libraries give identical results for the first four. For the fifth, Jackson's
+default keeps the last duplicate and the JDK always rejects the document.
+
+```bash
+cd jackson-comparison
+./fetch-jackson.sh      # jackson-core/databind 3.2.4 + annotations 2.22 into lib/
+java --add-modules jdk.incubator.json -cp 'lib/*' SideBySide.java
+```
+
+Output: `results/side-by-side.txt`.
+
 ## Data
 
 - `data/forecast.json`: shaped like the real `api.weather.gov` response for
@@ -80,5 +98,5 @@ For a modular application, use `requires jdk.incubator.json;` in
 ## Caveat
 
 This is an **incubator** API. Package name, method names and behaviour can
-change between JDK 28 and its eventual final form. Everything here was written
-against the JDK 28 early-access javadoc and the JEP text as of October 2026.
+change between JDK 28 and its eventual final form. Everything here was run on
+JDK 28 early-access build 21 in October 2026.

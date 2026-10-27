@@ -1,0 +1,214 @@
+openjdk version "28-ea" 2027-03-23
+OpenJDK Runtime Environment (build 28-ea+21-1707)
+OpenJDK 64-Bit Server VM (build 28-ea+21-1707, mixed mode, sharing)
+
+===== Forecast =====
+WARNING: Using incubator modules: jdk.incubator.json
+Average forecast temperature: 61.2 F
+
+Period            Temp  Precip Gusts    Forecast
+Today             74 F  -      -        Sunny
+Tonight           51 F  -      -        Clear
+Tuesday           71 F  10%    25 mph   Mostly Sunny
+Tuesday Night     53 F  20%    -        Partly Cloudy
+Wednesday         66 F  40%    30 mph   Chance Light Rain
+Wednesday Night   52 F  30%    -        Chance Light Rain
+
+Gridpoint elevation: 21.9 m
+Members on properties: [units, forecastGenerator, generatedAt, updateTime, validTimes, elevation, periods]
+
+===== AircraftStates =====
+WARNING: Using incubator modules: jdk.incubator.json
+Snapshot at 2026-10-27T14:00:00Z, 10 aircraft
+
+ICAO24  Callsign  Country        Level    GS kt  Sqwk  Category
+3c66a1  DLH402    Germany        FL400      483  6021  Heavy
+4ca7b9  EIN104    Ireland        FL380      490  5163  Heavy
+a1f6e3  UAL278    United States  FL360      460  2216  Heavy
+a0b77c  DAL1166   United States  FL260      386  4615  Large
+ab3f07  N512SP    United States  FL045      119  1200  Light
+a4b2c1  AAL1942   United States  FL035      180  3341  Large
+a3994f  -         United States  FL020      100  -     No info
+a6d5e4  N77MED    United States  FL015       80  7700  Rotorcraft   << EMERGENCY
+a8c4d2  SWA3307   United States  ?            -  -     Large
+a2e981  -         United States  GND          0  -     Service vehicle
+
+At or above FL300: 3   No position yet: 1
+
+===== ThreadDumpSchema =====
+WARNING: Using incubator modules: jdk.incubator.json
+Schema sketch (23 paths):
+
+  /                                                            object
+  /threadDump                                                  object
+  /threadDump/formatVersion                                    number
+  /threadDump/processId                                        number
+  /threadDump/runtimeVersion                                   string
+  /threadDump/threadContainers                                 array
+  /threadDump/threadContainers[]                               object
+  /threadDump/threadContainers[]/container                     string
+  /threadDump/threadContainers[]/owner                         null
+  /threadDump/threadContainers[]/parent                        null | string
+  /threadDump/threadContainers[]/threadCount                   number
+  /threadDump/threadContainers[]/threads                       array
+  /threadDump/threadContainers[]/threads[]                     object
+  /threadDump/threadContainers[]/threads[]/name                string
+  /threadDump/threadContainers[]/threads[]/parkBlocker         object
+  /threadDump/threadContainers[]/threads[]/parkBlocker/object  string
+  /threadDump/threadContainers[]/threads[]/stack               array
+  /threadDump/threadContainers[]/threads[]/stack[]             string
+  /threadDump/threadContainers[]/threads[]/state               string
+  /threadDump/threadContainers[]/threads[]/tid                 number
+  /threadDump/threadContainers[]/threads[]/time                string
+  /threadDump/threadContainers[]/threads[]/waitingOn           string
+  /threadDump/time                                             string
+
+Threads in this JVM:
+  tid=3    main                         RUNNABLE
+  tid=12   Reference Handler            RUNNABLE
+  tid=13   Finalizer                    WAITING
+  tid=14   Signal Dispatcher            RUNNABLE
+  tid=20   Notification Thread          RUNNABLE
+  tid=21   Common-Cleaner               TIMED_WAITING
+  tid=25   pool-1-thread-1              WAITING
+  tid=26   pool-1-thread-2              WAITING
+
+===== GenerateGeoJson =====
+WARNING: Using incubator modules: jdk.incubator.json
+Raw factories:  {"type":"Point","coordinates":[-75.2412,39.8721]}
+Compact:        745 chars
+Pretty:         1748 chars, written to out/tracks.geojson
+
+{
+  "type": "Feature",
+  "geometry": {
+    "type": "LineString",
+    "coordinates": [
+      [
+        -75.06,
+        39.91,
+        671
+      ],
+      [
+        -75.12,
+        39.935,
+        549
+      ],
+      [
+        -75.165,
+        39.9526,
+        457
+      ]
+    ]
+  },
+  "properties": {
+    "callsign": "N77MED",
+    "icao24": "a6d5e4",
+    "military": false,
+    "squawk": "7700",
+    "points": 3
+  }
+}
+
+Round trip equal (by toString): true
+Round trip equal (by equals):   false  <- unspecified, don't rely on it
+
+===== Strictness =====
+WARNING: Using incubator modules: jdk.incubator.json
+Input                Result   Detail
+valid object         OK       {"callsign":"AAL1942","alt":1100}
+top-level scalar     OK       42
+top-level string     OK       "just a string"
+whitespace around    OK       [1,2]
+duplicate member     REJECT   [line 2, pos 2] Duplicate member name: "squawk" was already parsed. Path: "{". Location: line 2, position 2.
+trailing comma       REJECT   [line 0, pos 9] Unexpected value. Expected a JSON Object, Array, String, Number, Boolean, or Null. Path: "[3". Location: line 0, position 9.
+line comment         REJECT   [line 1, pos 2] Expecting a JSON Object member name. Path: "{". Location: line 1, position 2.
+single quotes        REJECT   [line 0, pos 1] Expecting a JSON Object member name. Path: "{". Location: line 0, position 1.
+unquoted name        REJECT   [line 0, pos 1] Expecting a JSON Object member name. Path: "{". Location: line 0, position 1.
+leading zero         REJECT   [line 0, pos 12] Invalid position of '0' within JSON Number. Path: "{squawk". Location: line 0, position 12.
+NaN                  REJECT   [line 0, pos 8] Unexpected value. Expected a JSON Object, Array, String, Number, Boolean, or Null. Path: "{alt". Location: line 0, position 8.
+Infinity             REJECT   [line 0, pos 1] Unexpected value. Expected a JSON Object, Array, String, Number, Boolean, or Null. Path: "[0". Location: line 0, position 1.
+leading plus         REJECT   [line 0, pos 1] Invalid position of '+' within JSON Number. Path: "[0". Location: line 0, position 1.
+hex number           REJECT   [line 0, pos 2] Unexpected content after JSON value. Path: "[0". Location: line 0, position 2.
+raw tab in string    REJECT   [line 0, pos 3] Unescaped control code. Path: "[0". Location: line 0, position 3.
+two documents        REJECT   [line 0, pos 3] Additional value(s) were found after the JSON Value. Path: "". Location: line 0, position 3.
+empty input          REJECT   [line 0, pos 0] Expected a JSON Object, Array, String, Number, Boolean, or Null. Path: "". Location: line 0, position 0.
+
+Stripped '#' comments then parsed: {"feed":"adsb","interval":5}
+
+===== Numbers =====
+WARNING: Using incubator modules: jdk.incubator.json
+JSON text                          asInt()             asLong()               asDouble()             BigDecimal
+123                                123                 123                    123.0                  123
+123.0                              123                 123                    123.0                  123.0
+234.56E2                           23456               23456                  23456.0                23456
+345.6                              JsonValueException  JsonValueException     345.6                  345.6
+2147483647                         2147483647          2147483647             2.147483647E9          2147483647
+2147483648                         JsonValueException  2147483648             2.147483648E9          2147483648
+9007199254740993                   JsonValueException  9007199254740993       9.007199254740992E15   9007199254740993
+9223372036854775808                JsonValueException  JsonValueException     9.223372036854776E18   9223372036854775808
+-0                                 0                   0                      -0.0                   0
+3.141592653589793238462643383279   JsonValueException  JsonValueException     3.141592653589793      3.1415926535897932384626433...
+1.8E309                            JsonValueException  JsonValueException     JsonValueException     180000000000000000000000000...
+1E-400                             JsonValueException  JsonValueException     0.0                    0.0000000000000000000000000...
+
+Source text survives: [1.10,1E2,0.000]
+BigDecimal sum of [19.99, 0.01, 4.10] = 24.10
+double sum of [0.1, 0.2]              = 0.30000000000000004
+
+JsonNumber.of(42)              -> 42
+JsonNumber.of(42L)             -> 42
+JsonNumber.of(0.1)             -> 0.1
+JsonNumber.of("1.50")          -> 1.50
+JsonNumber.of(Double.NaN)      -> IllegalArgumentException
+JsonNumber.of("0x1F")          -> IllegalArgumentException
+
+===== RecordBinding =====
+WARNING: Using incubator modules: jdk.incubator.json
+Bound 6 periods, elevation 21.9 wmoUnit:m
+
+Period[number=1, name=Today, isDaytime=true, temperature=74, temperatureUnit=F, temperatureTrend=Optional.empty, probabilityOfPrecipitation=Precipitation[unitCode=wmoUnit:percent, value=Optional.empty], windSpeed=5 to 10 mph, windGust=Optional.empty, windDirection=NW, shortForecast=Sunny]
+Period[number=2, name=Tonight, isDaytime=false, temperature=51, temperatureUnit=F, temperatureTrend=Optional.empty, probabilityOfPrecipitation=Precipitation[unitCode=wmoUnit:percent, value=Optional.empty], windSpeed=0 to 5 mph, windGust=Optional.empty, windDirection=NW, shortForecast=Clear]
+Period[number=3, name=Tuesday, isDaytime=true, temperature=71, temperatureUnit=F, temperatureTrend=Optional.empty, probabilityOfPrecipitation=Precipitation[unitCode=wmoUnit:percent, value=Optional[10]], windSpeed=5 to 15 mph, windGust=Optional[25 mph], windDirection=W, shortForecast=Mostly Sunny]
+Period[number=4, name=Tuesday Night, isDaytime=false, temperature=53, temperatureUnit=F, temperatureTrend=Optional[rising], probabilityOfPrecipitation=Precipitation[unitCode=wmoUnit:percent, value=Optional[20]], windSpeed=5 mph, windGust=Optional.empty, windDirection=SW, shortForecast=Partly Cloudy]
+Period[number=5, name=Wednesday, isDaytime=true, temperature=66, temperatureUnit=F, temperatureTrend=Optional.empty, probabilityOfPrecipitation=Precipitation[unitCode=wmoUnit:percent, value=Optional[40]], windSpeed=10 to 15 mph, windGust=Optional[30 mph], windDirection=S, shortForecast=Chance Light Rain]
+Period[number=6, name=Wednesday Night, isDaytime=false, temperature=52, temperatureUnit=F, temperatureTrend=Optional.empty, probabilityOfPrecipitation=Precipitation[unitCode=wmoUnit:percent, value=Optional[30]], windSpeed=5 to 10 mph, windGust=Optional.empty, windDirection=SW, shortForecast=Chance Light Rain]
+
+Gusty periods as JSON:
+[
+  {
+    "number": 3,
+    "name": "Tuesday",
+    "isDaytime": true,
+    "temperature": 71,
+    "temperatureUnit": "F",
+    "temperatureTrend": null,
+    "probabilityOfPrecipitation": {
+      "unitCode": "wmoUnit:percent",
+      "value": 10
+    },
+    "windSpeed": "5 to 15 mph",
+    "windGust": "25 mph",
+    "windDirection": "W",
+    "shortForecast": "Mostly Sunny"
+  },
+  {
+    "number": 5,
+    "name": "Wednesday",
+    "isDaytime": true,
+    "temperature": 66,
+    "temperatureUnit": "F",
+    "temperatureTrend": null,
+    "probabilityOfPrecipitation": {
+      "unitCode": "wmoUnit:percent",
+      "value": 40
+    },
+    "windSpeed": "10 to 15 mph",
+    "windGust": "30 mph",
+    "windDirection": "S",
+    "shortForecast": "Chance Light Rain"
+  }
+]
+
+Binding into the wrong type:
+  JsonNumber is not a JsonString. Path: "{properties{periods[0{temperature". Location: line 41, position 23.

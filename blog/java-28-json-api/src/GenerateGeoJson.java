@@ -61,7 +61,7 @@ void main() throws Exception {
 
     // 3. Round trip. JsonValue has no equals() semantics, so compare text.
     JsonValue reparsed = Json.parse(pretty);
-    IO.println("%nRound trip equal (by toString): " + reparsed.toString().equals(compact));
+    IO.println("\nRound trip equal (by toString): " + reparsed.toString().equals(compact));
     IO.println("Round trip equal (by equals):   " + reparsed.equals(featureCollection) + "  <- unspecified, don't rely on it");
 }
 
@@ -72,7 +72,7 @@ JsonValue toFeature(Track t) {
                     "type", "LineString",
                     // GeoJSON is [longitude, latitude, altitude], the reverse of how pilots say it.
                     "coordinates", t.positions().stream()
-                            .map(p -> List.of(p.longitude(), p.latitude(), p.altitudeFt() * 0.3048))
+                            .map(p -> List.of(p.longitude(), p.latitude(), Math.round(p.altitudeFt() * 0.3048)))
                             .toList()),
             "properties", obj(
                     "callsign", t.callsign(),

@@ -19,10 +19,10 @@ void main() {
             "3.141592653589793238462643383279", "1.8E309", "1E-400"
     };
 
-    IO.println("%-34s %-14s %-22s %-22s %s".formatted("JSON text", "asInt()", "asLong()", "asDouble()", "BigDecimal"));
+    IO.println("%-34s %-19s %-22s %-22s %s".formatted("JSON text", "asInt()", "asLong()", "asDouble()", "BigDecimal"));
     for (String text : inputs) {
         JsonValue n = Json.parse(text);
-        IO.println("%-34s %-14s %-22s %-22s %s".formatted(
+        IO.println("%-34s %-19s %-22s %-22s %s".formatted(
                 text,
                 attempt(n, JsonValue::asInt),
                 attempt(n, JsonValue::asLong),
