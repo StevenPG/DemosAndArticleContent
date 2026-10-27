@@ -1,0 +1,9 @@
+// Every app compiles to Java 25 bytecode so the SAME jar runs on JDK 25, 26, 27 and 28.
+// The AOT cache is a runtime feature: only the JVM version changes between configs.
+subprojects {
+    apply plugin: 'java'
+    java {
+        toolchain { languageVersion = JavaLanguageVersion.of(25) }
+    }
+    repositories { mavenCentral() }
+}

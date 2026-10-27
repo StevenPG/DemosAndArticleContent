@@ -1,0 +1,2 @@
+rootProject.name = 'java-28-aot-code-compilation'
+include 'apps:spring-rest', 'apps:warmup-cpu', 'apps:cli-tool'

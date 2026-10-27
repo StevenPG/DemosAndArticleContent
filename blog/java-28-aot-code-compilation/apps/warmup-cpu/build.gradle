@@ -1,0 +1,5 @@
+// Zero dependencies on purpose: no framework startup, just code getting hot.
+jar {
+    archiveFileName = 'warmup-cpu.jar'
+    manifest { attributes 'Main-Class': 'com.stevenpg.aot.warmup.WarmupMain' }
+}
