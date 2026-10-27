@@ -1,0 +1,130 @@
+{
+  "@context": [
+    "https://geojson.org/geojson-ld/geojson-context.jsonld",
+    {
+      "@version": "1.1",
+      "wx": "https://api.weather.gov/ontology#",
+      "geo": "http://www.opengis.net/ont/geosparql#",
+      "unit": "http://codes.wmo.int/common/unit/",
+      "@vocab": "https://api.weather.gov/ontology#"
+    }
+  ],
+  "type": "Feature",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [-121.9748, 37.3537],
+        [-121.9802, 37.3757],
+        [-122.0079, 37.3714],
+        [-122.0025, 37.3494],
+        [-121.9748, 37.3537]
+      ]
+    ]
+  },
+  "properties": {
+    "units": "us",
+    "forecastGenerator": "BaselineForecastGenerator",
+    "generatedAt": "2026-10-27T14:02:11+00:00",
+    "updateTime": "2026-10-27T10:48:37+00:00",
+    "validTimes": "2026-10-27T04:00:00+00:00/P7DT21H",
+    "elevation": {
+      "unitCode": "wmoUnit:m",
+      "value": 21.9456
+    },
+    "periods": [
+      {
+        "number": 1,
+        "name": "Today",
+        "startTime": "2026-10-27T07:00:00-07:00",
+        "endTime": "2026-10-27T18:00:00-07:00",
+        "isDaytime": true,
+        "temperature": 74,
+        "temperatureUnit": "F",
+        "temperatureTrend": null,
+        "probabilityOfPrecipitation": { "unitCode": "wmoUnit:percent", "value": null },
+        "windSpeed": "5 to 10 mph",
+        "windDirection": "NW",
+        "shortForecast": "Sunny",
+        "detailedForecast": "Sunny, with a high near 74. Northwest wind 5 to 10 mph."
+      },
+      {
+        "number": 2,
+        "name": "Tonight",
+        "startTime": "2026-10-27T18:00:00-07:00",
+        "endTime": "2026-10-28T06:00:00-07:00",
+        "isDaytime": false,
+        "temperature": 51,
+        "temperatureUnit": "F",
+        "temperatureTrend": null,
+        "probabilityOfPrecipitation": { "unitCode": "wmoUnit:percent", "value": null },
+        "windSpeed": "0 to 5 mph",
+        "windDirection": "NW",
+        "shortForecast": "Clear",
+        "detailedForecast": "Clear, with a low around 51."
+      },
+      {
+        "number": 3,
+        "name": "Tuesday",
+        "startTime": "2026-10-28T06:00:00-07:00",
+        "endTime": "2026-10-28T18:00:00-07:00",
+        "isDaytime": true,
+        "temperature": 71,
+        "temperatureUnit": "F",
+        "temperatureTrend": null,
+        "probabilityOfPrecipitation": { "unitCode": "wmoUnit:percent", "value": 10 },
+        "windSpeed": "5 to 15 mph",
+        "windGust": "25 mph",
+        "windDirection": "W",
+        "shortForecast": "Mostly Sunny",
+        "detailedForecast": "Mostly sunny, with a high near 71. West wind 5 to 15 mph, with gusts as high as 25 mph."
+      },
+      {
+        "number": 4,
+        "name": "Tuesday Night",
+        "startTime": "2026-10-28T18:00:00-07:00",
+        "endTime": "2026-10-29T06:00:00-07:00",
+        "isDaytime": false,
+        "temperature": 53,
+        "temperatureUnit": "F",
+        "temperatureTrend": "rising",
+        "probabilityOfPrecipitation": { "unitCode": "wmoUnit:percent", "value": 20 },
+        "windSpeed": "5 mph",
+        "windDirection": "SW",
+        "shortForecast": "Partly Cloudy",
+        "detailedForecast": "Partly cloudy, with a low around 53. Temperatures rising to around 55 overnight."
+      },
+      {
+        "number": 5,
+        "name": "Wednesday",
+        "startTime": "2026-10-29T06:00:00-07:00",
+        "endTime": "2026-10-29T18:00:00-07:00",
+        "isDaytime": true,
+        "temperature": 66,
+        "temperatureUnit": "F",
+        "temperatureTrend": null,
+        "probabilityOfPrecipitation": { "unitCode": "wmoUnit:percent", "value": 40 },
+        "windSpeed": "10 to 15 mph",
+        "windGust": "30 mph",
+        "windDirection": "S",
+        "shortForecast": "Chance Light Rain",
+        "detailedForecast": "A chance of light rain after 11am. Mostly cloudy, with a high near 66. Chance of precipitation is 40%."
+      },
+      {
+        "number": 6,
+        "name": "Wednesday Night",
+        "startTime": "2026-10-29T18:00:00-07:00",
+        "endTime": "2026-10-30T06:00:00-07:00",
+        "isDaytime": false,
+        "temperature": 52,
+        "temperatureUnit": "F",
+        "temperatureTrend": null,
+        "probabilityOfPrecipitation": { "unitCode": "wmoUnit:percent", "value": 30 },
+        "windSpeed": "5 to 10 mph",
+        "windDirection": "SW",
+        "shortForecast": "Chance Light Rain",
+        "detailedForecast": "A chance of light rain before 11pm. Mostly cloudy, with a low around 52."
+      }
+    ]
+  }
+}
