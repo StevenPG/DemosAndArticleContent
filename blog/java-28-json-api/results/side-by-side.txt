@@ -1,0 +1,7 @@
+WARNING: Using incubator modules: jdk.incubator.json
+1. average           jdk=61.17  jackson=61.17
+2. gust/precip       jdk=25 mph/10%  jackson=25 mph/10%
+3. generate          jdk={"type":"Point","coordinates":[-75.2412,39.8721]}
+                     jackson={"type":"Point","coordinates":[-75.2412,39.8721]}
+4. records equal     true  (Period[name=Tuesday, temperature=71, windGust=Optional[25 mph]])
+5. duplicate names   jdk=rejected  jackson(default)={"squawk":"7700"}  jackson(strict)=rejected
