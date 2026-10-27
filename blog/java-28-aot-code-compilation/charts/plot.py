@@ -279,7 +279,7 @@ def gc_matrix():
         ax.set_ylim(0, 100)
     axes[0].set_ylabel("startup time saved vs JIT-only, %")
     axes[1].legend(loc="upper right", fontsize=9)
-    fig.suptitle("spring-rest startup reduction by collector and CPU count (JDK 28)", x=0.07, ha="left", fontsize=12)
+    fig.suptitle("spring-rest startup reduction by collector and CPU count (JDK 28)", x=0.07, y=1.04, ha="left", fontsize=12)
     save(fig, "gc-matrix-startup.svg")
 
 
@@ -331,6 +331,8 @@ if __name__ == "__main__":
                 "batch-mismatch-adsb.svg", ["28:g1:none", "28:g1:code:javac", "28:g1:code:adsb"],
                 {"28:g1:code:javac": "AOT code, trained on javac (wrong)",
                  "28:g1:code:adsb": "AOT code, trained on adsb"})
+    batch_chart("fixedheap", "adsb", "ADS-B batch, fixed 1 GB heap: iteration time (median of 10 runs)",
+                "batch-adsb-fixedheap.svg", ladder)
     gc_matrix()
     training_table()
     open(SUMMARY, "w").write("\n".join(md) + "\n")

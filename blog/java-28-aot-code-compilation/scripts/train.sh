@@ -23,7 +23,7 @@ start=$(date +%s%N)
 case "$app" in
   spring-rest)
     # shellcheck disable=SC2046
-    taskset -c "$APP_CPUS" "$java" $(gc_flag "$cfg") -XX:AOTCacheOutput="$cache" $(app_args "$app") \
+    taskset -c "$APP_CPUS" "$java" $(gc_flag "$cfg") $TRAIN_JVM -XX:AOTCacheOutput="$cache" $(app_args "$app") \
       >"$WORK/train-$app.log" 2>&1 &
     pid=$!
     wait_ready "$pid"
@@ -32,12 +32,12 @@ case "$app" in
     ;;
   warmup-cpu)
     # shellcheck disable=SC2046
-    ITERATIONS=10 taskset -c "$APP_CPUS" "$java" $(gc_flag "$cfg") -XX:AOTCacheOutput="$cache" \
+    ITERATIONS=10 taskset -c "$APP_CPUS" "$java" $(gc_flag "$cfg") $TRAIN_JVM -XX:AOTCacheOutput="$cache" \
       $(ITERATIONS=10 app_args "$app" "$training") >"$WORK/train-$app.log" 2>&1
     ;;
   cli-tool)
     # shellcheck disable=SC2046
-    taskset -c "$APP_CPUS" "$java" $(gc_flag "$cfg") -XX:AOTCacheOutput="$cache" $(app_args "$app") \
+    taskset -c "$APP_CPUS" "$java" $(gc_flag "$cfg") $TRAIN_JVM -XX:AOTCacheOutput="$cache" $(app_args "$app") \
       >"$WORK/train-$app.log" 2>&1
     ;;
 esac

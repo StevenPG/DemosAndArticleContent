@@ -58,9 +58,13 @@ for phase in "${phases[@]}"; do
       done
       ;;
 
-    fixedheap)  # the adsb batch again with a fixed 1 GB heap and more repetitions, to cut GC noise
-      TAG=fixedheap MODE=adsb REPS=10 EXTRA_JVM="-Xms1g -Xmx1g" \
+    fixedheap)  # the adsb batch again with a fixed 1 GB heap and more repetitions, to cut GC noise.
+      # Caches are trained with the same heap flags (own cache dir) - see TRAIN_JVM in lib.sh.
+      export CACHE_DIR="$WORK/cache-fixedheap" TRAIN_JVM="-Xms1g -Xmx1g" EXTRA_JVM="-Xms1g -Xmx1g"
+      for v in 25 26 27 28; do "$here/train.sh" warmup-cpu "$v:g1"; done
+      TAG=fixedheap MODE=adsb REPS=10 \
         "$here/batch.sh" 28:g1:none 25:g1:cache 26:g1:cache 27:g1:cache 28:g1:cache 28:g1:code
+      unset CACHE_DIR TRAIN_JVM EXTRA_JVM
       ;;
 
     *) echo "unknown phase $phase"; exit 1 ;;

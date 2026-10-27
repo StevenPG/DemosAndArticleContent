@@ -39,3 +39,21 @@ the flag also drops the AOT code — a superset is rejected too:
 So a fleet with mixed CPU generations needs either one cache per CPU feature level, or the same
 feature-limiting flags on BOTH the training run and every production run (giving up AVX-512 codegen
 on the newer nodes).
+
+## Heap size: the compressed-oops encoding is part of the cache key
+
+Found while re-running the adsb batch with `-Xms1g -Xmx1g` against caches trained with the default
+heap (~3.9 GB max on this 15 GB box).
+
+| Cache from | Production heap | Result |
+|---|---|---|
+| JDK 27 | `-Xmx1g` | `[error][aot,codecache,init] AOT Code Cache disabled: it was created with CompressedOops::shift() = 3 vs current 0` / `Consider adding -XX:+AOTCompatibleOopCompression when creating the AOT cache`. With `AOTMode=on`: **VM exits** ("Unable to use AOT Code Cache"). Without it: the cached adapter/stub code is dropped, the rest maps. |
+| JDK 28 (default training) | `-Xmx1g`, `2g`, `8g`, `31g` | AOT code used (770–829 methods installed) |
+| JDK 28 (default training) | `-Xmx33g` (compressed oops off) | **0 AOT methods**, silently |
+
+JDK 28's one-step training sets `-XX:+AOTCompatibleOopCompression` ergonomically in the cache-
+assembly child process (`PrintFlagsFinal` shows `true {diagnostic}` there, `false` in the
+training parent), so its code survives any compressed-oops heap size. JDK 25-27 caches carry
+some generated code too (adapters/stubs) and do not get this treatment.
+
+Fix used for the `fixedheap` phase: train with the production heap flags (`TRAIN_JVM` in lib.sh).

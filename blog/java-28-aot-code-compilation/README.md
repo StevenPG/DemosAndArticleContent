@@ -123,4 +123,10 @@ charts/          plot.py and the generated SVGs
 ## Results
 
 See `results/summary.md` and `results/environment.txt` (exact JDK builds and hardware) — and the
-blog post for the discussion.
+blog post for the discussion. `results/notes/cache-mismatch.md` documents what happens when
+production doesn't match training: CPU features (AOT code silently dropped, and the match is
+exact), GC, and heap size (compressed-oops encoding; train with your production heap flags, see
+`TRAIN_JVM` in `scripts/lib.sh`).
+
+Shenandoah: Oracle's JDK 28 EA build doesn't include it, so those rows use Temurin's build of the
+same EA tag (`JDK_HOME_28_SHENANDOAH`, default `/opt/jdks/jdk28t`).

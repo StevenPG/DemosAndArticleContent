@@ -17,7 +17,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK="$ROOT/work"
 RESULTS="$ROOT/results/raw"
-mkdir -p "$WORK/cache" "$RESULTS"
+# Caches trained with non-default flags (TRAIN_JVM) go in their own directory.
+CACHE_DIR="${CACHE_DIR:-$WORK/cache}"
+mkdir -p "$CACHE_DIR" "$RESULTS"
 
 JDK_HOME_25="${JDK_HOME_25:-/opt/jdks/jdk25}"
 JDK_HOME_26="${JDK_HOME_26:-/opt/jdks/jdk26}"
@@ -28,8 +30,11 @@ GRAALVM_HOME="${GRAALVM_HOME:-/opt/jdks/graal25}"
 # Temurin's build of the same JDK 28 EA source tag instead.
 JDK_HOME_28_SHENANDOAH="${JDK_HOME_28_SHENANDOAH:-/opt/jdks/jdk28t}"
 
-# Extra JVM flags for production runs (e.g. a fixed heap). Not used for training.
+# Extra JVM flags for production runs (EXTRA_JVM) and training runs (TRAIN_JVM), e.g. a fixed
+# heap. Train with the same flags you run with: on JDK 25-27 a different heap size changes the
+# compressed-oops encoding and invalidates the cached adapter/stub code (fatal with AOTMode=on).
 EXTRA_JVM="${EXTRA_JVM:-}"
+TRAIN_JVM="${TRAIN_JVM:-}"
 
 # Server under test on APP_CPUS, load generator on LOAD_CPUS - they never share a core.
 APP_CPUS="${APP_CPUS:-0-1}"
@@ -77,7 +82,7 @@ default_training() {
 cache_path() {
   local app=$1 cfg=$2 training
   training=$(field "$cfg" 4); training=${training:-$(default_training "$app")}
-  echo "$WORK/cache/$app-jdk$(field "$cfg" 1)-$(field "$cfg" 2)-$training.aot"
+  echo "$CACHE_DIR/$app-jdk$(field "$cfg" 1)-$(field "$cfg" 2)-$training.aot"
 }
 
 # JVM flags that select the cache for a production run.
