@@ -1,0 +1,24 @@
+spring:
+  main:
+    banner-mode: off
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate.jdbc.batch_size: 500
+  datasource:
+    url: jdbc:h2:mem:fleet;DB_CLOSE_DELAY=-1
+server:
+  port: ${PORT:8080}
+  tomcat:
+    threads:
+      max: 32
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+logging:
+  level:
+    root: warn

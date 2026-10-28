@@ -1,0 +1,16 @@
+dependencies {
+    implementation 'info.picocli:picocli:4.7.7'
+    // Generates reflect-config.json for GraalVM native image at compile time.
+    annotationProcessor 'info.picocli:picocli-codegen:4.7.7'
+}
+
+compileJava { options.compilerArgs += ['-Aproject=stevenpg/flightlog'] }
+
+// Single fat jar so the classpath is one file - the AOT cache requires the
+// production classpath to match the training classpath exactly.
+jar {
+    archiveFileName = 'flightlog.jar'
+    manifest { attributes 'Main-Class': 'com.stevenpg.aot.cli.FlightLog' }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+}

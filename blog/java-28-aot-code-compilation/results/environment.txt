@@ -1,0 +1,18 @@
+date: 2026-10-27T23:29:08Z
+kernel: Linux 6.18.44-fc-v180
+cpu: Intel(R) Xeon(R) Processor @ 2.10GHz x4
+mem: 15 GB
+jdk25: OpenJDK Runtime Environment Temurin-25.0.5+8 (build 25.0.5+8-LTS)
+jdk26: OpenJDK Runtime Environment Temurin-26.0.2.1+1 (build 26.0.2.1+1)
+jdk27: OpenJDK Runtime Environment Temurin-27.0.1.0.2+1 (build 27.0.1.0.2+1)
+jdk28: OpenJDK Runtime Environment (build 28-ea+21-1707)
+jdk28 (Shenandoah rows): OpenJDK Runtime Environment Temurin-28+21-202610221655 (build 28-beta+21-ea)
+graalvm: native-image 25.0.4 2026-07-21
+hyperfine: hyperfine 2.0.0
+
+note: the container was restarted at ~22:20Z and came back on a different VM with the same CPU
+model and feature flags (kernel 6.18.44-fc-v165 -> -v180). Everything up to and including the
+1-CPU half of the GC matrix and the 2-CPU Serial/G1 cells ran on the first VM; the GC-matrix
+startup cells, the 2-CPU ZGC/Shenandoah cells and the fixedheap phase ran on the second.
+Every comparison in the article is between configs measured in the same run on the same VM.
+Shenandoah rows use Temurin 28+21-ea (Oracle's jdk.java.net build omits Shenandoah).

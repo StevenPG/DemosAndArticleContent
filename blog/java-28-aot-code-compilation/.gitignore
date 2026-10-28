@@ -1,0 +1,7 @@
+.gradle/
+**/build/
+work/
+*.aot
+*.aotconf
+*.aot.config
+loadgen/loadgen
