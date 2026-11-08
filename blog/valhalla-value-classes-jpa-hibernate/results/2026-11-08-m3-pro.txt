@@ -1,0 +1,29 @@
+# Apple M3 Pro (12 cores, 36 GB), macOS 27.0, Docker Desktop (Postgres 18.4 container)
+# JDK 28-ea+23-1886, Hibernate 7.4.13.Final, Spring Boot 4.1.2, -Xmx2g, run 2026-11-08
+
+## default-1
+=== HYDRATION: 200,000 rows, 10 warmup + 20 measured rounds ===
+Runtime: 28-ea+23-1886, Hibernate 7.4.13.Final, heap max 2048 MB, JVM flags [--enable-preview]
+value records     median   287.16 ms  min   244.28 ms  |  allocated median   115.6 MB  (  606 B/row)
+identity records  median   287.76 ms  min   266.28 ms  |  allocated median   112.6 MB  (  590 B/row)
+=== IN-MEMORY: 200 passes over 200,000 loaded entities (checksum 204741216000000) ===
+value records    median   100.01 ms  min    95.50 ms  |  allocated median      0.0 MB
+identity records median   487.45 ms  min   482.50 ms  |  allocated median      0.0 MB
+
+## default-2
+=== HYDRATION: 200,000 rows, 10 warmup + 20 measured rounds ===
+Runtime: 28-ea+23-1886, Hibernate 7.4.13.Final, heap max 2048 MB, JVM flags [--enable-preview]
+value records     median   272.11 ms  min   206.71 ms  |  allocated median   115.6 MB  (  606 B/row)
+identity records  median   259.95 ms  min   234.00 ms  |  allocated median   112.6 MB  (  590 B/row)
+=== IN-MEMORY: 200 passes over 200,000 loaded entities (checksum 204741216000000) ===
+value records    median   761.84 ms  min   676.66 ms  |  allocated median      0.0 MB
+identity records median   580.99 ms  min   520.81 ms  |  allocated median      0.0 MB
+
+## no-field-flattening
+=== HYDRATION: 200,000 rows, 10 warmup + 20 measured rounds ===
+Runtime: 28-ea+23-1886, Hibernate 7.4.13.Final, heap max 2048 MB, JVM flags [-XX:+UnlockDiagnosticVMOptions, -XX:-UseFieldFlattening, --enable-preview]
+value records     median   200.26 ms  min   181.86 ms  |  allocated median   112.6 MB  (  590 B/row)
+identity records  median   202.71 ms  min   180.92 ms  |  allocated median   112.6 MB  (  590 B/row)
+=== IN-MEMORY: 200 passes over 200,000 loaded entities (checksum 204741216000000) ===
+value records    median   474.06 ms  min   466.70 ms  |  allocated median      0.0 MB
+identity records median   460.59 ms  min   449.50 ms  |  allocated median      0.0 MB
