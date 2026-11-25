@@ -1,14 +1,14 @@
 # SQL demo output
 
-Captured against `postgres:19beta4` via `docker compose up -d`.
+Captured against `postgres:19` (19.0) via `docker compose up -d`.
 
 ## sql/whats-new-19.sql
 
 ```
 Pager usage is off.
-                                                          version                                                          
----------------------------------------------------------------------------------------------------------------------------
- PostgreSQL 19beta4 (Debian 19~beta4-1.pgdg13+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+                                                         version                                                          
+--------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 19.0 (Debian 19.0-2.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
 (1 row)
 
 == Defaults that changed or are new
@@ -39,14 +39,14 @@ REPACK
 VACUUM
 CLUSTER
 == Things some previews said were in 19 (expect errors on the beta)
-CREATE TABLE
-== SQL/PGQ (reverted before release)
 psql:/sql/whats-new-19.sql:27: ERROR:  syntax error at or near ";"
 LINE 1: SELECT v % 3 AS bucket, count(*) FROM probe GROUP BY ALL;
                                                                 ^
+CREATE TABLE
 psql:/sql/whats-new-19.sql:29: ERROR:  syntax error at or near "FOR"
 LINE 1: UPDATE rate FOR PORTION OF valid FROM '2026-06-01' TO '2026-...
                     ^
+== SQL/PGQ (reverted before release)
 psql:/sql/whats-new-19.sql:31: ERROR:  syntax error at or near "PROPERTY"
 LINE 1: CREATE PROPERTY GRAPH g VERTEX TABLES (probe);
                ^
@@ -56,6 +56,8 @@ LINE 1: CREATE PROPERTY GRAPH g VERTEX TABLES (probe);
 
 ```
 Pager usage is off.
+psql:/sql/plan-advice.sql:6: NOTICE:  table "flight" does not exist, skipping
+psql:/sql/plan-advice.sql:6: NOTICE:  table "aircraft" does not exist, skipping
 DROP TABLE
 CREATE TABLE
 CREATE TABLE
@@ -137,8 +139,7 @@ RESET
 CREATE EXTENSION
  pg_drop_advice_stash 
 ----------------------
- 
-(1 row)
+(0 rows)
 
  pg_create_advice_stash 
 ------------------------
@@ -167,5 +168,4 @@ SET
    NESTED_LOOP_PLAIN(f) /* matched */
 (11 rows)
 
-psql:/sql/plan-advice.sql:35: NOTICE:  extension "pg_stash_advice" already exists, skipping
 ```

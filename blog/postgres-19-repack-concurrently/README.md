@@ -14,13 +14,13 @@ Accompanies the post **[PostgreSQL 19's REPACK CONCURRENTLY vs VACUUM FULL: What
 ## Layout
 
 ```
-compose.yaml                 postgres:19beta4 with pg_stash_advice preloaded
+compose.yaml                 postgres:19 (19.0) with pg_stash_advice preloaded
 sql/setup-bloated.sql        2M rows, delete 70%, plain VACUUM: a table that is 3x the size it needs
 sql/workload.pgbench         the live writer: insert + indexed read + update per transaction
 sql/plan-advice.sql          pg_plan_advice / pg_stash_advice walkthrough
 sql/whats-new-19.sql         checks of new defaults, views, and a couple of features that did NOT ship
 scripts/repack_bench.py      runs VACUUM FULL, REPACK, REPACK (CONCURRENTLY) under load
-results/                     results.md + raw.json (container run), sql-output.md
+results/                     results.md + raw.json (M3 Pro, 19.0), sql-output.md, older beta runs
 ```
 
 ## Run it
@@ -58,11 +58,14 @@ pgbench buffers the aggregate log and loses the buffer if killed, so the writer 
 window (`--warmup` + `--max-method-seconds` + `--cooldown`) and exits on its own. On bigger tables,
 raise `--max-method-seconds`. The harness warns if the method outlived the window.
 
-## Findings from the beta (deterministic, see `results/sql-output.md`)
+## Findings, checked on 19.0 (deterministic, see `results/sql-output.md`)
 
 - **`REPACK (CONCURRENTLY)` works with the default `wal_level=replica`.** It captures concurrent
   changes with logical decoding through its own slots, capped by `max_repack_replication_slots`
   (default 5). You don't need to switch the cluster to `wal_level=logical`.
+- **It does raise `effective_wal_level` to `logical` while it runs**, because its slot is a logical one. The
+  checkpointer lowers it again asynchronously. In my runs that took anywhere from under a second to over two
+  minutes, when it stayed `logical` until a `CHECKPOINT`. Expect extra WAL during and possibly after a repack.
 - `VACUUM FULL` and `CLUSTER` still work alongside `REPACK` and `REPACK ... USING INDEX`.
 - **Parallel autovacuum is opt-in.** `autovacuum_max_parallel_workers` defaults to `0`.
 - **JIT is now off by default** (`jit = off`). If you run large analytical queries, turn it back on
@@ -72,7 +75,7 @@ raise `--max-method-seconds`. The harness warns if the method outlived the windo
 - New views exist: `pg_stat_lock`, `pg_stat_recovery`, `pg_stat_autovacuum_scores`,
   `pg_dsm_registry_allocations`.
 - **Not in 19**, despite several preview articles: `GROUP BY ALL` and `UPDATE ... FOR PORTION OF` are both
-  syntax errors on 19beta4.
+  syntax errors on 19.0, as is `CREATE PROPERTY GRAPH` (SQL/PGQ was reverted before release).
 
 ## Restrictions on CONCURRENTLY
 
@@ -85,20 +88,28 @@ It also can't run inside a transaction block. A partitioned table means repackin
 
 ## Results
 
-**`results/results.md` / `raw.json` is the published run:** an M3 Pro MacBook, Docker Desktop with 2 CPUs, 2M rows and
-8 writers:
+**`results/results.md` / `raw.json` is the published run:** PostgreSQL 19.0 on an M3 Pro MacBook, Docker Desktop with
+2 CPUs, 2M rows and 8 writers:
 
 | Method | Duration s | Seconds with zero commits | Worst writer transaction (baseline) | Writer tps before → during |
 |---|---:|---:|---:|---:|
-| `VACUUM FULL` | 0.8 | 0 | 706 ms (22) | 8,654 → 8,138 |
-| `REPACK` | 0.7 | 0 | 585 ms (56) | 12,915 → 10,980 |
-| `REPACK (CONCURRENTLY)` | 1.2 | 0 | **38 ms** (30) | 13,728 → 10,384 |
+| `VACUUM FULL` | 0.6 | 0 | 507 ms (17) | 14,018 → 6,560 |
+| `REPACK` | 0.6 | 0 | 484 ms (22) | 13,512 → 6,066 |
+| `REPACK (CONCURRENTLY)` | 1.2 | 0 | **65 ms** (7) | 13,159 → 10,023 |
 
 At 2M rows on the M3, every rewrite finished in about a second, so none of them produced a whole second with zero
-commits. The per-transaction latency is where the lock shows: the locking methods' worst writer waited 0.6–0.7 s,
-while CONCURRENTLY stayed within 8 ms of baseline.
+commits. The per-transaction latency is where the lock shows: the locking methods' worst writer waited about half a
+second, while CONCURRENTLY's waited 65 ms. A second run (`raw-m3-run2.json`) gave 443–500 ms against 133 ms.
 
-**Table sizes: `results/results-sizes-container-2m.md` / `raw-sizes-container-2m.json`.** The M3 run, like the earlier
+The M3's "after" heap is 98–99 MB (indexes 38 MB) rather than the container's ~91 MB. Its writer is about three times
+faster, so it inserts ~140k rows during the 10 s warm-up, and the rewritten table keeps them.
+
+`results-beta4-m3.md` / `raw-beta4-m3.json` is the same M3 benchmark on 19beta4 (worst writes 706 / 585 / 38 ms).
+
+**Everything below ran on 19beta4.** The blog post also quotes a 19.0 re-run of these container benchmarks. Its
+numbers moved a little and the conclusions didn't, but its raw files aren't in this repo.
+
+**Table sizes: `results/results-sizes-container-2m.md` / `raw-sizes-container-2m.json`.** The beta M3 run, like the earlier
 container runs, recorded the "after" size at the end of the writer's window, so it counts every row inserted in the
 meantime (600k rows became 1.5–1.8M). That understates what the rewrite reclaimed. `scripts/repack_bench.py` now measures
 size the moment the command returns, and a re-run in a shared 4-core container gives the real figures. Size, unlike

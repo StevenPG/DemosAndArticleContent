@@ -1,8 +1,8 @@
-# PostgreSQL 19 beta. REPACK (CONCURRENTLY) works with the default wal_level=replica;
+# PostgreSQL 19. REPACK (CONCURRENTLY) works with the default wal_level=replica;
 # it uses its own replication slots, capped by max_repack_replication_slots (default 5).
 services:
   pg19:
-    image: postgres:19beta4
+    image: postgres:19
     container_name: pg19-repack
     environment:
       POSTGRES_PASSWORD: postgres
