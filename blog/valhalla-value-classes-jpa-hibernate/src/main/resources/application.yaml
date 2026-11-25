@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: valhalla-jpa
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 500
+        order_inserts: true
